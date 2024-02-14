@@ -31,7 +31,9 @@ def t_newline(t):
 def t_error(t):
     tok = ply_token_to_py(t)
     loc = Location.from_token(current_filename, tok)
-    msg = "Illegal combination of characters"
+    # point to just one character because error token goes to the end of the string
+    loc = loc.without_end()
+    msg = "illegal combination of characters"
     report_fatal_at(loc, "SyntaxError", msg, tok.line)
 
 

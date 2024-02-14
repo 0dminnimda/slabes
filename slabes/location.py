@@ -24,6 +24,15 @@ class Location:
             end_offset,
         )
 
+    def without_end(self) -> Location:
+        return Location(
+            self.filepath,
+            self.lineno,
+            self.col_offset,
+            None,
+            None,
+        )
+
     def __str__(self) -> str:
         result = f"{self.filepath}:{self.lineno}:{self.col_offset}"
         if self.end_lineno is not None and self.end_col_offset is not None:
