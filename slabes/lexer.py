@@ -9,6 +9,7 @@ from .location import Location
 token_name_to_type = {
     "NAME": token.NAME,
     "NUMBER": token.NUMBER,
+    "COMMENT": token.COMMENT,
 }
 
 
@@ -21,6 +22,7 @@ t_NAME = r"[a-zA-Z_][a-zA-Z0-9_]*"
 t_NUMBER = r"0z[\da-wA-W]+"
 
 t_ignore = " \t"
+t_COMMENT = r"\#.*"
 
 
 def t_newline(t):
@@ -75,4 +77,4 @@ def lex(text: str, filename: str = "<unknown>"):
 
     for tok in lexer:
         yield ply_token_to_py(tok)
-    yield TokenInfo(token.ENDMARKER, '', (len(lines) + 1, 0), (len(lines) + 1, 0), '')
+    yield TokenInfo(token.ENDMARKER, "", (len(lines) + 1, 0), (len(lines) + 1, 0), "")
