@@ -1,3 +1,3 @@
 # slabes
 
-A language for Simulating LAByrinth EScape
+A compiled language for Simulating LAByrinth EScape
