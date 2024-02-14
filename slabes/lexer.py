@@ -70,9 +70,3 @@ def lex(text: str, filename: str = "<unknown>"):
     for tok in lexer:
         yield ply_token_to_py(tok)
     yield TokenInfo(token.ENDMARKER, '', (len(lines) + 1, 0), (len(lines) + 1, 0), '')
-
-
-# print(
-#     *lex("a = 3786 + 9784 * bk\nadfg = 3465 + 445 * b\na7g = 3678 + 4755 * nfgb f dfg 564"),
-#     sep="\n",
-# )
