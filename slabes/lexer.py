@@ -45,10 +45,14 @@ def ply_token_to_py(tok):
     type = token_name_to_type.get(tok.type, token.OP)
     lineno = tok.lineno
     column_offset = tok.lexpos - cumlen[lineno - 1]
-    end_column_offset = column_offset + len(string)
+    end_lineno = lineno + string.count("\n")
+    if lineno == end_lineno:
+        end_column_offset = column_offset + len(string)
+    else:
+        end_column_offset = tok.lexpos + len(string) - cumlen[end_lineno - 1]
     line = lines[lineno - 1]
     return TokenInfo(
-        type, string, (lineno, column_offset), (lineno, end_column_offset), line
+        type, string, (lineno, column_offset), (end_lineno, end_column_offset), line
     )
 
 
