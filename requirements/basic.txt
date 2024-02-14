@@ -1,0 +1,2 @@
+pegen>=0.3.0
+# ply  # copied into the project as recommended by the PLY docs
