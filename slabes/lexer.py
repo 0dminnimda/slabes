@@ -18,7 +18,7 @@ literals = ["=", "+", "-", "*", "/", "(", ")"]
 
 
 t_NAME = r"[a-zA-Z_][a-zA-Z0-9_]*"
-t_NUMBER = r"\d+"
+t_NUMBER = r"0z[\da-wA-W]+"
 
 t_ignore = " \t"
 
