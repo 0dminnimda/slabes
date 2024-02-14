@@ -24,7 +24,11 @@ if __name__ == '__main__':
 '''
 
 
-start: expr* ENDMARKER
+start: statements ENDMARKER
+
+statements: statement*
+
+statement: expr (',' expr)* '.'
 
 expr: 
     | term '+' expr

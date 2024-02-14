@@ -15,14 +15,15 @@ token_name_to_type = {
 
 tokens = list(token_name_to_type.keys())
 
-literals = ["=", "+", "-", "*", "/", "(", ")"]
+
+literals = [",", ".", "=", "+", "-", "*", "/", "(", ")"]
 
 
-t_NAME = r"[a-zA-Z_][a-zA-Z0-9_]*"
-t_NUMBER = r"0z[\da-wA-W]+"
+t_NAME = r"[a-z_][a-z0-9_]*"
+t_NUMBER = r"[A-W0-9_]+"
 
-t_ignore = " \t"
 t_COMMENT = r"\#.*"
+t_ignore = " \t"
 
 
 def t_newline(t):

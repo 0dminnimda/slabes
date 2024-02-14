@@ -16,14 +16,41 @@ class SlabesParser(Parser):
 
     @memoize
     def start(self) -> Optional[Any]:
-        # start: expr* $
+        # start: statements $
         mark = self._mark()
         if (
-            (_loop0_1 := self._loop0_1(),)
+            (statements := self.statements())
             and
             (_endmarker := self.expect('ENDMARKER'))
         ):
-            return [_loop0_1, _endmarker];
+            return [statements, _endmarker];
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def statements(self) -> Optional[Any]:
+        # statements: statement*
+        # nullable=True
+        mark = self._mark()
+        if (
+            (_loop0_1 := self._loop0_1(),)
+        ):
+            return _loop0_1;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def statement(self) -> Optional[Any]:
+        # statement: expr ((',' expr))* '.'
+        mark = self._mark()
+        if (
+            (expr := self.expr())
+            and
+            (_loop0_2 := self._loop0_2(),)
+            and
+            (literal := self.expect('.'))
+        ):
+            return [expr, _loop0_2, literal];
         self._reset(mark)
         return None;
 
@@ -41,7 +68,7 @@ class SlabesParser(Parser):
             return [term, literal, expr];
         self._reset(mark)
         if (
-            (_loop1_2 := self._loop1_2())
+            (_loop1_3 := self._loop1_3())
             and
             (term := self.term())
             and
@@ -49,7 +76,7 @@ class SlabesParser(Parser):
             and
             (expr := self.expr())
         ):
-            return [_loop1_2, term, literal, expr];
+            return [_loop1_3, term, literal, expr];
         self._reset(mark)
         if (
             (term := self.term())
@@ -141,33 +168,59 @@ class SlabesParser(Parser):
 
     @memoize
     def _loop0_1(self) -> Optional[Any]:
-        # _loop0_1: expr
+        # _loop0_1: statement
         mark = self._mark()
         children = []
         while (
+            (statement := self.statement())
+        ):
+            children.append(statement)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_2(self) -> Optional[Any]:
+        # _loop0_2: (',' expr)
+        mark = self._mark()
+        children = []
+        while (
+            (_tmp_4 := self._tmp_4())
+        ):
+            children.append(_tmp_4)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_3(self) -> Optional[Any]:
+        # _loop1_3: (sign sign)
+        mark = self._mark()
+        children = []
+        while (
+            (_tmp_5 := self._tmp_5())
+        ):
+            children.append(_tmp_5)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _tmp_4(self) -> Optional[Any]:
+        # _tmp_4: ',' expr
+        mark = self._mark()
+        if (
+            (literal := self.expect(','))
+            and
             (expr := self.expr())
         ):
-            children.append(expr)
-            mark = self._mark()
+            return [literal, expr];
         self._reset(mark)
-        return children;
+        return None;
 
     @memoize
-    def _loop1_2(self) -> Optional[Any]:
-        # _loop1_2: (sign sign)
-        mark = self._mark()
-        children = []
-        while (
-            (_tmp_3 := self._tmp_3())
-        ):
-            children.append(_tmp_3)
-            mark = self._mark()
-        self._reset(mark)
-        return children;
-
-    @memoize
-    def _tmp_3(self) -> Optional[Any]:
-        # _tmp_3: sign sign
+    def _tmp_5(self) -> Optional[Any]:
+        # _tmp_5: sign sign
         mark = self._mark()
         if (
             (sign := self.sign())
