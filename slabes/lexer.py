@@ -2,10 +2,32 @@ import re
 import token
 from tokenize import TokenInfo
 from itertools import accumulate
+from enum import Enum, auto
 
 from .ply import lex as _ply_lex
 from .errors import report_fatal_at
 from .location import Location
+
+
+class Keywords(Enum):
+    TINY = token.N_TOKENS
+    SMALL = auto()
+    NORMAL = auto()
+    BIG = auto()
+    FIELD = auto()
+    BEGIN = auto()
+    END = auto()
+    UNTIL = auto()
+    DO = auto()
+    CHECK = auto()
+    GO = auto()
+    RL = auto()
+    RR = auto()
+    SONAR = auto()
+    COMPASS = auto()
+
+
+token.N_TOKENS = Keywords.COMPASS.value + 1
 
 
 class Lexer:
@@ -36,27 +58,13 @@ class Lexer:
         "COMMENT": token.COMMENT,
     }
 
+    for k, v in Keywords.__members__.items():
+        token_name_to_type[k] = v.value
+        token.tok_name[v.value] = k
+
     states = (("INVALID", "exclusive"),)
 
-    keywords = {
-        "tiny": "TINY",
-        "small": "SMALL",
-        "normal": "NORMAL",
-        "big": "BIG",
-        "field": "FIELD",
-        "begin": "BEGIN",
-        "end": "END",
-        "until": "UNTIL",
-        "do": "DO",
-        "check": "CHECK",
-        "go": "GO",
-        "rl": "RL",
-        "rr": "RR",
-        "sonar": "SONAR",
-        "compass": "COMPASS",
-    }
-
-    token_name_to_type.update(dict.fromkeys(keywords.values(), token.SOFT_KEYWORD))
+    keywords = {k.lower(): k for k in Keywords.__members__.keys()}
 
     # keywords can be shortened while those shortenings are unique
     # small = smal = sma = sm, but not s, because of sonar
@@ -69,9 +77,9 @@ class Lexer:
                 keywords[partial] = keywords[name]
     keywords = {k: v for k, v in keywords.items() if v}
 
-    tokens = list(token_name_to_type.keys())
 
     literals = [",", ".", "+", "-", "*", "/", "(", ")"]
+    tokens = list(token_name_to_type.keys())
 
     t_INITIAL_NUMBER = r"\b(?!_)[A-W0-9_]+(?<!_)\b"
 

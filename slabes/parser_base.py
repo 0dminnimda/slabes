@@ -7,10 +7,10 @@ import traceback
 
 from . import ast_nodes as ast
 
-from pegen.parser import Parser
+from pegen.parser import Parser, memoize
 from pegen.tokenizer import Tokenizer
 from pprint import pprint
-from .lexer import lex
+from .lexer import lex, Keywords
 from .errors import report_fatal_at
 from .location import Location
 
@@ -48,6 +48,8 @@ class ParserBase(Parser):
         if res is None:
             last_token = self._tokenizer.diagnose()
 
+            print("DEBUG: last_token =", last_token)
+
             report_fatal_at(
                 Location.from_token(self.filename, last_token),
                 "SyntaxError",
@@ -66,6 +68,13 @@ class ParserBase(Parser):
         tokenizer = Tokenizer(lex(text), path=filename)
         parser = cls(tokenizer, filename=filename)
         return parser.parse("start")
+
+    @memoize
+    def SMALL(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.SMALL.value:
+            return self._tokenizer.getnext()
+        return None
 
 
 def parser_main(parser_class: typing.Type[ParserBase]) -> None:
