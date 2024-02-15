@@ -77,14 +77,31 @@ class Lexer:
                 keywords[partial] = keywords[name]
     keywords = {k: v for k, v in keywords.items() if v}
 
+    multichar_literals = [
+        # statment delimeters
+        ",", ".",
 
-    literals = [",", ".", "+", "-", "*", "/", "(", ")"]
+        # assigment
+        "<<", ">>",
+
+        # arithmetic operators
+        "+", "-", "\\", "/",
+
+        # comparison operators
+        "<>", "<=", "=>",
+
+        # brackets
+        "(", ")", "[", "]"
+    ]
+    token_name_to_type.update(dict.fromkeys(multichar_literals, token.OP))
+
     tokens = list(token_name_to_type.keys())
 
-    t_INITIAL_NUMBER = r"\b(?!_)[A-W0-9_]+(?<!_)\b"
-
+    t_ANY_OP = "|".join(re.escape(it) for it in multichar_literals)
     t_ANY_COMMENT = r"\#.*"
     t_ANY_ignore = " \t"
+
+    t_INITIAL_NUMBER = r"\b(?!_)[A-W0-9_]+(?<!_)\b"
 
     def t_INITIAL_NAME(self, t):
         r"\b[a-z_][a-z0-9_]*\b"

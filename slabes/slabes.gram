@@ -30,17 +30,22 @@ statements: statement*
 
 statement: expr (',' expr)* '.'
 
-expr: 
+expr:
     | term '+' expr
     | (sign sign)+ term '-' expr
     | term
+    | declaration
+
+declaration: type NAME+ '<<' expr
+
+type: SMALL
 
 sign:
     | '+'
     | '-'
 
 term: 
-    | factor '*' term
+    | factor '\\' term
     | factor '/' term
     | factor
 

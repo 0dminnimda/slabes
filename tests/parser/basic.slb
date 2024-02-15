@@ -6,9 +6,9 @@
 
 a3409583094sdf_, _a3409583094sdf_,
 
-sm, sma, smal, small, smalll,
+sm a << 1, # sma, smal, small, smalll,
 
-4353FSDUFOSDIU + 434KE + (0 * 342) + (2 * 342),
+4353FSDUFOSDIU + 434KE, (0 / 342) + (2 \ 342),
 
 # +4353FSDUFOSDIU,
 
@@ -18,6 +18,6 @@ sm, sma, smal, small, smalll,
 
 4353FSDUFOSDIU,
 
-4353FSDUFOSDIU+434KE + (0 * 342) + (2 * 342),
+4353FSDUFOSDIU+434KE + (0 / 342) + (2 \ 342),
 
 4353FSDUFOSDIU. # + 434KE + (0 * 342) + (2 * 342)
