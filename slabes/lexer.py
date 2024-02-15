@@ -10,7 +10,7 @@ from .location import Location
 
 class Lexer:
     def __init__(self) -> None:
-        self.ply_lexer: _ply_lex.Lexer = _ply_lex.lex(module=self)
+        self.ply_lexer: _ply_lex.Lexer = _ply_lex.lex(module=self, optimize=1)
         self.reset("", "")
 
     def reset(self, text: str, filename: str):
