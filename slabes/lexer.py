@@ -38,7 +38,7 @@ class Lexer:
 
     states = (("INVALID", "exclusive"),)
 
-    reserved = {
+    keywords = {
         "tiny": "TINY",
         "small": "SMALL",
         "normal": "NORMAL",
@@ -56,28 +56,32 @@ class Lexer:
         "compass": "COMPASS",
     }
 
+    token_name_to_type.update(dict.fromkeys(keywords.values(), token.SOFT_KEYWORD))
+
     # keywords can be shortened while those shortenings are unique
     # small = smal = sma = sm, but not s, because of sonar
-    reserved_names = list(reserved.keys())
+    reserved_names = tuple(keywords.keys())
     for name in reserved_names:
-        for patrial in accumulate(name):
-            for other_name in reserved_names:
-                if name == other_name:
-                    continue
-                if other_name.startswith(patrial):
-                    break
+        for partial in accumulate(name):
+            if partial in keywords:
+                keywords[partial] = ""
             else:
-                reserved[patrial] = reserved[name]
+                keywords[partial] = keywords[name]
+    keywords = {k: v for k, v in keywords.items() if v}
 
-    tokens = list(token_name_to_type.keys()) + reserved_names
+    tokens = list(token_name_to_type.keys())
 
     literals = [",", ".", "+", "-", "*", "/", "(", ")"]
 
-    t_INITIAL_NAME = r"\b[a-z_][a-z0-9_]*\b"
     t_INITIAL_NUMBER = r"\b(?!_)[A-W0-9_]+(?<!_)\b"
 
     t_ANY_COMMENT = r"\#.*"
     t_ANY_ignore = " \t"
+
+    def t_INITIAL_NAME(self, t):
+        r"\b[a-z_][a-z0-9_]*\b"
+        t.type = self.keywords.get(t.value, "NAME")
+        return t
 
     def t_INVALID_NAME_NUMBER(self, t):
         r"\b[a-wA-W0-9_]+\b"
