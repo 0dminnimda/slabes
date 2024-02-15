@@ -38,9 +38,40 @@ class Lexer:
 
     states = (("INVALID", "exclusive"),)
 
-    tokens = list(token_name_to_type.keys())
+    reserved = {
+        "tiny": "TINY",
+        "small": "SMALL",
+        "normal": "NORMAL",
+        "big": "BIG",
+        "field": "FIELD",
+        "begin": "BEGIN",
+        "end": "END",
+        "until": "UNTIL",
+        "do": "DO",
+        "check": "CHECK",
+        "go": "GO",
+        "rl": "RL",
+        "rr": "RR",
+        "sonar": "SONAR",
+        "compass": "COMPASS",
+    }
 
-    literals = [",", ".", "=", "+", "-", "*", "/", "(", ")"]
+    # keywords can be shortened while those shortenings are unique
+    # small = smal = sma = sm, but not s, because of sonar
+    reserved_names = list(reserved.keys())
+    for name in reserved_names:
+        for patrial in accumulate(name):
+            for other_name in reserved_names:
+                if name == other_name:
+                    continue
+                if other_name.startswith(patrial):
+                    break
+            else:
+                reserved[patrial] = reserved[name]
+
+    tokens = list(token_name_to_type.keys()) + reserved_names
+
+    literals = [",", ".", "+", "-", "*", "/", "(", ")"]
 
     t_INITIAL_NAME = r"\b[a-z_][a-z0-9_]*\b"
     t_INITIAL_NUMBER = r"\b(?!_)[A-W0-9_]+(?<!_)\b"
