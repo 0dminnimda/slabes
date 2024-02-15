@@ -38,12 +38,12 @@ declaration: number_declaration
 
 number_declaration:
     | number_type NAME+ '<<' signed_number
-#     | invalid_number_declaration
+    | invalid_number_declaration
 
-# invalid_number_declaration:
-#     | number_type keywords+ '<<' signed_number {
-#         # self.raise_syntax_error_starting_from
-#     }
+invalid_number_declaration:
+    | number_type names=(keywords|NAME)+ '<<' signed_number {
+        self.invalid_number_declaration_bad_names(names)
+    }
 
 number_type: TINY | SMALL | NORMAL | BIG
 
@@ -57,4 +57,4 @@ atom:
     | NAME
     | NUMBER
 
-# keywords: TINY | SMALL | NORMAL | BIG
+keywords: TINY | SMALL | NORMAL | BIG

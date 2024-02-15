@@ -47,3 +47,6 @@ def report_fatal_at(
 ) -> NoReturn:
     print(str(CompilerError(loc, error_name, message, line)))
     exit(1)
+
+
+SyntaxError = "SyntaxError"

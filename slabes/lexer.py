@@ -4,6 +4,7 @@ from tokenize import TokenInfo
 from itertools import accumulate
 from enum import Enum, auto
 
+from . import errors
 from .ply import lex as _ply_lex
 from .errors import report_fatal_at
 from .location import Location
@@ -32,7 +33,7 @@ token.N_TOKENS = Keywords.COMPASS.value + 1
 
 class Lexer:
     def __init__(self) -> None:
-        self.ply_lexer: _ply_lex.Lexer = _ply_lex.lex(module=self, optimize=1)
+        self.ply_lexer: _ply_lex.Lexer = _ply_lex.lex(module=self, optimize=True)
         self.reset("", "")
 
     def reset(self, text: str, filename: str):
@@ -125,7 +126,7 @@ class Lexer:
             msg = f"numbers cannot end with an underscore. Did you mean '{tok.string.rstrip('_')}'?"
         else:
             msg = "invalid number or name"
-        report_fatal_at(loc, "SyntaxError", msg, tok.line)
+        report_fatal_at(loc, errors.SyntaxError, msg, tok.line)
 
     def t_ANY_newline(self, t):
         r"\n+"
@@ -137,7 +138,7 @@ class Lexer:
         # point to just one character because error token goes to the end of the string
         loc = loc.without_end()
         msg = "illegal combination of characters"
-        report_fatal_at(loc, "SyntaxError", msg, tok.line)
+        report_fatal_at(loc, errors.SyntaxError, msg, tok.line)
 
     def t_INITIAL_error(self, t):
         self.reset_ply(self.text, "INVALID")

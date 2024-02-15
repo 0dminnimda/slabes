@@ -83,7 +83,7 @@ class SlabesParser(Parser):
 
     @memoize
     def number_declaration(self) -> Optional[Any]:
-        # number_declaration: number_type NAME+ '<<' signed_number
+        # number_declaration: number_type NAME+ '<<' signed_number | invalid_number_declaration
         mark = self._mark()
         if (
             (number_type := self.number_type())
@@ -95,6 +95,30 @@ class SlabesParser(Parser):
             (signed_number := self.signed_number())
         ):
             return [number_type, _loop1_3, literal, signed_number];
+        self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_number_declaration())
+        ):
+            return None  # pragma: no cover;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_number_declaration(self) -> Optional[Any]:
+        # invalid_number_declaration: number_type ((keywords | NAME))+ '<<' signed_number
+        mark = self._mark()
+        if (
+            (self.number_type())
+            and
+            (names := self._loop1_4())
+            and
+            (self.expect('<<'))
+            and
+            (self.signed_number())
+        ):
+            return self . invalid_number_declaration_bad_names ( names );
         self._reset(mark)
         return None;
 
@@ -214,9 +238,9 @@ class SlabesParser(Parser):
         mark = self._mark()
         children = []
         while (
-            (_tmp_4 := self._tmp_4())
+            (_tmp_5 := self._tmp_5())
         ):
-            children.append(_tmp_4)
+            children.append(_tmp_5)
             mark = self._mark()
         self._reset(mark)
         return children;
@@ -235,8 +259,21 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _tmp_4(self) -> Optional[Any]:
-        # _tmp_4: ',' expr
+    def _loop1_4(self) -> Optional[Any]:
+        # _loop1_4: (keywords | NAME)
+        mark = self._mark()
+        children = []
+        while (
+            (_tmp_6 := self._tmp_6())
+        ):
+            children.append(_tmp_6)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _tmp_5(self) -> Optional[Any]:
+        # _tmp_5: ',' expr
         mark = self._mark()
         if (
             (literal := self.expect(','))
@@ -244,6 +281,22 @@ class SlabesParser(Parser):
             (expr := self.expr())
         ):
             return [literal, expr];
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def _tmp_6(self) -> Optional[Any]:
+        # _tmp_6: keywords | NAME
+        mark = self._mark()
+        if (
+            (keywords := self.keywords())
+        ):
+            return keywords;
+        self._reset(mark)
+        if (
+            (name := self.name())
+        ):
+            return name;
         self._reset(mark)
         return None;
 

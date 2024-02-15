@@ -6,13 +6,16 @@ import argparse
 import traceback
 
 from . import ast_nodes as ast
+from . import errors
 
 from pegen.parser import Parser, memoize
 from pegen.tokenizer import Tokenizer
+from tokenize import TokenInfo
 from pprint import pprint
-from .lexer import lex, Keywords
+from .lexer import lex, Keywords, _lexer
 from .errors import report_fatal_at
 from .location import Location
+from typing import Sequence, NoReturn
 
 
 DEFAULT_FILENAME = "<unknown>"
@@ -36,6 +39,7 @@ class ParserBase(Parser):
         res = getattr(self, rule)()
 
         if res is None:
+            print("do shit")
             self.call_invalid_rules = True
 
             # Reset the parser cache to be able to restart parsing from the
@@ -52,7 +56,7 @@ class ParserBase(Parser):
 
             report_fatal_at(
                 Location.from_token(self.filename, last_token),
-                "SyntaxError",
+                errors.SyntaxError,
                 "invalid syntax",
                 last_token.line,
             )
@@ -68,6 +72,49 @@ class ParserBase(Parser):
         tokenizer = Tokenizer(lex(text), path=filename)
         parser = cls(tokenizer, filename=filename)
         return parser.parse("start")
+
+    def raise_syntax_error_at(
+        self, message: str, node: ast.AST | TokenInfo
+    ) -> NoReturn:
+        if isinstance(node, TokenInfo):
+            start = node.start
+            end = node.end
+        else:
+            start = node.lineno, node.col_offset
+            end = node.end_lineno, node.end_col_offset
+
+        self._raise_syntax_error(message, start, end)
+
+    def raise_syntax_error_starting_from(
+        self, message: str, start_node: ast.AST | TokenInfo
+    ) -> NoReturn:
+        if isinstance(start_node, TokenInfo):
+            start = start_node.start
+        else:
+            start = start_node.lineno, start_node.col_offset
+
+        last_token = self._tokenizer.diagnose()
+
+        self._raise_syntax_error(message, start, last_token.start)
+
+    def _raise_syntax_error(
+        self, message: str, start: tuple[int, int], end: tuple[int, int], line: str | None = None
+    ) -> NoReturn:
+        loc = Location(self.filename, *start, *end)
+        if line is None:
+            line = _lexer.lines[start[0] - 1]
+        report_fatal_at(loc, errors.SyntaxError, message, line)
+
+    def invalid_number_declaration_bad_names(
+        self, names: Sequence[TokenInfo]
+    ) -> None:
+        for name in names:
+            if name.type == token.NAME:
+                continue
+            self.raise_syntax_error_at(
+                f"cannot use keywords as variable names, you used keyword {token.tok_name[name.type]}",
+                name,
+            )
 
     @memoize
     def TINY(self):
