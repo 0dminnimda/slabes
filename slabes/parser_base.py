@@ -70,9 +70,30 @@ class ParserBase(Parser):
         return parser.parse("start")
 
     @memoize
+    def TINY(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.TINY.value:
+            return self._tokenizer.getnext()
+        return None
+
+    @memoize
     def SMALL(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.SMALL.value:
+            return self._tokenizer.getnext()
+        return None
+
+    @memoize
+    def NORMAL(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.NORMAL.value:
+            return self._tokenizer.getnext()
+        return None
+
+    @memoize
+    def BIG(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.BIG.value:
             return self._tokenizer.getnext()
         return None
 

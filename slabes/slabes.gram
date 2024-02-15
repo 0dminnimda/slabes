@@ -31,28 +31,30 @@ statements: statement*
 statement: expr (',' expr)* '.'
 
 expr:
-    | term '+' expr
-    | (sign sign)+ term '-' expr
-    | term
+    | atom
     | declaration
 
-declaration: type NAME+ '<<' expr
+declaration: number_declaration
 
-type: SMALL
+number_declaration:
+    | number_type NAME+ '<<' signed_number
+#     | invalid_number_declaration
+
+# invalid_number_declaration:
+#     | number_type keywords+ '<<' signed_number {
+#         # self.raise_syntax_error_starting_from
+#     }
+
+number_type: TINY | SMALL | NORMAL | BIG
+
+signed_number: sign? NUMBER
 
 sign:
     | '+'
     | '-'
 
-term: 
-    | factor '\\' term
-    | factor '/' term
-    | factor
-
-factor:
-    | '(' expr ')'
-    | atom
-
 atom:
     | NAME
     | NUMBER
+
+# keywords: TINY | SMALL | NORMAL | BIG

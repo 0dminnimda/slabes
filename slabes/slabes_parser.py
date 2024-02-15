@@ -56,32 +56,12 @@ class SlabesParser(Parser):
 
     @memoize
     def expr(self) -> Optional[Any]:
-        # expr: term '+' expr | ((sign sign))+ term '-' expr | term | declaration
+        # expr: atom | declaration
         mark = self._mark()
         if (
-            (term := self.term())
-            and
-            (literal := self.expect('+'))
-            and
-            (expr := self.expr())
+            (atom := self.atom())
         ):
-            return [term, literal, expr];
-        self._reset(mark)
-        if (
-            (_loop1_3 := self._loop1_3())
-            and
-            (term := self.term())
-            and
-            (literal := self.expect('-'))
-            and
-            (expr := self.expr())
-        ):
-            return [_loop1_3, term, literal, expr];
-        self._reset(mark)
-        if (
-            (term := self.term())
-        ):
-            return term;
+            return atom;
         self._reset(mark)
         if (
             (declaration := self.declaration())
@@ -92,29 +72,68 @@ class SlabesParser(Parser):
 
     @memoize
     def declaration(self) -> Optional[Any]:
-        # declaration: type NAME+ '<<' expr
+        # declaration: number_declaration
         mark = self._mark()
         if (
-            (type := self.type())
-            and
-            (_loop1_4 := self._loop1_4())
-            and
-            (literal := self.expect('<<'))
-            and
-            (expr := self.expr())
+            (number_declaration := self.number_declaration())
         ):
-            return [type, _loop1_4, literal, expr];
+            return number_declaration;
         self._reset(mark)
         return None;
 
     @memoize
-    def type(self) -> Optional[Any]:
-        # type: SMALL
+    def number_declaration(self) -> Optional[Any]:
+        # number_declaration: number_type NAME+ '<<' signed_number
         mark = self._mark()
+        if (
+            (number_type := self.number_type())
+            and
+            (_loop1_3 := self._loop1_3())
+            and
+            (literal := self.expect('<<'))
+            and
+            (signed_number := self.signed_number())
+        ):
+            return [number_type, _loop1_3, literal, signed_number];
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def number_type(self) -> Optional[Any]:
+        # number_type: TINY | SMALL | NORMAL | BIG
+        mark = self._mark()
+        if (
+            (TINY := self.TINY())
+        ):
+            return TINY;
+        self._reset(mark)
         if (
             (SMALL := self.SMALL())
         ):
             return SMALL;
+        self._reset(mark)
+        if (
+            (NORMAL := self.NORMAL())
+        ):
+            return NORMAL;
+        self._reset(mark)
+        if (
+            (BIG := self.BIG())
+        ):
+            return BIG;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def signed_number(self) -> Optional[Any]:
+        # signed_number: sign? NUMBER
+        mark = self._mark()
+        if (
+            (opt := self.sign(),)
+            and
+            (number := self.number())
+        ):
+            return [opt, number];
         self._reset(mark)
         return None;
 
@@ -135,55 +154,6 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def term(self) -> Optional[Any]:
-        # term: factor '\\' term | factor '/' term | factor
-        mark = self._mark()
-        if (
-            (factor := self.factor())
-            and
-            (literal := self.expect('\\'))
-            and
-            (term := self.term())
-        ):
-            return [factor, literal, term];
-        self._reset(mark)
-        if (
-            (factor := self.factor())
-            and
-            (literal := self.expect('/'))
-            and
-            (term := self.term())
-        ):
-            return [factor, literal, term];
-        self._reset(mark)
-        if (
-            (factor := self.factor())
-        ):
-            return factor;
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def factor(self) -> Optional[Any]:
-        # factor: '(' expr ')' | atom
-        mark = self._mark()
-        if (
-            (literal := self.expect('('))
-            and
-            (expr := self.expr())
-            and
-            (literal_1 := self.expect(')'))
-        ):
-            return [literal, expr, literal_1];
-        self._reset(mark)
-        if (
-            (atom := self.atom())
-        ):
-            return atom;
-        self._reset(mark)
-        return None;
-
-    @memoize
     def atom(self) -> Optional[Any]:
         # atom: NAME | NUMBER
         mark = self._mark()
@@ -196,6 +166,32 @@ class SlabesParser(Parser):
             (number := self.number())
         ):
             return number;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def keywords(self) -> Optional[Any]:
+        # keywords: TINY | SMALL | NORMAL | BIG
+        mark = self._mark()
+        if (
+            (TINY := self.TINY())
+        ):
+            return TINY;
+        self._reset(mark)
+        if (
+            (SMALL := self.SMALL())
+        ):
+            return SMALL;
+        self._reset(mark)
+        if (
+            (NORMAL := self.NORMAL())
+        ):
+            return NORMAL;
+        self._reset(mark)
+        if (
+            (BIG := self.BIG())
+        ):
+            return BIG;
         self._reset(mark)
         return None;
 
@@ -218,29 +214,16 @@ class SlabesParser(Parser):
         mark = self._mark()
         children = []
         while (
-            (_tmp_5 := self._tmp_5())
+            (_tmp_4 := self._tmp_4())
         ):
-            children.append(_tmp_5)
+            children.append(_tmp_4)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
     def _loop1_3(self) -> Optional[Any]:
-        # _loop1_3: (sign sign)
-        mark = self._mark()
-        children = []
-        while (
-            (_tmp_6 := self._tmp_6())
-        ):
-            children.append(_tmp_6)
-            mark = self._mark()
-        self._reset(mark)
-        return children;
-
-    @memoize
-    def _loop1_4(self) -> Optional[Any]:
-        # _loop1_4: NAME
+        # _loop1_3: NAME
         mark = self._mark()
         children = []
         while (
@@ -252,8 +235,8 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _tmp_5(self) -> Optional[Any]:
-        # _tmp_5: ',' expr
+    def _tmp_4(self) -> Optional[Any]:
+        # _tmp_4: ',' expr
         mark = self._mark()
         if (
             (literal := self.expect(','))
@@ -261,19 +244,6 @@ class SlabesParser(Parser):
             (expr := self.expr())
         ):
             return [literal, expr];
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def _tmp_6(self) -> Optional[Any]:
-        # _tmp_6: sign sign
-        mark = self._mark()
-        if (
-            (sign := self.sign())
-            and
-            (sign_1 := self.sign())
-        ):
-            return [sign, sign_1];
         self._reset(mark)
         return None;
 
