@@ -44,7 +44,7 @@ expr[ast.Expression]:
 
 invalid_expr:
     | a=declaration {
-        self.raise_syntax_error_at(
+        self.report_syntax_error_at(
             "expected expression, got declaration."
             " Did you mean to use '.' before/after this declaration?",
             a,

@@ -92,7 +92,7 @@ class SlabesParser(Parser):
         if (
             (a := self.declaration())
         ):
-            return self . raise_syntax_error_at ( "expected expression, got declaration." " Did you mean to use '.' before/after this declaration?" , a , fatal = True , );
+            return self . report_syntax_error_at ( "expected expression, got declaration." " Did you mean to use '.' before/after this declaration?" , a , fatal = True , );
         self._reset(mark)
         return None;
 

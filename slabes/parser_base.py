@@ -80,7 +80,7 @@ class ParserBase(Parser):
         parser = cls(tokenizer, filename=filename)
         return parser.parse("start")
 
-    def raise_syntax_error_at(
+    def report_syntax_error_at(
         self, message: str, node: ast.AST | TokenInfo, fatal: bool = False
     ):
         if isinstance(node, TokenInfo):
@@ -90,9 +90,9 @@ class ParserBase(Parser):
             start = node.lineno, node.col_offset
             end = node.end_lineno, node.end_col_offset
 
-        self._raise_syntax_error(message, start, end, fatal=fatal)
+        self._report_syntax_error(message, start, end, fatal=fatal)
 
-    def raise_syntax_error_starting_from(
+    def report_syntax_error_starting_from(
         self, message: str, start_node: ast.AST | TokenInfo, fatal: bool = False
     ):
         if isinstance(start_node, TokenInfo):
@@ -102,9 +102,9 @@ class ParserBase(Parser):
 
         last_token = self._tokenizer.diagnose()
 
-        self._raise_syntax_error(message, start, last_token.start, fatal=fatal)
+        self._report_syntax_error(message, start, last_token.start, fatal=fatal)
 
-    def _raise_syntax_error(
+    def _report_syntax_error(
         self,
         message: str,
         start: tuple[int, int],
@@ -139,7 +139,7 @@ class ParserBase(Parser):
         if not isinstance(name, TokenInfo):
             return ast.Name("<invalid>", **loc, error_recovered=True)
         if name.type != token.NAME:
-            self.raise_syntax_error_at(
+            self.report_syntax_error_at(
                 f"expected name, got keyword {token.tok_name[name.type]}",
                 name,
             )
@@ -150,7 +150,7 @@ class ParserBase(Parser):
 
         error_recovered = False
         if len(string) > 3:
-            self.raise_syntax_error_at(
+            self.report_syntax_error_at(
                 "number literal too large to be represented by any integral type", tok
             )
             error_recovered = True
@@ -179,7 +179,7 @@ class ParserBase(Parser):
         if tok.type == Keywords.BIG.value:
             return ast.NumberType(ast.NumberType.Kind.BIG, **loc)
 
-        self.raise_syntax_error_at(
+        self.report_syntax_error_at(
             f"expected number type, got {token.tok_name[tok.type]}", tok
         )
         return ast.NumberType(ast.NumberType.Kind.NORMAL, **loc, error_recovered=True)
@@ -210,10 +210,10 @@ class ParserBase(Parser):
         **loc,
     ):
         if not isinstance(name, ast.Name):
-            self.raise_syntax_error_at("subscript requires a name", name)
+            self.report_syntax_error_at("subscript requires a name", name)
             return ast.Statement(**loc, error_recovered=True)
         if len(indices) != 2:
-            self.raise_syntax_error_at(
+            self.report_syntax_error_at(
                 f"subscript requires exactly two indices, got {len(indices)}",
                 indices[-1] if indices else name,
             )
