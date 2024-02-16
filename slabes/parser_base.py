@@ -11,11 +11,9 @@ from . import errors
 from pegen.parser import Parser, memoize
 from pegen.tokenizer import Tokenizer
 from tokenize import TokenInfo
-from pprint import pprint
 from .lexer import lex, Keywords, _lexer
-from .errors import report_fatal_at, report_at
+from .errors import report_fatal_at, report_at, report_collected
 from .location import Location
-from typing import NoReturn
 
 
 DEFAULT_FILENAME = "<unknown>"
@@ -223,9 +221,9 @@ def parser_main(parser_class: typing.Type[ParserBase]) -> None:
     else:
         file = open(args.filename)
     try:
-        tokengen = lex(file.read())
+        tokengen = lex(file.read(), filename)
         tokenizer = Tokenizer(tokengen, verbose=verbose_tokenizer)
-        parser = parser_class(tokenizer, verbose=verbose_parser)
+        parser = parser_class(tokenizer, filename=filename, verbose=verbose_parser)
         tree = parser.parse("start")
         try:
             if file.isatty():
@@ -244,6 +242,8 @@ def parser_main(parser_class: typing.Type[ParserBase]) -> None:
         err = parser.make_syntax_error(filename)
         traceback.print_exception(err.__class__, err, None)
         sys.exit(1)
+
+    report_collected()
 
     if not args.quiet:
         print(ast.dump(tree, indent=4))

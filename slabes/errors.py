@@ -39,6 +39,19 @@ def report_at(
     _reported.append(CompilerError(loc, error_name, message, line))
 
 
+def report_collected(separator: str = "\n" + "="*80 + "\n"):
+    if not _reported:
+        return
+
+    for i, error in enumerate(_reported):
+        if i:
+            print(separator)
+        print(str(error))
+    _reported.clear()
+
+    exit(1)
+
+
 def report_fatal_at(
     loc: Location,
     error_name: str,
