@@ -77,8 +77,8 @@ atom:
     | identifier
     | signed_number
 
-signed_number: sign=(sign?) num=NUMBER {
-    self.make_number(num, sign is not None, LOCATIONS)
+signed_number: sign=sign? num=NUMBER {
+    self.make_number(num, sign is not None and sign.string == "-", LOCATIONS)
 }
 
 sign: '+' | '-'
