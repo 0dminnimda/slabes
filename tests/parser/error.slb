@@ -1,4 +1,4 @@
-8Fg,  # SyntaxError: numbers have to be uppercase. Did you mean '8F_G'?
+8F_g,  # SyntaxError: numbers have to be uppercase. Did you mean '8F_G'?
 d_fH,  # SyntaxError: names have to be lowercase. Did you mean 'd_fh'?
 _3409583094DSF,  # SyntaxError: numbers cannot start with an underscore. Did you mean '3409583094DSF'?
 3409583094DSF_,  # SyntaxError: numbers cannot end with an underscore. Did you mean '3409583094DSF'?

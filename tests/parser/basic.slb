@@ -6,7 +6,7 @@ smal c << -1.
 smal da << 0.
 # smalll,
 
-bi uuu << 42.
+bi uuu << 4_2.
 
 # 4U + 434KE, (0 / 342) + (2 \ 342),
 

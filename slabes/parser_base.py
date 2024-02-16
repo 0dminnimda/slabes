@@ -129,15 +129,17 @@ class ParserBase(Parser):
         return ast.Name(name.string, **loc)
 
     def make_number(self, tok: TokenInfo, sign: bool, **loc) -> ast.NumberLiteral:
+        string = tok.string.replace("_", "")
+
         error_recovered = False
-        if len(tok.string) > 3:
+        if len(string) > 3:
             self.raise_syntax_error_at(
                 "number literal too large to be represented by any integral type", tok
             )
             error_recovered = True
 
         return ast.NumberLiteral(
-            (-1) ** (sign) * int(tok.string, 32), **loc, error_recovered=error_recovered
+            (-1) ** (sign) * int(string, 32), **loc, error_recovered=error_recovered
         )
 
     def make_number_type(self, tok: TokenInfo, **loc) -> ast.NumberType:
