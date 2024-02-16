@@ -15,7 +15,7 @@ from .parser_base import ParserBase as Parser, parser_main
 class SlabesParser(Parser):
 
     @memoize
-    def start(self) -> Optional[Any]:
+    def start(self) -> Optional[ast . Module]:
         # start: statements $
         mark = self._mark()
         tok = self._tokenizer.peek()

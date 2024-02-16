@@ -24,23 +24,15 @@ if __name__ == '__main__':
 '''
 
 
-start: a=statements ENDMARKER {
-    ast.Module(a, LOCATIONS)
-}
+start[ast.Module]: a=statements ENDMARKER { ast.Module(a, LOCATIONS) }
 
 
 statements[list[ast.Statement]]: a=statement* { a }
 
 statement[ast.Statement]:
-    | declaration '.' {
-        declaration
-    }
-    | assignment '.' {
-        assignment
-    }
-    | exprs=','.expr+ '.' {
-        ast.CompoundExpression(exprs, LOCATIONS)
-    }
+    | declaration '.' { declaration }
+    | assignment '.' { assignment }
+    | exprs=','.expr+ '.' { ast.CompoundExpression(exprs, LOCATIONS) }
 
 
 expr[ast.Expression]:
@@ -59,9 +51,7 @@ invalid_expr:
 
 
 assignment[ast.Assignment]:
-    | start=expr rest=(('<<' | '>>') expr)+ {
-        self.make_assignment(start, rest, LOCATIONS)
-    }
+    | start=expr rest=(('<<' | '>>') expr)+ { self.make_assignment(start, rest, LOCATIONS) }
 
 
 declaration[ast.NumberDeclaration]:
@@ -110,9 +100,7 @@ primary:
 
 
 subscript[ast.Subscript]:
-    | a=expr '[' exprs=expr* ']' {
-        self.make_subscript(a, exprs, LOCATIONS)
-    }
+    | a=expr '[' exprs=expr* ']' { self.make_subscript(a, exprs, LOCATIONS) }
     | recover_subscript
 
 recover_subscript[ast.Subscript]:
@@ -126,23 +114,17 @@ atom:
     | signed_number
 
 
-signed_number[ast.NumericLiteral]: sign=sign? num=NUMBER {
-    self.make_number(num, sign, LOCATIONS)
-}
+signed_number[ast.NumericLiteral]: sign=sign? num=NUMBER { self.make_number(num, sign, LOCATIONS) }
 
 sign: '+' | '-'
 
 
 # ugh bug in pegen
-number_type[ast.NumberType]: a=number_type_raw {
-    self.make_number_type(a, LOCATIONS)
-}
+number_type[ast.NumberType]: a=number_type_raw { self.make_number_type(a, LOCATIONS) }
 number_type_raw: TINY | SMALL | NORMAL | BIG
 
 
-identifier[ast.Name]: a=NAME {
-    self.make_name(a, LOCATIONS)
-}
+identifier[ast.Name]: a=NAME { self.make_name(a, LOCATIONS) }
 
 
 word: NAME | keyword
