@@ -28,9 +28,9 @@ start: a=statements ENDMARKER {
     ast.Module(a, LOCATIONS)
 }
 
-statements: a=statement* { a }
+statements[list[ast.Statement]]: a=statement* { a }
 
-statement:
+statement[ast.Statement]:
     | declaration '.' {
         declaration
     }
@@ -38,9 +38,9 @@ statement:
         ast.CompoundExpression([expr] + exprs, LOCATIONS)
     }
 
-compound_expr_not_first: ',' a=expr { a }
+compound_expr_not_first[ast.Expression]: ',' a=expr { a }
 
-expr:
+expr[ast.Expression]:
     | atom
     | invalid_expr
 
@@ -54,15 +54,15 @@ invalid_expr:
         )
     }
 
-declaration: number_declaration
+declaration[ast.NumberDeclaration]: number_declaration
 
-number_declaration:
+number_declaration[ast.NumberDeclaration]:
     | type=number_type names=identifier+ '<<' signed_number {
         self.make_number_declaration(type, names, signed_number, LOCATIONS)
     }
     | bad_number_declaration
 
-bad_number_declaration:
+bad_number_declaration[ast.NumberDeclaration]:
     | type=word names=word+ '<<' signed_number {
         self.make_number_declaration(
             self.make_number_type(type, **self.locs(type)),
@@ -77,18 +77,18 @@ atom:
     | identifier
     | signed_number
 
-signed_number: sign=sign? num=NUMBER {
+signed_number[ast.NumberLiteral]: sign=sign? num=NUMBER {
     self.make_number(num, sign is not None and sign.string == "-", LOCATIONS)
 }
 
 sign: '+' | '-'
 
-number_type: a=number_type_ {
+number_type[ast.NumberType]: a=number_type_ {
     self.make_number_type(a, LOCATIONS)
 }
 number_type_: TINY | SMALL | NORMAL | BIG  # ugh bug in pegen
 
-identifier: a=NAME {
+identifier[ast.Name]: a=NAME {
     self.make_name(a, LOCATIONS)
 }
 

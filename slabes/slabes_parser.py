@@ -32,7 +32,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def statements(self) -> Optional[Any]:
+    def statements(self) -> Optional[list [ast . Statement]]:
         # statements: statement*
         # nullable=True
         mark = self._mark()
@@ -44,7 +44,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def statement(self) -> Optional[Any]:
+    def statement(self) -> Optional[ast . Statement]:
         # statement: declaration '.' | expr compound_expr_not_first* '.'
         mark = self._mark()
         tok = self._tokenizer.peek()
@@ -70,7 +70,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def compound_expr_not_first(self) -> Optional[Any]:
+    def compound_expr_not_first(self) -> Optional[ast . Expression]:
         # compound_expr_not_first: ',' expr
         mark = self._mark()
         if (
@@ -83,7 +83,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def expr(self) -> Optional[Any]:
+    def expr(self) -> Optional[ast . Expression]:
         # expr: atom | invalid_expr
         mark = self._mark()
         if (
@@ -112,7 +112,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def declaration(self) -> Optional[Any]:
+    def declaration(self) -> Optional[ast . NumberDeclaration]:
         # declaration: number_declaration
         mark = self._mark()
         if (
@@ -123,7 +123,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def number_declaration(self) -> Optional[Any]:
+    def number_declaration(self) -> Optional[ast . NumberDeclaration]:
         # number_declaration: number_type identifier+ '<<' signed_number | bad_number_declaration
         mark = self._mark()
         tok = self._tokenizer.peek()
@@ -149,7 +149,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def bad_number_declaration(self) -> Optional[Any]:
+    def bad_number_declaration(self) -> Optional[ast . NumberDeclaration]:
         # bad_number_declaration: word word+ '<<' signed_number
         mark = self._mark()
         tok = self._tokenizer.peek()
@@ -186,7 +186,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def signed_number(self) -> Optional[Any]:
+    def signed_number(self) -> Optional[ast . NumberLiteral]:
         # signed_number: sign? NUMBER
         mark = self._mark()
         tok = self._tokenizer.peek()
@@ -219,7 +219,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def number_type(self) -> Optional[Any]:
+    def number_type(self) -> Optional[ast . NumberType]:
         # number_type: number_type_
         mark = self._mark()
         tok = self._tokenizer.peek()
@@ -260,7 +260,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def identifier(self) -> Optional[Any]:
+    def identifier(self) -> Optional[ast . Name]:
         # identifier: NAME
         mark = self._mark()
         tok = self._tokenizer.peek()
