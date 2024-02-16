@@ -49,7 +49,9 @@ invalid_expr:
         self.raise_syntax_error_at(
             "expected expression, got declaration."
             " Did you mean to use '.' before/after this declaration?",
-        a)
+            a,
+            fatal=True,
+        )
     }
 
 declaration: number_declaration
@@ -57,6 +59,17 @@ declaration: number_declaration
 number_declaration:
     | type=number_type names=identifier+ '<<' signed_number {
         self.make_number_declaration(type, names, signed_number, LOCATIONS)
+    }
+    | bad_number_declaration
+
+bad_number_declaration:
+    | type=word names=word+ '<<' signed_number {
+        self.make_number_declaration(
+            self.make_number_type(type, **self.locs(type)),
+            [self.make_name(name, **self.locs(name)) for name in names],
+            signed_number,
+            LOCATIONS
+        )
     }
 
 
@@ -68,15 +81,13 @@ signed_number: sign=(sign?) num=NUMBER {
     self.make_number(num, sign is not None, LOCATIONS)
 }
 
-sign:
-    | '+'
-    | '-'
+sign: '+' | '-'
 
-number_type: a=word {
+number_type: a=(TINY | SMALL | NORMAL | BIG) {
     self.make_number_type(a, LOCATIONS)
 }
 
-identifier: a=word {
+identifier: a=NAME {
     self.make_name(a, LOCATIONS)
 }
 

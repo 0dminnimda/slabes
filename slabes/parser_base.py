@@ -120,6 +120,14 @@ class ParserBase(Parser):
         else:
             report_at(loc, errors.SyntaxError, message, line)
 
+    def locs(self, tok: TokenInfo) -> dict[str, int]:
+        return {
+            "lineno": tok.start[0],
+            "col_offset": tok.start[1],
+            "end_lineno": tok.end[0],
+            "end_col_offset": tok.end[1],
+        }
+
     def make_name(self, name: TokenInfo, **loc) -> ast.Name:
         if name.type != token.NAME:
             self.raise_syntax_error_at(
