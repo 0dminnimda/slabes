@@ -45,7 +45,7 @@ class SlabesParser(Parser):
 
     @memoize
     def statement(self) -> Optional[ast . Statement]:
-        # statement: declaration '.' | expr compound_expr_not_first* '.'
+        # statement: declaration '.' | ','.expr+ '.'
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -57,28 +57,13 @@ class SlabesParser(Parser):
             return declaration;
         self._reset(mark)
         if (
-            (expr := self.expr())
-            and
-            (exprs := self._loop0_2(),)
+            (exprs := self._gather_2())
             and
             (self.expect('.'))
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . CompoundExpression ( [expr] + exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def compound_expr_not_first(self) -> Optional[ast . Expression]:
-        # compound_expr_not_first: ',' expr
-        mark = self._mark()
-        if (
-            (self.expect(','))
-            and
-            (a := self.expr())
-        ):
-            return a;
+            return ast . CompoundExpression ( exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -131,7 +116,7 @@ class SlabesParser(Parser):
         if (
             (type := self.number_type())
             and
-            (names := self._loop1_3())
+            (names := self._loop1_4())
             and
             (self.expect('<<'))
             and
@@ -157,7 +142,7 @@ class SlabesParser(Parser):
         if (
             (type := self.word())
             and
-            (names := self._loop1_4())
+            (names := self._loop1_5())
             and
             (self.expect('<<'))
             and
@@ -330,21 +315,38 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop0_2(self) -> Optional[Any]:
-        # _loop0_2: compound_expr_not_first
+    def _loop0_3(self) -> Optional[Any]:
+        # _loop0_3: ',' expr
         mark = self._mark()
         children = []
         while (
-            (compound_expr_not_first := self.compound_expr_not_first())
+            (self.expect(','))
+            and
+            (elem := self.expr())
         ):
-            children.append(compound_expr_not_first)
+            children.append(elem)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop1_3(self) -> Optional[Any]:
-        # _loop1_3: identifier
+    def _gather_2(self) -> Optional[Any]:
+        # _gather_2: expr _loop0_3
+        mark = self._mark()
+        if (
+            (elem := self.expr())
+            is not None
+            and
+            (seq := self._loop0_3())
+            is not None
+        ):
+            return [elem] + seq;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def _loop1_4(self) -> Optional[Any]:
+        # _loop1_4: identifier
         mark = self._mark()
         children = []
         while (
@@ -356,8 +358,8 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_4(self) -> Optional[Any]:
-        # _loop1_4: word
+    def _loop1_5(self) -> Optional[Any]:
+        # _loop1_5: word
         mark = self._mark()
         children = []
         while (

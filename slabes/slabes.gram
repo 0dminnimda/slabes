@@ -34,11 +34,9 @@ statement[ast.Statement]:
     | declaration '.' {
         declaration
     }
-    | expr=expr exprs=compound_expr_not_first* '.' {
-        ast.CompoundExpression([expr] + exprs, LOCATIONS)
+    | exprs=','.expr+ '.' {
+        ast.CompoundExpression(exprs, LOCATIONS)
     }
-
-compound_expr_not_first[ast.Expression]: ',' a=expr { a }
 
 expr[ast.Expression]:
     | atom
