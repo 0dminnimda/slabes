@@ -79,6 +79,9 @@ class Lexer:
     reserved_names = tuple(keywords.keys())
     for name in reserved_names:
         for partial in accumulate(name):
+            if partial == name:
+                continue
+
             if partial in keywords:
                 keywords[partial] = ""
             else:

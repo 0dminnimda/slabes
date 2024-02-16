@@ -9,7 +9,6 @@ sm a << 1.
 sma b << +1.
 smal c << -1.
 smal da << 0.
-# smalll,
 
 bi uuu << 42.
 no nor << 42.

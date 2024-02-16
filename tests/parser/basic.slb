@@ -3,10 +3,14 @@ a3409583094sdf_, _a3409583094sdf_.
 sm a << 1.
 sma b << +1.
 smal c << -1.
-smal da << 0.
-# smalll,
+small da << 0.
+
+smalll.
+
+small smalll << 3.
 
 bi uuu << 4_2.
+big uuu << 4_2.
 
 # 4U + 434KE, (0 / 342) + (2 \ 342),
 
