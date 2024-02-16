@@ -145,7 +145,7 @@ class ParserBase(Parser):
             )
         return ast.Name(name.string, **loc)
 
-    def make_number(self, tok: TokenInfo, sign: TokenInfo | None, **loc) -> ast.NumberLiteral:
+    def make_number(self, tok: TokenInfo, sign: TokenInfo | None, **loc) -> ast.NumericLiteral:
         string = tok.string.replace("_", "")
 
         error_recovered = False
@@ -157,15 +157,15 @@ class ParserBase(Parser):
 
         if sign is None:
             sign_multiple = 1
-            signedness = ast.NumberLiteral.Signedness.UNSIGNED
+            signedness = ast.NumericLiteral.Signedness.UNSIGNED
         elif sign.string == "-":
             sign_multiple = -1
-            signedness = ast.NumberLiteral.Signedness.NEGATIVE
+            signedness = ast.NumericLiteral.Signedness.NEGATIVE
         else:
             sign_multiple = 1
-            signedness = ast.NumberLiteral.Signedness.POSITIVE
+            signedness = ast.NumericLiteral.Signedness.POSITIVE
 
-        return ast.NumberLiteral(
+        return ast.NumericLiteral(
             sign_multiple * int(string, 32), signedness, **loc, error_recovered=error_recovered
         )
 
@@ -188,7 +188,7 @@ class ParserBase(Parser):
         self,
         type: ast.NumberType,
         names: list[ast.Name],
-        value: ast.NumberLiteral,
+        value: ast.NumericLiteral,
         **loc,
     ) -> ast.NumberDeclaration:
         return ast.NumberDeclaration(type, names, value, **loc)
@@ -198,7 +198,7 @@ class ParserBase(Parser):
         elem_t: ast.NumberType,
         size_t: ast.NumberType,
         names: list[ast.Name],
-        value: ast.NumberLiteral,
+        value: ast.NumericLiteral,
         **loc,
     ) -> ast.ArrayDeclaration:
         return ast.ArrayDeclaration(elem_t, size_t, names, value, **loc)

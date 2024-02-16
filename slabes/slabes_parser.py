@@ -294,7 +294,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def signed_number(self) -> Optional[ast . NumberLiteral]:
+    def signed_number(self) -> Optional[ast . NumericLiteral]:
         # signed_number: sign? NUMBER
         mark = self._mark()
         tok = self._tokenizer.peek()

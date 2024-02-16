@@ -75,7 +75,7 @@ class NumberType(Type):
 
 
 @dataclass
-class NumberLiteral(Expression):
+class NumericLiteral(Expression):
     class Signedness(Enum):
         POSITIVE = auto()
         NEGATIVE = auto()
@@ -119,7 +119,7 @@ class Subscript(Expression):
 class NumberDeclaration(Statement):
     type: NumberType
     names: list[Name]
-    value: NumberLiteral
+    value: NumericLiteral
 
     def fields(self):
         yield from super().fields()
@@ -133,7 +133,7 @@ class ArrayDeclaration(Statement):
     element_type: NumberType
     size_type: NumberType
     names: list[Name]
-    value: NumberLiteral
+    value: NumericLiteral
 
     def fields(self):
         yield from super().fields()

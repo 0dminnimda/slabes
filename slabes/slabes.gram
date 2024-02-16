@@ -110,7 +110,7 @@ atom:
     | identifier
     | signed_number
 
-signed_number[ast.NumberLiteral]: sign=sign? num=NUMBER {
+signed_number[ast.NumericLiteral]: sign=sign? num=NUMBER {
     self.make_number(num, sign, LOCATIONS)
 }
 
