@@ -202,7 +202,7 @@ def dump(
             if not node:
                 return "[]", True
             if len(node) == 1:
-                value, simple = _format(node[0], 0)
+                value, simple = _format(node[0], level)
                 return f"[{value}]", simple
             return (
                 f"[{prefix}{sep.join(_format(x, level)[0] for x in node)}{postfix}]",
