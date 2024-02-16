@@ -27,16 +27,16 @@ class CompilerError(Exception):
         return prefix + f"<could not get the line '{self.loc}'>\n\n"
 
 
-# _reported = []
+_reported = []
 
 
-# def report_at(
-#     loc: Location,
-#     error_name: str,
-#     message: str,
-#     line: str | None = None,
-# ):
-#     _reported.append(CompilerError(loc, error_name, message, line))
+def report_at(
+    loc: Location,
+    error_name: str,
+    message: str,
+    line: str | None = None,
+):
+    _reported.append(CompilerError(loc, error_name, message, line))
 
 
 def report_fatal_at(

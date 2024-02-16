@@ -13,12 +13,22 @@ from pegen.tokenizer import Tokenizer
 from tokenize import TokenInfo
 from pprint import pprint
 from .lexer import lex, Keywords, _lexer
-from .errors import report_fatal_at
+from .errors import report_fatal_at, report_at
 from .location import Location
-from typing import NoReturn, Literal
+from typing import NoReturn
 
 
 DEFAULT_FILENAME = "<unknown>"
+
+
+NUMBER_TYPE_KEWORDS = (
+    Keywords.TINY,
+    Keywords.SMALL,
+    Keywords.NORMAL,
+    Keywords.BIG,
+)
+
+NUMBEER_TYPES = tuple(k.value for k in NUMBER_TYPE_KEWORDS)
 
 
 class ParserBase(Parser):
@@ -73,8 +83,8 @@ class ParserBase(Parser):
         return parser.parse("start")
 
     def raise_syntax_error_at(
-        self, message: str, node: ast.AST | TokenInfo
-    ) -> NoReturn:
+        self, message: str, node: ast.AST | TokenInfo, fatal: bool = False
+    ):
         if isinstance(node, TokenInfo):
             start = node.start
             end = node.end
@@ -82,11 +92,11 @@ class ParserBase(Parser):
             start = node.lineno, node.col_offset
             end = node.end_lineno, node.end_col_offset
 
-        self._raise_syntax_error(message, start, end)
+        self._raise_syntax_error(message, start, end, fatal=fatal)
 
     def raise_syntax_error_starting_from(
-        self, message: str, start_node: ast.AST | TokenInfo
-    ) -> NoReturn:
+        self, message: str, start_node: ast.AST | TokenInfo, fatal: bool = False
+    ):
         if isinstance(start_node, TokenInfo):
             start = start_node.start
         else:
@@ -94,7 +104,7 @@ class ParserBase(Parser):
 
         last_token = self._tokenizer.diagnose()
 
-        self._raise_syntax_error(message, start, last_token.start)
+        self._raise_syntax_error(message, start, last_token.start, fatal=fatal)
 
     def _raise_syntax_error(
         self,
@@ -102,49 +112,50 @@ class ParserBase(Parser):
         start: tuple[int, int],
         end: tuple[int, int],
         line: str | None = None,
-    ) -> NoReturn:
+        fatal: bool = False,
+    ):
         loc = Location(self.filename, *start, *end)
         if line is None:
             line = _lexer.lines[start[0] - 1]
-        report_fatal_at(loc, errors.SyntaxError, message, line)
+        if fatal:
+            report_fatal_at(loc, errors.SyntaxError, message, line)
+        else:
+            report_at(loc, errors.SyntaxError, message, line)
 
     def make_name(self, name: TokenInfo, **loc) -> ast.Name:
-        if name.type == token.NAME:
-            return ast.Name(name.string, **loc)
-        self.raise_syntax_error_at(
-            f"expected name, got keyword {token.tok_name[name.type]}",
-            name,
-        )
-
-    def validate_number_type(self, type: TokenInfo) -> None:
-        if type.type in (
-            Keywords.TINY.value,
-            Keywords.SMALL.value,
-            Keywords.NORMAL.value,
-            Keywords.BIG.value,
-        ):
+        if name.type != token.NAME:
             self.raise_syntax_error_at(
-                f"expected number type, got {token.tok_name[type.type]}",
-                type,
+                f"expected name, got keyword {token.tok_name[name.type]}",
+                name,
             )
+        return ast.Name(name.string, **loc)
 
-    def make_number_type(self, token: TokenInfo, **loc) -> ast.NumberType:
-        if token.type == Keywords.TINY.value:
-            return ast.NumberType(ast.NumberType.Kind.TINY, **loc)
-        if token.type == Keywords.SMALL.value:
-            return ast.NumberType(ast.NumberType.Kind.SMALL, **loc)
-        if token.type == Keywords.NORMAL.value:
-            return ast.NumberType(ast.NumberType.Kind.NORMAL, **loc)
-        if token.type == Keywords.BIG.value:
-            return ast.NumberType(ast.NumberType.Kind.BIG, **loc)
-        # report_at(
-        #     Location.from_token(self.filename, token),
-        #     errors.SyntaxError,
-        #     f"expected number type, got {token.tok_name[token.type]}",
-        # )
-        return ast.NumberType(
-            ast.NumberType.Kind.NORMAL, **loc, error_recovered=True
+    def make_number(self, tok: TokenInfo, sign: bool, **loc) -> ast.NumberLiteral:
+        error_recovered = False
+        if len(tok.string) > 3:
+            self.raise_syntax_error_at(
+                "number literal too large to be represented by any integral type", tok
+            )
+            error_recovered = True
+
+        return ast.NumberLiteral(
+            (-1) ** (sign) * int(tok.string, 32), **loc, error_recovered=error_recovered
         )
+
+    def make_number_type(self, tok: TokenInfo, **loc) -> ast.NumberType:
+        if tok.type == Keywords.TINY.value:
+            return ast.NumberType(ast.NumberType.Kind.TINY, **loc)
+        if tok.type == Keywords.SMALL.value:
+            return ast.NumberType(ast.NumberType.Kind.SMALL, **loc)
+        if tok.type == Keywords.NORMAL.value:
+            return ast.NumberType(ast.NumberType.Kind.NORMAL, **loc)
+        if tok.type == Keywords.BIG.value:
+            return ast.NumberType(ast.NumberType.Kind.BIG, **loc)
+
+        self.raise_syntax_error_at(
+            f"expected number type, got {token.tok_name[tok.type]}", tok
+        )
+        return ast.NumberType(ast.NumberType.Kind.NORMAL, **loc, error_recovered=True)
 
     def make_number_declaration(
         self,
@@ -153,8 +164,6 @@ class ParserBase(Parser):
         value: ast.NumberLiteral,
         **loc,
     ) -> ast.NumberDeclaration:
-        # self.validate_number_type(type)
-
         return ast.NumberDeclaration(type=type, names=names, value=value, **loc)
 
     @memoize

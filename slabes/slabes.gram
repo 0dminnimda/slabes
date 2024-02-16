@@ -30,9 +30,7 @@ start: a=statements ENDMARKER {
 
 statements: a=statement* { a }
 
-statement: a=simple_stmt* { a }
-
-simple_stmt:
+statement:
     | declaration '.' {
         declaration
     }
@@ -67,7 +65,7 @@ atom:
     | signed_number
 
 signed_number: sign=(sign?) num=NUMBER {
-    ast.NumberLiteral((-1)**(sign is not None) * int(num.string, 32), LOCATIONS)
+    self.make_number(num, sign is not None, LOCATIONS)
 }
 
 sign:

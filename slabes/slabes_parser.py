@@ -45,19 +45,7 @@ class SlabesParser(Parser):
 
     @memoize
     def statement(self) -> Optional[Any]:
-        # statement: simple_stmt*
-        # nullable=True
-        mark = self._mark()
-        if (
-            (a := self._loop0_2(),)
-        ):
-            return a;
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def simple_stmt(self) -> Optional[Any]:
-        # simple_stmt: declaration '.' | expr compound_expr_not_first* '.'
+        # statement: declaration '.' | expr compound_expr_not_first* '.'
         mark = self._mark()
         if (
             (declaration := self.declaration())
@@ -69,7 +57,7 @@ class SlabesParser(Parser):
         if (
             (expr := self.expr())
             and
-            (exprs := self._loop0_3(),)
+            (exprs := self._loop0_2(),)
             and
             (self.expect('.'))
         ):
@@ -139,7 +127,7 @@ class SlabesParser(Parser):
         if (
             (type := self.number_type())
             and
-            (names := self._loop1_4())
+            (names := self._loop1_3())
             and
             (self.expect('<<'))
             and
@@ -180,7 +168,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . NumberLiteral ( ( - 1 ) ** ( sign is not None ) * int ( num . string , 32 ) , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return self . make_number ( num , sign is not None , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -287,20 +275,7 @@ class SlabesParser(Parser):
 
     @memoize
     def _loop0_2(self) -> Optional[Any]:
-        # _loop0_2: simple_stmt
-        mark = self._mark()
-        children = []
-        while (
-            (simple_stmt := self.simple_stmt())
-        ):
-            children.append(simple_stmt)
-            mark = self._mark()
-        self._reset(mark)
-        return children;
-
-    @memoize
-    def _loop0_3(self) -> Optional[Any]:
-        # _loop0_3: compound_expr_not_first
+        # _loop0_2: compound_expr_not_first
         mark = self._mark()
         children = []
         while (
@@ -312,8 +287,8 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_4(self) -> Optional[Any]:
-        # _loop1_4: identifier
+    def _loop1_3(self) -> Optional[Any]:
+        # _loop1_3: identifier
         mark = self._mark()
         children = []
         while (
