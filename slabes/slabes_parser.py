@@ -45,7 +45,7 @@ class SlabesParser(Parser):
 
     @memoize
     def statement(self) -> Optional[ast . Statement]:
-        # statement: declaration '.' | assignment '.' | ','.expr+ '.'
+        # statement: declaration '.' | ','.expr+ '.'
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -57,13 +57,6 @@ class SlabesParser(Parser):
             return declaration;
         self._reset(mark)
         if (
-            (assignment := self.assignment())
-            and
-            (self.expect('.'))
-        ):
-            return assignment;
-        self._reset(mark)
-        if (
             (exprs := self._gather_2())
             and
             (self.expect('.'))
@@ -71,52 +64,6 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return ast . CompoundExpression ( exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def expr(self) -> Optional[ast . Expression]:
-        # expr: comparison | invalid_expr
-        mark = self._mark()
-        if (
-            (comparison := self.comparison())
-        ):
-            return comparison;
-        self._reset(mark)
-        if (
-            self.call_invalid_rules
-            and
-            (self.invalid_expr())
-        ):
-            return None  # pragma: no cover;
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def invalid_expr(self) -> Optional[Any]:
-        # invalid_expr: declaration
-        mark = self._mark()
-        if (
-            (a := self.declaration())
-        ):
-            return self . report_syntax_error_at ( "expected expression, got declaration." " Did you mean to use '.' before/after this declaration?" , a , fatal = True , );
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def assignment(self) -> Optional[ast . Assignment]:
-        # assignment: expr ((('<<' | '>>') expr))+
-        mark = self._mark()
-        tok = self._tokenizer.peek()
-        start_lineno, start_col_offset = tok.start
-        if (
-            (start := self.expr())
-            and
-            (rest := self._loop1_4())
-        ):
-            tok = self._tokenizer.get_last_non_whitespace_token()
-            end_lineno, end_col_offset = tok.end
-            return self . make_assignment ( start , rest , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -149,7 +96,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.number_type())
             and
-            (names := self._loop1_5())
+            (names := self._loop1_4())
             and
             (self.expect('<<'))
             and
@@ -179,7 +126,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.word())
             and
-            (names := self._loop1_6())
+            (names := self._loop1_5())
             and
             (self.expect('<<'))
             and
@@ -200,7 +147,7 @@ class SlabesParser(Parser):
         if (
             (type := self.number_type())
             and
-            (names := self._loop1_7())
+            (names := self._loop1_6())
             and
             (self.expect('<<'))
             and
@@ -226,7 +173,7 @@ class SlabesParser(Parser):
         if (
             (type := self.word())
             and
-            (names := self._loop1_8())
+            (names := self._loop1_7())
             and
             (self.expect('<<'))
             and
@@ -235,6 +182,57 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return self . make_number_declaration ( self . make_number_type ( type , ** self . locs ( type ) ) , [self . make_name ( name , ** self . locs ( name ) ) for name in names] , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def expr(self) -> Optional[ast . Expression]:
+        # expr: assignment | invalid_expr
+        mark = self._mark()
+        if (
+            (assignment := self.assignment())
+        ):
+            return assignment;
+        self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_expr())
+        ):
+            return None  # pragma: no cover;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_expr(self) -> Optional[Any]:
+        # invalid_expr: declaration
+        mark = self._mark()
+        if (
+            (a := self.declaration())
+        ):
+            return self . report_syntax_error_at ( "expected expression, got declaration." " Did you mean to use '.' before/after this declaration?" , a , fatal = True , );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def assignment(self) -> Optional[Any]:
+        # assignment: comparison ((('<<' | '>>') comparison))+ | comparison
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (start := self.comparison())
+            and
+            (rest := self._loop1_8())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_assignment ( start , rest , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (comparison := self.comparison())
+        ):
+            return comparison;
         self._reset(mark)
         return None;
 
@@ -665,46 +663,33 @@ class SlabesParser(Parser):
 
     @memoize
     def _loop1_4(self) -> Optional[Any]:
-        # _loop1_4: (('<<' | '>>') expr)
+        # _loop1_4: identifier
         mark = self._mark()
         children = []
         while (
-            (_tmp_11 := self._tmp_11())
+            (identifier := self.identifier())
         ):
-            children.append(_tmp_11)
+            children.append(identifier)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
     def _loop1_5(self) -> Optional[Any]:
-        # _loop1_5: identifier
+        # _loop1_5: word
         mark = self._mark()
         children = []
         while (
-            (identifier := self.identifier())
+            (word := self.word())
         ):
-            children.append(identifier)
+            children.append(word)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
     def _loop1_6(self) -> Optional[Any]:
-        # _loop1_6: word
-        mark = self._mark()
-        children = []
-        while (
-            (word := self.word())
-        ):
-            children.append(word)
-            mark = self._mark()
-        self._reset(mark)
-        return children;
-
-    @memoize
-    def _loop1_7(self) -> Optional[Any]:
-        # _loop1_7: identifier
+        # _loop1_6: identifier
         mark = self._mark()
         children = []
         while (
@@ -716,14 +701,27 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_8(self) -> Optional[Any]:
-        # _loop1_8: word
+    def _loop1_7(self) -> Optional[Any]:
+        # _loop1_7: word
         mark = self._mark()
         children = []
         while (
             (word := self.word())
         ):
             children.append(word)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_8(self) -> Optional[Any]:
+        # _loop1_8: (('<<' | '>>') comparison)
+        mark = self._mark()
+        children = []
+        while (
+            (_tmp_11 := self._tmp_11())
+        ):
+            children.append(_tmp_11)
             mark = self._mark()
         self._reset(mark)
         return children;
@@ -756,14 +754,14 @@ class SlabesParser(Parser):
 
     @memoize
     def _tmp_11(self) -> Optional[Any]:
-        # _tmp_11: ('<<' | '>>') expr
+        # _tmp_11: ('<<' | '>>') comparison
         mark = self._mark()
         if (
             (_tmp_12 := self._tmp_12())
             and
-            (expr := self.expr())
+            (comparison := self.comparison())
         ):
-            return [_tmp_12, expr];
+            return [_tmp_12, comparison];
         self._reset(mark)
         return None;
 

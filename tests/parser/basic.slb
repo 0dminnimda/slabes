@@ -61,3 +61,5 @@ ggg1 << a >> fdgdf [ a b ] >> c >> ggg2 << c << ggg3.  # ggg1 = a, fdgdf [ b a ]
 4U+4KE + 0 / 342 + 2 \ 342.
 
 a + c \ dpp / fll \ fll - dpp / h.
+
+ggg1 << a + b - c >> ggg2 >> c.

@@ -31,27 +31,7 @@ statements[list[ast.Statement]]: a=statement* { a }
 
 statement[ast.Statement]:
     | declaration '.' { declaration }
-    | assignment '.' { assignment }
     | exprs=','.expr+ '.' { ast.CompoundExpression(exprs, LOCATIONS) }
-
-
-expr[ast.Expression]:
-    | comparison
-    | invalid_expr
-
-invalid_expr:
-    | a=declaration {
-        self.report_syntax_error_at(
-            "expected expression, got declaration."
-            " Did you mean to use '.' before/after this declaration?",
-            a,
-            fatal=True,
-        )
-    }
-
-
-assignment[ast.Assignment]:
-    | start=expr rest=(('<<' | '>>') expr)+ { self.make_assignment(start, rest, LOCATIONS) }
 
 
 declaration[ast.NumberDeclaration]:
@@ -93,6 +73,25 @@ recover_number_declaration[ast.NumberDeclaration]:
         )
     }
 
+
+expr[ast.Expression]:
+    | assignment
+    | invalid_expr
+
+invalid_expr:
+    | a=declaration {
+        self.report_syntax_error_at(
+            "expected expression, got declaration."
+            " Did you mean to use '.' before/after this declaration?",
+            a,
+            fatal=True,
+        )
+    }
+
+
+assignment:
+    | start=comparison rest=(('<<' | '>>') comparison)+ { self.make_assignment(start, rest, LOCATIONS) }
+    | comparison
 
 comparison:
     # | a=comparison '<>' b=sum { ast.CompareOperation(a, ast.Add(), b, LOCATIONS) }
