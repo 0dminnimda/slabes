@@ -96,6 +96,19 @@ class Name(Expression):
 
 
 @dataclass
+class Subscript(Expression):
+    value: Name
+    index1: Expression
+    index2: Expression
+
+    def fields(self):
+        yield from super().fields()
+        yield "value", self.value
+        yield "index1", self.index1
+        yield "index2", self.index2
+
+
+@dataclass
 class NumberDeclaration(Statement):
     type: NumberType
     names: list[Name]

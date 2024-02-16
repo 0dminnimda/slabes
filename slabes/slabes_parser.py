@@ -67,14 +67,14 @@ class SlabesParser(Parser):
         self._reset(mark)
         return None;
 
-    @memoize
+    @memoize_left_rec
     def expr(self) -> Optional[ast . Expression]:
-        # expr: atom | invalid_expr
+        # expr: primary | invalid_expr
         mark = self._mark()
         if (
-            (atom := self.atom())
+            (primary := self.primary())
         ):
-            return atom;
+            return primary;
         self._reset(mark)
         if (
             self.call_invalid_rules
@@ -113,8 +113,8 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def array_declaration(self) -> Optional[ast . NumberDeclaration]:
-        # array_declaration: FIELD number_type number_type identifier+ '<<' signed_number | bad_array_declaration
+    def array_declaration(self) -> Optional[ast . ArrayDeclaration]:
+        # array_declaration: FIELD number_type number_type identifier+ '<<' signed_number | recover_array_declaration
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -136,15 +136,15 @@ class SlabesParser(Parser):
             return self . make_array_declaration ( elem_t , size_t , names , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
-            (bad_array_declaration := self.bad_array_declaration())
+            (recover_array_declaration := self.recover_array_declaration())
         ):
-            return bad_array_declaration;
+            return recover_array_declaration;
         self._reset(mark)
         return None;
 
     @memoize
-    def bad_array_declaration(self) -> Optional[ast . NumberDeclaration]:
-        # bad_array_declaration: FIELD word word word+ '<<' signed_number
+    def recover_array_declaration(self) -> Optional[ast . ArrayDeclaration]:
+        # recover_array_declaration: FIELD word word word+ '<<' signed_number
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -169,7 +169,7 @@ class SlabesParser(Parser):
 
     @memoize
     def number_declaration(self) -> Optional[ast . NumberDeclaration]:
-        # number_declaration: number_type identifier+ '<<' signed_number | bad_number_declaration
+        # number_declaration: number_type identifier+ '<<' signed_number | recover_number_declaration
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -187,15 +187,15 @@ class SlabesParser(Parser):
             return self . make_number_declaration ( type , names , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
-            (bad_number_declaration := self.bad_number_declaration())
+            (recover_number_declaration := self.recover_number_declaration())
         ):
-            return bad_number_declaration;
+            return recover_number_declaration;
         self._reset(mark)
         return None;
 
     @memoize
-    def bad_number_declaration(self) -> Optional[ast . NumberDeclaration]:
-        # bad_number_declaration: word word+ '<<' signed_number
+    def recover_number_declaration(self) -> Optional[ast . NumberDeclaration]:
+        # recover_number_declaration: word word+ '<<' signed_number
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -211,6 +211,69 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return self . make_number_declaration ( self . make_number_type ( type , ** self . locs ( type ) ) , [self . make_name ( name , ** self . locs ( name ) ) for name in names] , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @logger
+    def primary(self) -> Optional[Any]:
+        # primary: subscript | atom
+        mark = self._mark()
+        if (
+            (subscript := self.subscript())
+        ):
+            return subscript;
+        self._reset(mark)
+        if (
+            (atom := self.atom())
+        ):
+            return atom;
+        self._reset(mark)
+        return None;
+
+    @logger
+    def subscript(self) -> Optional[ast . Subscript]:
+        # subscript: expr '[' expr* ']' | recover_subscript
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.expr())
+            and
+            (self.expect('['))
+            and
+            (exprs := self._loop0_8(),)
+            and
+            (self.expect(']'))
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_subscript ( a , exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (recover_subscript := self.recover_subscript())
+        ):
+            return recover_subscript;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def recover_subscript(self) -> Optional[Any]:
+        # recover_subscript: word '[' expr* ']'
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.word())
+            and
+            (self.expect('['))
+            and
+            (exprs := self._loop0_9(),)
+            and
+            (self.expect(']'))
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_subscript ( self . make_name ( a , ** self . locs ( a ) ) , exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -442,6 +505,32 @@ class SlabesParser(Parser):
             (word := self.word())
         ):
             children.append(word)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_8(self) -> Optional[Any]:
+        # _loop0_8: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_9(self) -> Optional[Any]:
+        # _loop0_9: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
             mark = self._mark()
         self._reset(mark)
         return children;

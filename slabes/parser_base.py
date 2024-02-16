@@ -120,15 +120,24 @@ class ParserBase(Parser):
         else:
             report_at(loc, errors.SyntaxError, message, line)
 
-    def locs(self, tok: TokenInfo) -> dict[str, int]:
+    def locs(self, node: ast.AST | TokenInfo) -> dict[str, int]:
+        if isinstance(node, TokenInfo):
+            return {
+                "lineno": node.start[0],
+                "col_offset": node.start[1],
+                "end_lineno": node.end[0],
+                "end_col_offset": node.end[1],
+            }
         return {
-            "lineno": tok.start[0],
-            "col_offset": tok.start[1],
-            "end_lineno": tok.end[0],
-            "end_col_offset": tok.end[1],
+            "lineno": node.lineno,
+            "col_offset": node.col_offset,
+            "end_lineno": node.end_lineno,
+            "end_col_offset": node.end_col_offset,
         }
 
-    def make_name(self, name: TokenInfo, **loc) -> ast.Name:
+    def make_name(self, name: ast.AST | TokenInfo, **loc) -> ast.Name:
+        if not isinstance(name, TokenInfo):
+            return ast.Name("<invalid>", **loc, error_recovered=True)
         if name.type != token.NAME:
             self.raise_syntax_error_at(
                 f"expected name, got keyword {token.tok_name[name.type]}",
@@ -183,6 +192,23 @@ class ParserBase(Parser):
         **loc,
     ) -> ast.ArrayDeclaration:
         return ast.ArrayDeclaration(elem_t, size_t, names, value, **loc)
+
+    def make_subscript(
+        self,
+        name: ast.AST | TokenInfo,
+        indices: list[ast.Expression],
+        **loc,
+    ):
+        if not isinstance(name, ast.Name):
+            self.raise_syntax_error_at("subscript requires a name", name)
+            return ast.Statement(**loc, error_recovered=True)
+        if len(indices) != 2:
+            self.raise_syntax_error_at(
+                f"subscript requires exactly two indices, got {len(indices)}",
+                indices[-1] if indices else name,
+            )
+            return ast.Statement(**loc, error_recovered=True)
+        return ast.Subscript(name, indices[0], indices[1], **loc)
 
     @memoize
     def TINY(self):

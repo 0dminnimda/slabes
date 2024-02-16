@@ -39,7 +39,7 @@ statement[ast.Statement]:
     }
 
 expr[ast.Expression]:
-    | atom
+    | primary
     | invalid_expr
 
 invalid_expr:
@@ -56,13 +56,13 @@ declaration[ast.NumberDeclaration]:
     | array_declaration
     | number_declaration
 
-array_declaration[ast.NumberDeclaration]:
+array_declaration[ast.ArrayDeclaration]:
     | FIELD elem_t=number_type size_t=number_type names=identifier+ '<<' signed_number {
         self.make_array_declaration(elem_t, size_t, names, signed_number, LOCATIONS)
     }
-    | bad_array_declaration
+    | recover_array_declaration
 
-bad_array_declaration[ast.NumberDeclaration]:
+recover_array_declaration[ast.ArrayDeclaration]:
     | FIELD elem_t=word size_t=word names=word+ '<<' signed_number {
         self.make_array_declaration(
             self.make_number_type(elem_t, **self.locs(elem_t)),
@@ -78,9 +78,9 @@ number_declaration[ast.NumberDeclaration]:
     | type=number_type names=identifier+ '<<' signed_number {
         self.make_number_declaration(type, names, signed_number, LOCATIONS)
     }
-    | bad_number_declaration
+    | recover_number_declaration
 
-bad_number_declaration[ast.NumberDeclaration]:
+recover_number_declaration[ast.NumberDeclaration]:
     | type=word names=word+ '<<' signed_number {
         self.make_number_declaration(
             self.make_number_type(type, **self.locs(type)),
@@ -90,6 +90,21 @@ bad_number_declaration[ast.NumberDeclaration]:
         )
     }
 
+
+primary:
+    | subscript
+    | atom
+
+subscript[ast.Subscript]:
+    | a=expr '[' exprs=expr* ']' {
+        self.make_subscript(a, exprs, LOCATIONS)
+    }
+    | recover_subscript
+
+recover_subscript:
+    | a=word '[' exprs=expr* ']' {
+        self.make_subscript(self.make_name(a, **self.locs(a)), exprs, LOCATIONS)
+    }
 
 atom:
     | identifier
