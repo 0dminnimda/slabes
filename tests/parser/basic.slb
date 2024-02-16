@@ -31,3 +31,30 @@ fi norm tin abobui babaoi << F.
 abobui [ 0 F ],
 abobui [ 0 a ],
 fdgdf [ b a ].
+
+a << b.
+b >> c.
+0 >> a.
+b << 4.
+
+small ggg1 << 0.
+small ggg2 << 2.
+small ggg3 << 5.
+
+c >> c.  # c = c
+c << c.  # c = c
+c >> c << c.  # c = c
+c << c >> c.  # c = c, c = c
+
+a >> b >> c.  # b = a, c = a
+a << b << c.  # b = c, a = c
+a >> b << c.  # b = a
+a << b >> c.  # a = b, c = b
+
+c >> b >> c.  # b = c, c = c
+c << b << c.  # c = c, b = c
+c >> b << c.  # b = c
+c << b >> c.  # c = b, c = b
+
+a << 9 >> fdgdf [ b a ] << 4 >> c.  # a = 9, fdgdf [ b a ] = 9, c = 4
+ggg1 << a >> fdgdf [ a b ] >> c >> ggg2 << c << ggg3.  # ggg1 = a, fdgdf [ b a ] = a, c = a, ggg2 = a, c = ggg3

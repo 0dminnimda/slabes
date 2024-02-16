@@ -116,6 +116,26 @@ class Subscript(Expression):
 
 
 @dataclass
+class BasicAssignment(AST):
+    targets: list[Name | Subscript]
+    value: Expression
+
+    def fields(self):
+        yield from super().fields()
+        yield "targets", self.targets
+        yield "value", self.value
+
+
+@dataclass
+class Assignment(Expression):
+    parts: list[BasicAssignment]
+
+    def fields(self):
+        yield from super().fields()
+        yield "parts", self.parts
+
+
+@dataclass
 class NumberDeclaration(Statement):
     type: NumberType
     names: list[Name]

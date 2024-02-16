@@ -145,7 +145,9 @@ class ParserBase(Parser):
             )
         return ast.Name(name.string, **loc)
 
-    def make_number(self, tok: TokenInfo, sign: TokenInfo | None, **loc) -> ast.NumericLiteral:
+    def make_number(
+        self, tok: TokenInfo, sign: TokenInfo | None, **loc
+    ) -> ast.NumericLiteral:
         string = tok.string.replace("_", "")
 
         error_recovered = False
@@ -166,7 +168,10 @@ class ParserBase(Parser):
             signedness = ast.NumericLiteral.Signedness.POSITIVE
 
         return ast.NumericLiteral(
-            sign_multiple * int(string, 32), signedness, **loc, error_recovered=error_recovered
+            sign_multiple * int(string, 32),
+            signedness,
+            **loc,
+            error_recovered=error_recovered,
         )
 
     def make_number_type(self, tok: TokenInfo, **loc) -> ast.NumberType:
@@ -219,6 +224,102 @@ class ParserBase(Parser):
             )
             return ast.Statement(**loc, error_recovered=True)
         return ast.Subscript(name, indices[0], indices[1], **loc)
+
+    def is_assignment_target(self, node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return True
+        if isinstance(node, ast.Subscript):
+            return True
+        return False
+
+    def _make_basic_assignment(
+        self, to_left: bool, group: list[ast.Expression]
+    ) -> ast.BasicAssignment | None:
+        if to_left:
+            targets = group[:-1][::-1]
+            value = group[-1]
+        else:
+            targets = group[1:]
+            value = group[0]
+
+        for node in targets:
+            if not self.is_assignment_target(node):
+                self.report_syntax_error_at(
+                    f"assignment to expression {type(node).__name__} not allowed", node
+                )
+                return None
+
+        return ast.BasicAssignment(
+            targets,  # type: ignore
+            value,
+            lineno=group[0].lineno,
+            col_offset=group[0].col_offset,
+            end_lineno=group[-1].end_lineno,
+            end_col_offset=group[-1].end_col_offset,
+        )
+
+    def _producee_assignment_groups(
+        self,
+        curr_value: ast.Expression,
+        pairs: list[tuple[TokenInfo, ast.Expression]],
+    ):
+        assert pairs, "cannot assign to/from nothing, pairs is empty"
+
+        # group operands with the same op
+        # so those are compressed just into one group
+        # a << b << c
+        # a >> b >> c
+        group: list[ast.Expression] = []
+
+        # let's use out imagination to create the path before
+        # we need the loop to continue the first group
+        prev_to_left = pairs[0][0].string == "<<"
+
+        for op, next_value in pairs:
+            to_left = op.string == "<<"
+
+            group.append(curr_value)
+
+            if prev_to_left == to_left:
+                curr_value = next_value
+                continue
+
+            yield prev_to_left, group
+
+            group = []
+
+            # ... >> curent << ... - skip, ">>" takes presedance
+            # ... << curent >> ... - copy to both
+            if prev_to_left:
+                group.append(curr_value)
+
+            curr_value = next_value
+            prev_to_left = to_left
+
+        group.append(curr_value)
+        yield prev_to_left, group
+
+    def make_assignment(
+        self,
+        prev_value: ast.Expression,
+        pairs: list[tuple[TokenInfo, ast.Expression]],
+        **loc,
+    ):
+        error_recovered = False
+        basic_assigns = []
+        for to_left, group in self._producee_assignment_groups(prev_value, pairs):
+            # ignore groups that don't result is any operations
+            if len(group) <= 1:
+                continue
+
+            bass = self._make_basic_assignment(to_left, group)
+            if bass is not None:
+                basic_assigns.append(bass)
+            else:
+                # skip erroneous targets
+                error_recovered = True
+
+        return ast.Assignment(basic_assigns, **loc, error_recovered=error_recovered)
 
     @memoize
     def TINY(self):
