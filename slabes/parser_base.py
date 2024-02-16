@@ -237,7 +237,7 @@ def parser_main(parser_class: typing.Type[ParserBase]) -> None:
         sys.exit(1)
 
     if not args.quiet:
-        pprint(tree)
+        print(ast.dump(tree, indent=4))
 
     if verbose:
         dt = t1 - t0
