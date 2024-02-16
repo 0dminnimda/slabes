@@ -111,7 +111,7 @@ atom:
     | signed_number
 
 signed_number[ast.NumberLiteral]: sign=sign? num=NUMBER {
-    self.make_number(num, sign is not None and sign.string == "-", LOCATIONS)
+    self.make_number(num, sign, LOCATIONS)
 }
 
 sign: '+' | '-'

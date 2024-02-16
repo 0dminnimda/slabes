@@ -76,11 +76,18 @@ class NumberType(Type):
 
 @dataclass
 class NumberLiteral(Expression):
+    class Signedness(Enum):
+        POSITIVE = auto()
+        NEGATIVE = auto()
+        UNSIGNED = auto()
+
     value: int
+    signedness: Signedness
 
     def fields(self):
         yield from super().fields()
         yield "value", self.value
+        yield "signedness", self.signedness
 
     # def __str__(self) -> str:
     #     return str(self)

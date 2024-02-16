@@ -145,7 +145,7 @@ class ParserBase(Parser):
             )
         return ast.Name(name.string, **loc)
 
-    def make_number(self, tok: TokenInfo, sign: bool, **loc) -> ast.NumberLiteral:
+    def make_number(self, tok: TokenInfo, sign: TokenInfo | None, **loc) -> ast.NumberLiteral:
         string = tok.string.replace("_", "")
 
         error_recovered = False
@@ -155,8 +155,18 @@ class ParserBase(Parser):
             )
             error_recovered = True
 
+        if sign is None:
+            sign_multiple = 1
+            signedness = ast.NumberLiteral.Signedness.UNSIGNED
+        elif sign.string == "-":
+            sign_multiple = -1
+            signedness = ast.NumberLiteral.Signedness.NEGATIVE
+        else:
+            sign_multiple = 1
+            signedness = ast.NumberLiteral.Signedness.POSITIVE
+
         return ast.NumberLiteral(
-            (-1) ** (sign) * int(string, 32), **loc, error_recovered=error_recovered
+            sign_multiple * int(string, 32), signedness, **loc, error_recovered=error_recovered
         )
 
     def make_number_type(self, tok: TokenInfo, **loc) -> ast.NumberType:
