@@ -135,6 +135,30 @@ class Assignment(Expression):
         yield "parts", self.parts
 
 
+class BinaryKind(Enum):
+    ADD = auto()
+    SUB = auto()
+    MUL = auto()
+    DIV = auto()
+    EQ = auto()
+    NE = auto()
+    LE = auto()
+    GE = auto()
+
+
+@dataclass
+class BinaryOperation(Expression):
+    lhs: Expression
+    op: BinaryKind
+    rhs: Expression
+
+    def fields(self):
+        yield from super().fields()
+        yield "lhs", self.lhs
+        yield "op", self.op
+        yield "rhs", self.rhs
+
+
 @dataclass
 class NumberDeclaration(Statement):
     type: NumberType

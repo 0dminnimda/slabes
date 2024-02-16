@@ -74,14 +74,14 @@ class SlabesParser(Parser):
         self._reset(mark)
         return None;
 
-    @memoize_left_rec
+    @memoize
     def expr(self) -> Optional[ast . Expression]:
-        # expr: primary | invalid_expr
+        # expr: comparison | invalid_expr
         mark = self._mark()
         if (
-            (primary := self.primary())
+            (comparison := self.comparison())
         ):
-            return primary;
+            return comparison;
         self._reset(mark)
         if (
             self.call_invalid_rules
@@ -238,7 +238,99 @@ class SlabesParser(Parser):
         self._reset(mark)
         return None;
 
-    @logger
+    @memoize
+    def comparison(self) -> Optional[Any]:
+        # comparison: sum
+        mark = self._mark()
+        if (
+            (sum := self.sum())
+        ):
+            return sum;
+        self._reset(mark)
+        return None;
+
+    @memoize_left_rec
+    def sum(self) -> Optional[Any]:
+        # sum: sum '+' term | sum '-' term | term
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.sum())
+            and
+            (self.expect('+'))
+            and
+            (b := self.term())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . BinaryOperation ( a , ast . BinaryKind . ADD , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (a := self.sum())
+            and
+            (self.expect('-'))
+            and
+            (b := self.term())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . BinaryOperation ( a , ast . BinaryKind . SUB , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (term := self.term())
+        ):
+            return term;
+        self._reset(mark)
+        return None;
+
+    @memoize_left_rec
+    def term(self) -> Optional[Any]:
+        # term: term '\\' factor | term '/' factor | factor
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.term())
+            and
+            (self.expect('\\'))
+            and
+            (b := self.factor())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . BinaryOperation ( a , ast . BinaryKind . MUL , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (a := self.term())
+            and
+            (self.expect('/'))
+            and
+            (b := self.factor())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . BinaryOperation ( a , ast . BinaryKind . DIV , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (factor := self.factor())
+        ):
+            return factor;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def factor(self) -> Optional[Any]:
+        # factor: primary
+        mark = self._mark()
+        if (
+            (primary := self.primary())
+        ):
+            return primary;
+        self._reset(mark)
+        return None;
+
+    @memoize_left_rec
     def primary(self) -> Optional[Any]:
         # primary: subscript | atom
         mark = self._mark()
@@ -256,12 +348,12 @@ class SlabesParser(Parser):
 
     @logger
     def subscript(self) -> Optional[ast . Subscript]:
-        # subscript: expr '[' expr* ']' | recover_subscript
+        # subscript: primary '[' expr* ']' | recover_subscript
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
         if (
-            (a := self.expr())
+            (a := self.primary())
             and
             (self.expect('['))
             and
@@ -303,7 +395,7 @@ class SlabesParser(Parser):
 
     @memoize
     def atom(self) -> Optional[Any]:
-        # atom: identifier | signed_number
+        # atom: identifier | signed_number | group | recover_atom
         mark = self._mark()
         if (
             (identifier := self.identifier())
@@ -314,6 +406,46 @@ class SlabesParser(Parser):
             (signed_number := self.signed_number())
         ):
             return signed_number;
+        self._reset(mark)
+        if (
+            (group := self.group())
+        ):
+            return group;
+        self._reset(mark)
+        if (
+            (recover_atom := self.recover_atom())
+        ):
+            return recover_atom;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def group(self) -> Optional[Any]:
+        # group: '(' comparison ')'
+        mark = self._mark()
+        if (
+            (self.expect('('))
+            and
+            (a := self.comparison())
+            and
+            (self.expect(')'))
+        ):
+            return a;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def recover_atom(self) -> Optional[Any]:
+        # recover_atom: word
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.word())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_name ( a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 

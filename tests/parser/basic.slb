@@ -12,8 +12,6 @@ small smalll << 3.
 bi uuu << 4_2.
 big uuu uuu2 << 4_2.
 
-# 4U + 434KE, (0 / 342) + (2 \ 342),
-
 +4U,
 
 -4U,
@@ -22,9 +20,7 @@ dfgdfgkdlfg,
 
 4U,
 
-# 4U+434KE + (0 / 342) + (2 \ 342),
-
-4U. # + 434KE + (0 * 342) + (2 * 342)
+4U.
 
 fi norm tin abobui babaoi << F.
 
@@ -58,3 +54,10 @@ c << b >> c.  # c = b, c = b
 
 a << 9 >> fdgdf [ b a ] << 4 >> c.  # a = 9, fdgdf [ b a ] = 9, c = 4
 ggg1 << a >> fdgdf [ a b ] >> c >> ggg2 << c << ggg3.  # ggg1 = a, fdgdf [ b a ] = a, c = a, ggg2 = a, c = ggg3
+
+4U+4KE + (0 / 342) + (2 \ 342).
+4U+4KE + (0 / 342) + 2 \ 342.
+4U+4KE + 0 / 342 + (2 \ 342).
+4U+4KE + 0 / 342 + 2 \ 342.
+
+a + c \ dpp / fll \ fll - dpp / h.

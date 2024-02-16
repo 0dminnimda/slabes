@@ -36,7 +36,7 @@ statement[ast.Statement]:
 
 
 expr[ast.Expression]:
-    | primary
+    | comparison
     | invalid_expr
 
 invalid_expr:
@@ -94,13 +94,35 @@ recover_number_declaration[ast.NumberDeclaration]:
     }
 
 
+comparison:
+    # | a=comparison '<>' b=sum { ast.CompareOperation(a, ast.Add(), b, LOCATIONS) }
+    # | a=comparison '<=' b=sum { ast.CompareOperation(a, ast.Add(), b, LOCATIONS) }
+    # | a=comparison '=>' b=sum { ast.CompareOperation(a, ast.Add(), b, LOCATIONS) }
+    | sum
+
+sum:
+    | a=sum '+' b=term { ast.BinaryOperation(a, ast.BinaryKind.ADD, b, LOCATIONS) }
+    | a=sum '-' b=term { ast.BinaryOperation(a, ast.BinaryKind.SUB, b, LOCATIONS) }
+    | term
+
+term:
+    | a=term '\\' b=factor { ast.BinaryOperation(a, ast.BinaryKind.MUL, b, LOCATIONS) }
+    | a=term '/' b=factor { ast.BinaryOperation(a, ast.BinaryKind.DIV, b, LOCATIONS) }
+    | factor
+
+factor (memo):
+    # | '+' a=factor { ast.UnaryOperation(ast.UAdd(), operand=a, LOCATIONS) }
+    # | '-' a=factor { ast.UnaryOperation(ast.USub(), operand=a, LOCATIONS) }
+    | primary
+
+
 primary:
     | subscript
     | atom
 
 
 subscript[ast.Subscript]:
-    | a=expr '[' exprs=expr* ']' { self.make_subscript(a, exprs, LOCATIONS) }
+    | a=primary '[' exprs=expr* ']' { self.make_subscript(a, exprs, LOCATIONS) }
     | recover_subscript
 
 recover_subscript[ast.Subscript]:
@@ -112,6 +134,14 @@ recover_subscript[ast.Subscript]:
 atom:
     | identifier
     | signed_number
+    | group
+    | recover_atom
+
+recover_atom: a=word { self.make_name(a, LOCATIONS) }
+
+
+group:
+    | '(' a=comparison ')' { a }
 
 
 signed_number[ast.NumericLiteral]: sign=sign? num=NUMBER { self.make_number(num, sign, LOCATIONS) }
