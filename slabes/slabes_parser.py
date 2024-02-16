@@ -98,12 +98,72 @@ class SlabesParser(Parser):
 
     @memoize
     def declaration(self) -> Optional[ast . NumberDeclaration]:
-        # declaration: number_declaration
+        # declaration: array_declaration | number_declaration
         mark = self._mark()
+        if (
+            (array_declaration := self.array_declaration())
+        ):
+            return array_declaration;
+        self._reset(mark)
         if (
             (number_declaration := self.number_declaration())
         ):
             return number_declaration;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def array_declaration(self) -> Optional[ast . NumberDeclaration]:
+        # array_declaration: FIELD number_type number_type identifier+ '<<' signed_number | bad_array_declaration
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (self.FIELD())
+            and
+            (elem_t := self.number_type())
+            and
+            (size_t := self.number_type())
+            and
+            (names := self._loop1_4())
+            and
+            (self.expect('<<'))
+            and
+            (signed_number := self.signed_number())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_array_declaration ( elem_t , size_t , names , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (bad_array_declaration := self.bad_array_declaration())
+        ):
+            return bad_array_declaration;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def bad_array_declaration(self) -> Optional[ast . NumberDeclaration]:
+        # bad_array_declaration: FIELD word word word+ '<<' signed_number
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (self.FIELD())
+            and
+            (elem_t := self.word())
+            and
+            (size_t := self.word())
+            and
+            (names := self._loop1_5())
+            and
+            (self.expect('<<'))
+            and
+            (signed_number := self.signed_number())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_array_declaration ( self . make_number_type ( elem_t , ** self . locs ( elem_t ) ) , self . make_number_type ( size_t , ** self . locs ( size_t ) ) , [self . make_name ( name , ** self . locs ( name ) ) for name in names] , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -116,7 +176,7 @@ class SlabesParser(Parser):
         if (
             (type := self.number_type())
             and
-            (names := self._loop1_4())
+            (names := self._loop1_6())
             and
             (self.expect('<<'))
             and
@@ -142,7 +202,7 @@ class SlabesParser(Parser):
         if (
             (type := self.word())
             and
-            (names := self._loop1_5())
+            (names := self._loop1_7())
             and
             (self.expect('<<'))
             and
@@ -205,12 +265,12 @@ class SlabesParser(Parser):
 
     @memoize
     def number_type(self) -> Optional[ast . NumberType]:
-        # number_type: number_type_
+        # number_type: number_type_raw
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
         if (
-            (a := self.number_type_())
+            (a := self.number_type_raw())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
@@ -219,8 +279,8 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def number_type_(self) -> Optional[Any]:
-        # number_type_: TINY | SMALL | NORMAL | BIG
+    def number_type_raw(self) -> Optional[Any]:
+        # number_type_raw: TINY | SMALL | NORMAL | BIG
         mark = self._mark()
         if (
             (TINY := self.TINY())
@@ -261,7 +321,7 @@ class SlabesParser(Parser):
 
     @memoize
     def word(self) -> Optional[Any]:
-        # word: NAME | keywords
+        # word: NAME | keyword
         mark = self._mark()
         if (
             (name := self.name())
@@ -269,35 +329,25 @@ class SlabesParser(Parser):
             return name;
         self._reset(mark)
         if (
-            (keywords := self.keywords())
+            (keyword := self.keyword())
         ):
-            return keywords;
+            return keyword;
         self._reset(mark)
         return None;
 
     @memoize
-    def keywords(self) -> Optional[Any]:
-        # keywords: TINY | SMALL | NORMAL | BIG
+    def keyword(self) -> Optional[Any]:
+        # keyword: number_type_raw | FIELD
         mark = self._mark()
         if (
-            (TINY := self.TINY())
+            (number_type_raw := self.number_type_raw())
         ):
-            return TINY;
+            return number_type_raw;
         self._reset(mark)
         if (
-            (SMALL := self.SMALL())
+            (FIELD := self.FIELD())
         ):
-            return SMALL;
-        self._reset(mark)
-        if (
-            (NORMAL := self.NORMAL())
-        ):
-            return NORMAL;
-        self._reset(mark)
-        if (
-            (BIG := self.BIG())
-        ):
-            return BIG;
+            return FIELD;
         self._reset(mark)
         return None;
 
@@ -360,6 +410,32 @@ class SlabesParser(Parser):
     @memoize
     def _loop1_5(self) -> Optional[Any]:
         # _loop1_5: word
+        mark = self._mark()
+        children = []
+        while (
+            (word := self.word())
+        ):
+            children.append(word)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_6(self) -> Optional[Any]:
+        # _loop1_6: identifier
+        mark = self._mark()
+        children = []
+        while (
+            (identifier := self.identifier())
+        ):
+            children.append(identifier)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_7(self) -> Optional[Any]:
+        # _loop1_7: word
         mark = self._mark()
         children = []
         while (

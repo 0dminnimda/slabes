@@ -172,7 +172,17 @@ class ParserBase(Parser):
         value: ast.NumberLiteral,
         **loc,
     ) -> ast.NumberDeclaration:
-        return ast.NumberDeclaration(type=type, names=names, value=value, **loc)
+        return ast.NumberDeclaration(type, names, value, **loc)
+
+    def make_array_declaration(
+        self,
+        elem_t: ast.NumberType,
+        size_t: ast.NumberType,
+        names: list[ast.Name],
+        value: ast.NumberLiteral,
+        **loc,
+    ) -> ast.ArrayDeclaration:
+        return ast.ArrayDeclaration(elem_t, size_t, names, value, **loc)
 
     @memoize
     def TINY(self):
@@ -199,6 +209,13 @@ class ParserBase(Parser):
     def BIG(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.BIG.value:
+            return self._tokenizer.getnext()
+        return None
+
+    @memoize
+    def FIELD(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.FIELD.value:
             return self._tokenizer.getnext()
         return None
 

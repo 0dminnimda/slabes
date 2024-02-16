@@ -52,7 +52,27 @@ invalid_expr:
         )
     }
 
-declaration[ast.NumberDeclaration]: number_declaration
+declaration[ast.NumberDeclaration]:
+    | array_declaration
+    | number_declaration
+
+array_declaration[ast.NumberDeclaration]:
+    | FIELD elem_t=number_type size_t=number_type names=identifier+ '<<' signed_number {
+        self.make_array_declaration(elem_t, size_t, names, signed_number, LOCATIONS)
+    }
+    | bad_array_declaration
+
+bad_array_declaration[ast.NumberDeclaration]:
+    | FIELD elem_t=word size_t=word names=word+ '<<' signed_number {
+        self.make_array_declaration(
+            self.make_number_type(elem_t, **self.locs(elem_t)),
+            self.make_number_type(size_t, **self.locs(size_t)),
+            [self.make_name(name, **self.locs(name)) for name in names],
+            signed_number,
+            LOCATIONS
+        )
+    }
+
 
 number_declaration[ast.NumberDeclaration]:
     | type=number_type names=identifier+ '<<' signed_number {
@@ -81,15 +101,16 @@ signed_number[ast.NumberLiteral]: sign=sign? num=NUMBER {
 
 sign: '+' | '-'
 
-number_type[ast.NumberType]: a=number_type_ {
+# ugh bug in pegen
+number_type[ast.NumberType]: a=number_type_raw {
     self.make_number_type(a, LOCATIONS)
 }
-number_type_: TINY | SMALL | NORMAL | BIG  # ugh bug in pegen
+number_type_raw: TINY | SMALL | NORMAL | BIG
 
 identifier[ast.Name]: a=NAME {
     self.make_name(a, LOCATIONS)
 }
 
-word: NAME | keywords
+word: NAME | keyword
 
-keywords: TINY | SMALL | NORMAL | BIG
+keyword: number_type_raw | FIELD

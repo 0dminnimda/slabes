@@ -108,6 +108,21 @@ class NumberDeclaration(Statement):
         yield "value", self.value
 
 
+@dataclass
+class ArrayDeclaration(Statement):
+    element_type: NumberType
+    size_type: NumberType
+    names: list[Name]
+    value: NumberLiteral
+
+    def fields(self):
+        yield from super().fields()
+        yield "element_type", self.element_type
+        yield "size_type", self.size_type
+        yield "names", self.names
+        yield "value", self.value
+
+
 def dump(
     node: AST,
     annotate_fields: bool = True,
