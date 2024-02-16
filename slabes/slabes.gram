@@ -35,7 +35,7 @@ statement:
         declaration
     }
     | expr=expr exprs=compound_expr_not_first* '.' {
-        [expr] + exprs
+        ast.CompoundExpression([expr] + exprs, LOCATIONS)
     }
 
 compound_expr_not_first: ',' a=expr { a }

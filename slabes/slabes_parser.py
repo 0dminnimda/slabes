@@ -47,6 +47,8 @@ class SlabesParser(Parser):
     def statement(self) -> Optional[Any]:
         # statement: declaration '.' | expr compound_expr_not_first* '.'
         mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
         if (
             (declaration := self.declaration())
             and
@@ -61,7 +63,9 @@ class SlabesParser(Parser):
             and
             (self.expect('.'))
         ):
-            return [expr] + exprs;
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . CompoundExpression ( [expr] + exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 

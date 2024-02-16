@@ -51,6 +51,15 @@ class Type(AST):
 
 
 @dataclass
+class CompoundExpression(Statement):
+    body: list[Expression]
+
+    def fields(self):
+        yield from super().fields()
+        yield "body", self.body
+
+
+@dataclass
 class NumberType(Type):
     class Kind(Enum):
         TINY = auto()
