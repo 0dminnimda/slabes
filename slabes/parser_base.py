@@ -356,6 +356,76 @@ class ParserBase(Parser):
             return self._tokenizer.getnext()
         return None
 
+    @memoize
+    def BEGIN(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.BEGIN.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def END(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.END.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def UNTIL(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.UNTIL.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def DO(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.DO.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def CHECK(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.CHECK.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def GO(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.GO.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def RL(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.RL.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def RR(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.RR.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def SONAR(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.SONAR.value:
+            return self._tokenizer.getnext()
+        return None
+    
+    @memoize
+    def COMPASS(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.COMPASS.value:
+            return self._tokenizer.getnext()
+        return None
+
 
 def parser_main(parser_class: typing.Type[ParserBase]) -> None:
     argparser = argparse.ArgumentParser()

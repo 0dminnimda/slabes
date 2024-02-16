@@ -159,4 +159,4 @@ identifier[ast.Name]: a=NAME { self.make_name(a, LOCATIONS) }
 
 word: NAME | keyword
 
-keyword: number_type_raw | FIELD
+keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | GO | RL | RR | SONAR | COMPASS

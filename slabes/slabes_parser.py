@@ -420,21 +420,6 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def group(self) -> Optional[Any]:
-        # group: '(' comparison ')'
-        mark = self._mark()
-        if (
-            (self.expect('('))
-            and
-            (a := self.comparison())
-            and
-            (self.expect(')'))
-        ):
-            return a;
-        self._reset(mark)
-        return None;
-
-    @memoize
     def recover_atom(self) -> Optional[Any]:
         # recover_atom: word
         mark = self._mark()
@@ -446,6 +431,21 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return self . make_name ( a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def group(self) -> Optional[Any]:
+        # group: '(' comparison ')'
+        mark = self._mark()
+        if (
+            (self.expect('('))
+            and
+            (a := self.comparison())
+            and
+            (self.expect(')'))
+        ):
+            return a;
         self._reset(mark)
         return None;
 
@@ -556,7 +556,7 @@ class SlabesParser(Parser):
 
     @memoize
     def keyword(self) -> Optional[Any]:
-        # keyword: number_type_raw | FIELD
+        # keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | GO | RL | RR | SONAR | COMPASS
         mark = self._mark()
         if (
             (number_type_raw := self.number_type_raw())
@@ -567,6 +567,56 @@ class SlabesParser(Parser):
             (FIELD := self.FIELD())
         ):
             return FIELD;
+        self._reset(mark)
+        if (
+            (BEGIN := self.BEGIN())
+        ):
+            return BEGIN;
+        self._reset(mark)
+        if (
+            (END := self.END())
+        ):
+            return END;
+        self._reset(mark)
+        if (
+            (UNTIL := self.UNTIL())
+        ):
+            return UNTIL;
+        self._reset(mark)
+        if (
+            (DO := self.DO())
+        ):
+            return DO;
+        self._reset(mark)
+        if (
+            (CHECK := self.CHECK())
+        ):
+            return CHECK;
+        self._reset(mark)
+        if (
+            (GO := self.GO())
+        ):
+            return GO;
+        self._reset(mark)
+        if (
+            (RL := self.RL())
+        ):
+            return RL;
+        self._reset(mark)
+        if (
+            (RR := self.RR())
+        ):
+            return RR;
+        self._reset(mark)
+        if (
+            (SONAR := self.SONAR())
+        ):
+            return SONAR;
+        self._reset(mark)
+        if (
+            (COMPASS := self.COMPASS())
+        ):
+            return COMPASS;
         self._reset(mark)
         return None;
 
