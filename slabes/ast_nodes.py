@@ -144,7 +144,7 @@ class ArrayDeclaration(Statement):
 
 
 def dump(
-    node: AST,
+    node: AST | list,
     annotate_fields: bool = True,
     include_attributes: bool = False,
     *,
@@ -162,7 +162,7 @@ def dump(
     level. None (the default) selects the single line representation.
     """
 
-    if not isinstance(node, AST):
+    if not isinstance(node, (AST, list)):
         raise TypeError("expected AST, got %r" % node.__class__.__name__)
 
     if indent is not None and not isinstance(indent, str):
