@@ -18,12 +18,16 @@ class SlabesParser(Parser):
     def start(self) -> Optional[Any]:
         # start: statements $
         mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
         if (
-            (statements := self.statements())
+            (a := self.statements())
             and
-            (_endmarker := self.expect('ENDMARKER'))
+            (self.expect('ENDMARKER'))
         ):
-            return [statements, _endmarker];
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Module ( a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -33,30 +37,62 @@ class SlabesParser(Parser):
         # nullable=True
         mark = self._mark()
         if (
-            (_loop0_1 := self._loop0_1(),)
+            (a := self._loop0_1(),)
         ):
-            return _loop0_1;
+            return a;
         self._reset(mark)
         return None;
 
     @memoize
     def statement(self) -> Optional[Any]:
-        # statement: expr ((',' expr))* '.'
+        # statement: simple_stmt*
+        # nullable=True
         mark = self._mark()
+        if (
+            (a := self._loop0_2(),)
+        ):
+            return a;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def simple_stmt(self) -> Optional[Any]:
+        # simple_stmt: declaration '.' | expr compound_expr_not_first* '.'
+        mark = self._mark()
+        if (
+            (declaration := self.declaration())
+            and
+            (self.expect('.'))
+        ):
+            return declaration;
+        self._reset(mark)
         if (
             (expr := self.expr())
             and
-            (_loop0_2 := self._loop0_2(),)
+            (exprs := self._loop0_3(),)
             and
-            (literal := self.expect('.'))
+            (self.expect('.'))
         ):
-            return [expr, _loop0_2, literal];
+            return [expr] + exprs;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def compound_expr_not_first(self) -> Optional[Any]:
+        # compound_expr_not_first: ',' expr
+        mark = self._mark()
+        if (
+            (self.expect(','))
+            and
+            (a := self.expr())
+        ):
+            return a;
         self._reset(mark)
         return None;
 
     @memoize
     def expr(self) -> Optional[Any]:
-        # expr: atom | declaration
+        # expr: atom | invalid_expr
         mark = self._mark()
         if (
             (atom := self.atom())
@@ -64,9 +100,22 @@ class SlabesParser(Parser):
             return atom;
         self._reset(mark)
         if (
-            (declaration := self.declaration())
+            self.call_invalid_rules
+            and
+            (self.invalid_expr())
         ):
-            return declaration;
+            return None  # pragma: no cover;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_expr(self) -> Optional[Any]:
+        # invalid_expr: declaration
+        mark = self._mark()
+        if (
+            (a := self.declaration())
+        ):
+            return self . raise_syntax_error_at ( "expected expression, got declaration." " Did you mean to use '.' before/after this declaration?" , a );
         self._reset(mark)
         return None;
 
@@ -83,81 +132,55 @@ class SlabesParser(Parser):
 
     @memoize
     def number_declaration(self) -> Optional[Any]:
-        # number_declaration: number_type NAME+ '<<' signed_number | invalid_number_declaration
+        # number_declaration: number_type identifier+ '<<' signed_number
         mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
         if (
-            (number_type := self.number_type())
-            and
-            (_loop1_3 := self._loop1_3())
-            and
-            (literal := self.expect('<<'))
-            and
-            (signed_number := self.signed_number())
-        ):
-            return [number_type, _loop1_3, literal, signed_number];
-        self._reset(mark)
-        if (
-            self.call_invalid_rules
-            and
-            (self.invalid_number_declaration())
-        ):
-            return None  # pragma: no cover;
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def invalid_number_declaration(self) -> Optional[Any]:
-        # invalid_number_declaration: number_type ((keywords | NAME))+ '<<' signed_number
-        mark = self._mark()
-        if (
-            (self.number_type())
+            (type := self.number_type())
             and
             (names := self._loop1_4())
             and
             (self.expect('<<'))
             and
-            (self.signed_number())
+            (signed_number := self.signed_number())
         ):
-            return self . invalid_number_declaration_bad_names ( names );
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_number_declaration ( type , names , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
     @memoize
-    def number_type(self) -> Optional[Any]:
-        # number_type: TINY | SMALL | NORMAL | BIG
+    def atom(self) -> Optional[Any]:
+        # atom: NAME | signed_number
         mark = self._mark()
         if (
-            (TINY := self.TINY())
+            (name := self.name())
         ):
-            return TINY;
+            return name;
         self._reset(mark)
         if (
-            (SMALL := self.SMALL())
+            (signed_number := self.signed_number())
         ):
-            return SMALL;
-        self._reset(mark)
-        if (
-            (NORMAL := self.NORMAL())
-        ):
-            return NORMAL;
-        self._reset(mark)
-        if (
-            (BIG := self.BIG())
-        ):
-            return BIG;
+            return signed_number;
         self._reset(mark)
         return None;
 
     @memoize
     def signed_number(self) -> Optional[Any]:
-        # signed_number: sign? NUMBER
+        # signed_number: (sign?) NUMBER
         mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
         if (
-            (opt := self.sign(),)
+            (sign := self.sign(),)
             and
-            (number := self.number())
+            (num := self.number())
         ):
-            return [opt, number];
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . NumberLiteral ( ( - 1 ) ** ( sign is not None ) * int ( num . string , 32 ) , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -178,8 +201,38 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def atom(self) -> Optional[Any]:
-        # atom: NAME | NUMBER
+    def number_type(self) -> Optional[Any]:
+        # number_type: word
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.word())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_number_type ( a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def identifier(self) -> Optional[Any]:
+        # identifier: word
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.word())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_name ( a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def word(self) -> Optional[Any]:
+        # word: NAME | keywords
         mark = self._mark()
         if (
             (name := self.name())
@@ -187,9 +240,9 @@ class SlabesParser(Parser):
             return name;
         self._reset(mark)
         if (
-            (number := self.number())
+            (keywords := self.keywords())
         ):
-            return number;
+            return keywords;
         self._reset(mark)
         return None;
 
@@ -234,71 +287,42 @@ class SlabesParser(Parser):
 
     @memoize
     def _loop0_2(self) -> Optional[Any]:
-        # _loop0_2: (',' expr)
+        # _loop0_2: simple_stmt
         mark = self._mark()
         children = []
         while (
-            (_tmp_5 := self._tmp_5())
+            (simple_stmt := self.simple_stmt())
         ):
-            children.append(_tmp_5)
+            children.append(simple_stmt)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop1_3(self) -> Optional[Any]:
-        # _loop1_3: NAME
+    def _loop0_3(self) -> Optional[Any]:
+        # _loop0_3: compound_expr_not_first
         mark = self._mark()
         children = []
         while (
-            (name := self.name())
+            (compound_expr_not_first := self.compound_expr_not_first())
         ):
-            children.append(name)
+            children.append(compound_expr_not_first)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
     def _loop1_4(self) -> Optional[Any]:
-        # _loop1_4: (keywords | NAME)
+        # _loop1_4: identifier
         mark = self._mark()
         children = []
         while (
-            (_tmp_6 := self._tmp_6())
+            (identifier := self.identifier())
         ):
-            children.append(_tmp_6)
+            children.append(identifier)
             mark = self._mark()
         self._reset(mark)
         return children;
-
-    @memoize
-    def _tmp_5(self) -> Optional[Any]:
-        # _tmp_5: ',' expr
-        mark = self._mark()
-        if (
-            (literal := self.expect(','))
-            and
-            (expr := self.expr())
-        ):
-            return [literal, expr];
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def _tmp_6(self) -> Optional[Any]:
-        # _tmp_6: keywords | NAME
-        mark = self._mark()
-        if (
-            (keywords := self.keywords())
-        ):
-            return keywords;
-        self._reset(mark)
-        if (
-            (name := self.name())
-        ):
-            return name;
-        self._reset(mark)
-        return None;
 
     KEYWORDS = ()
     SOFT_KEYWORDS = ()

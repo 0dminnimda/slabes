@@ -15,7 +15,7 @@ from pprint import pprint
 from .lexer import lex, Keywords, _lexer
 from .errors import report_fatal_at
 from .location import Location
-from typing import Sequence, NoReturn
+from typing import NoReturn, Literal
 
 
 DEFAULT_FILENAME = "<unknown>"
@@ -39,7 +39,6 @@ class ParserBase(Parser):
         res = getattr(self, rule)()
 
         if res is None:
-            print("do shit")
             self.call_invalid_rules = True
 
             # Reset the parser cache to be able to restart parsing from the
@@ -98,23 +97,65 @@ class ParserBase(Parser):
         self._raise_syntax_error(message, start, last_token.start)
 
     def _raise_syntax_error(
-        self, message: str, start: tuple[int, int], end: tuple[int, int], line: str | None = None
+        self,
+        message: str,
+        start: tuple[int, int],
+        end: tuple[int, int],
+        line: str | None = None,
     ) -> NoReturn:
         loc = Location(self.filename, *start, *end)
         if line is None:
             line = _lexer.lines[start[0] - 1]
         report_fatal_at(loc, errors.SyntaxError, message, line)
 
-    def invalid_number_declaration_bad_names(
-        self, names: Sequence[TokenInfo]
-    ) -> None:
-        for name in names:
-            if name.type == token.NAME:
-                continue
+    def make_name(self, name: TokenInfo, **loc) -> ast.Name:
+        if name.type == token.NAME:
+            return ast.Name(name.string, **loc)
+        self.raise_syntax_error_at(
+            f"expected name, got keyword {token.tok_name[name.type]}",
+            name,
+        )
+
+    def validate_number_type(self, type: TokenInfo) -> None:
+        if type.type in (
+            Keywords.TINY.value,
+            Keywords.SMALL.value,
+            Keywords.NORMAL.value,
+            Keywords.BIG.value,
+        ):
             self.raise_syntax_error_at(
-                f"cannot use keywords as variable names, you used keyword {token.tok_name[name.type]}",
-                name,
+                f"expected number type, got {token.tok_name[type.type]}",
+                type,
             )
+
+    def make_number_type(self, token: TokenInfo, **loc) -> ast.NumberType:
+        if token.type == Keywords.TINY.value:
+            return ast.NumberType(ast.NumberType.Kind.TINY, **loc)
+        if token.type == Keywords.SMALL.value:
+            return ast.NumberType(ast.NumberType.Kind.SMALL, **loc)
+        if token.type == Keywords.NORMAL.value:
+            return ast.NumberType(ast.NumberType.Kind.NORMAL, **loc)
+        if token.type == Keywords.BIG.value:
+            return ast.NumberType(ast.NumberType.Kind.BIG, **loc)
+        # report_at(
+        #     Location.from_token(self.filename, token),
+        #     errors.SyntaxError,
+        #     f"expected number type, got {token.tok_name[token.type]}",
+        # )
+        return ast.NumberType(
+            ast.NumberType.Kind.NORMAL, **loc, error_recovered=True
+        )
+
+    def make_number_declaration(
+        self,
+        type: ast.NumberType,
+        names: list[ast.Name],
+        value: ast.NumberLiteral,
+        **loc,
+    ) -> ast.NumberDeclaration:
+        # self.validate_number_type(type)
+
+        return ast.NumberDeclaration(type=type, names=names, value=value, **loc)
 
     @memoize
     def TINY(self):

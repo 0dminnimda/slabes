@@ -24,37 +24,64 @@ if __name__ == '__main__':
 '''
 
 
-start: statements ENDMARKER
+start: a=statements ENDMARKER {
+    ast.Module(a, LOCATIONS)
+}
 
-statements: statement*
+statements: a=statement* { a }
 
-statement: expr (',' expr)* '.'
+statement: a=simple_stmt* { a }
+
+simple_stmt:
+    | declaration '.' {
+        declaration
+    }
+    | expr=expr exprs=compound_expr_not_first* '.' {
+        [expr] + exprs
+    }
+
+compound_expr_not_first: ',' a=expr { a }
 
 expr:
     | atom
-    | declaration
+    | invalid_expr
+
+invalid_expr:
+    | a=declaration {
+        self.raise_syntax_error_at(
+            "expected expression, got declaration."
+            " Did you mean to use '.' before/after this declaration?",
+        a)
+    }
 
 declaration: number_declaration
 
 number_declaration:
-    | number_type NAME+ '<<' signed_number
-    | invalid_number_declaration
-
-invalid_number_declaration:
-    | number_type names=(keywords|NAME)+ '<<' signed_number {
-        self.invalid_number_declaration_bad_names(names)
+    | type=number_type names=identifier+ '<<' signed_number {
+        self.make_number_declaration(type, names, signed_number, LOCATIONS)
     }
 
-number_type: TINY | SMALL | NORMAL | BIG
 
-signed_number: sign? NUMBER
+atom:
+    | NAME
+    | signed_number
+
+signed_number: sign=(sign?) num=NUMBER {
+    ast.NumberLiteral((-1)**(sign is not None) * int(num.string, 32), LOCATIONS)
+}
 
 sign:
     | '+'
     | '-'
 
-atom:
-    | NAME
-    | NUMBER
+number_type: a=word {
+    self.make_number_type(a, LOCATIONS)
+}
+
+identifier: a=word {
+    self.make_name(a, LOCATIONS)
+}
+
+word: NAME | keywords
 
 keywords: TINY | SMALL | NORMAL | BIG
