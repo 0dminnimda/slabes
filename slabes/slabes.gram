@@ -83,9 +83,10 @@ signed_number: sign=sign? num=NUMBER {
 
 sign: '+' | '-'
 
-number_type: a=(TINY | SMALL | NORMAL | BIG) {
+number_type: a=number_type_ {
     self.make_number_type(a, LOCATIONS)
 }
+number_type_: TINY | SMALL | NORMAL | BIG  # ugh bug in pegen
 
 identifier: a=NAME {
     self.make_name(a, LOCATIONS)

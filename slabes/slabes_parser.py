@@ -220,10 +220,23 @@ class SlabesParser(Parser):
 
     @memoize
     def number_type(self) -> Optional[Any]:
-        # number_type: TINY | SMALL | NORMAL | BIG
+        # number_type: number_type_
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
+        if (
+            (a := self.number_type_())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_number_type ( a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def number_type_(self) -> Optional[Any]:
+        # number_type_: TINY | SMALL | NORMAL | BIG
+        mark = self._mark()
         if (
             (TINY := self.TINY())
         ):
