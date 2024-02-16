@@ -6,7 +6,7 @@ from enum import Enum, auto
 
 from . import errors
 from .ply import lex as _ply_lex
-from .errors import report_fatal_at
+from .errors import report_fatal_at, report_at
 from .location import Location
 
 
@@ -31,6 +31,10 @@ class Keywords(Enum):
 token.N_TOKENS = Keywords.COMPASS.value + 1
 
 
+INITIAL_STATE = "INITIAL"
+INVALID_STATE = "INVALID"
+
+
 class Lexer:
     def __init__(self) -> None:
         self.ply_lexer: _ply_lex.Lexer = _ply_lex.lex(module=self, optimize=True)
@@ -41,12 +45,15 @@ class Lexer:
         self.lines = text.splitlines()
         self.cumlen = [0] + list(accumulate((len(it) + 1 for it in self.lines)))
         self.filename = filename
-        self.reset_ply(text, "INITIAL")
+        self.reset_ply(text)
 
-    def reset_ply(self, text: str, state: str):
-        self.ply_lexer.begin(state)
+    def reset_ply(self, text: str, state: str = INITIAL_STATE):
+        self.reset_ply_state(state)
         self.ply_lexer.input(text)
         self.ply_lexer.lineno = 1
+
+    def reset_ply_state(self, state: str = INITIAL_STATE):
+        self.ply_lexer.begin(state)
 
     def skip_ply_by(self, count: int):
         lexpos = self.ply_lexer.lexpos
@@ -63,7 +70,7 @@ class Lexer:
         token_name_to_type[k] = v.value
         token.tok_name[v.value] = k
 
-    states = (("INVALID", "exclusive"),)
+    states = ((INVALID_STATE, "exclusive"),)
 
     keywords = {k.lower(): k for k in Keywords.__members__.keys()}
 
@@ -115,18 +122,26 @@ class Lexer:
         loc = Location.from_token(self.filename, tok)
         if tok.string[0].isdigit() and not tok.string.isupper():
             msg = f"numbers have to be uppercase. Did you mean '{tok.string.upper()}'?"
+            t.type = "NUMBER"
         elif tok.string.startswith("_"):
             msg = f"numbers cannot start with an underscore. Did you mean '{tok.string.lstrip('_')}'?"
+            t.type = "NAME"
         elif not tok.string[0].isdigit() and not tok.string.islower():
             msg = f"names have to be lowercase. Did you mean '{tok.string.lower()}'?"
+            t.type = "NAME"
         elif not tok.string.isupper() and not tok.string.islower():
             # XXX: is it even reachable?
             msg = "numbers have to be uppercase and names have to be lowercase"
+            t.type = "NUMBER"
         elif tok.string.endswith("_"):
             msg = f"numbers cannot end with an underscore. Did you mean '{tok.string.rstrip('_')}'?"
+            t.type = "NAME"
         else:
             msg = "invalid number or name"
-        report_fatal_at(loc, errors.SyntaxError, msg, tok.line)
+            t.type = "NAME"
+        report_at(loc, errors.SyntaxError, msg, tok.line)
+        self.reset_ply_state()
+        return t
 
     def t_ANY_newline(self, t):
         r"\n+"
@@ -141,11 +156,9 @@ class Lexer:
         report_fatal_at(loc, errors.SyntaxError, msg, tok.line)
 
     def t_INITIAL_error(self, t):
-        self.reset_ply(self.text, "INVALID")
+        self.reset_ply(self.text, INVALID_STATE)
         self.skip_ply_by(t.lexpos)
-        for tok in self.ply_lexer:
-            pass  # should error
-        assert False, "error state passed without error"
+        return self.ply_lexer.token()
 
     def ply_token_to_py(self, tok):
         string = tok.value

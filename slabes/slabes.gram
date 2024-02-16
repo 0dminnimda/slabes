@@ -61,7 +61,7 @@ number_declaration:
 
 
 atom:
-    | NAME
+    | identifier
     | signed_number
 
 signed_number: sign=(sign?) num=NUMBER {

@@ -141,12 +141,12 @@ class SlabesParser(Parser):
 
     @memoize
     def atom(self) -> Optional[Any]:
-        # atom: NAME | signed_number
+        # atom: identifier | signed_number
         mark = self._mark()
         if (
-            (name := self.name())
+            (identifier := self.identifier())
         ):
-            return name;
+            return identifier;
         self._reset(mark)
         if (
             (signed_number := self.signed_number())

@@ -1,0 +1,30 @@
+8Fg,  # SyntaxError: numbers have to be uppercase. Did you mean '8F_G'?
+d_fH,  # SyntaxError: names have to be lowercase. Did you mean 'd_fh'?
+_3409583094DSF,  # SyntaxError: numbers cannot start with an underscore. Did you mean '3409583094DSF'?
+3409583094DSF_,  # SyntaxError: numbers cannot end with an underscore. Did you mean '3409583094DSF'?
+
+a3409583094sdf_, _a3409583094sdf_.
+
+sm a << 1.
+sma b << +1.
+smal c << -1.
+smal da << 0.
+# smalll,
+
+bi uuu << 42.
+no nor << 42.
+gg uuu << 42.
+
+# 4353FSDUFOSDIU + 434KE, (0 / 342) + (2 \ 342),
+
+# +4353FSDUFOSDIU,
+
+# -4353FSDUFOSDIU,
+
+# dfgdfgkdlfg,
+
+4353FSDUFOSDIU,
+
+# 4353FSDUFOSDIU+434KE + (0 / 342) + (2 \ 342),
+
+4353FSDUFOSDIU. # + 434KE + (0 * 342) + (2 * 342)
