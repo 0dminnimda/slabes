@@ -306,6 +306,7 @@ class ParserBase(Parser):
         **loc,
     ):
         error_recovered = False
+        prev_bass = None
         basic_assigns = []
         for to_left, group in self._producee_assignment_groups(prev_value, pairs):
             # ignore groups that don't result is any operations
@@ -314,7 +315,14 @@ class ParserBase(Parser):
 
             bass = self._make_basic_assignment(to_left, group)
             if bass is not None:
-                basic_assigns.append(bass)
+                if prev_bass is not None and prev_bass.value is bass.value:
+                    # merge basic assignments that share the same value
+                    # a << b >> c  <===>  c << a << b
+                    # a << b << c >> d >> e  <===>  e << d << b << a << c
+                    prev_bass.targets += bass.targets
+                else:
+                    prev_bass = bass
+                    basic_assigns.append(bass)
             else:
                 # skip erroneous targets
                 error_recovered = True
