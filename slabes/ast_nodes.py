@@ -236,11 +236,10 @@ def dump(
         if isinstance(node, AST):
             args = []
             allsimple = True
-            keywords = annotate_fields
             for name, value in node.fields():
                 value, simple = _format(value, level)
                 allsimple = allsimple and simple
-                if keywords:
+                if annotate_fields:
                     args.append(f"{name}={value}")
                 else:
                     args.append(value)
