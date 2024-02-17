@@ -46,23 +46,24 @@ class Expression(AST):
 
 
 @dataclass
-class Type(AST):
+class TypeRef(AST):
     pass
 
 
-@dataclass
-class NumberType(Type):
-    class Kind(Enum):
-        TINY = auto()
-        SMALL = auto()
-        NORMAL = auto()
-        BIG = auto()
+class NumbeType(Enum):
+    TINY = auto()
+    SMALL = auto()
+    NORMAL = auto()
+    BIG = auto()
 
-    kind: Kind
+
+@dataclass
+class NumbeTypeRef(TypeRef):
+    type: NumbeType
 
     def fields(self):
         yield from super().fields()
-        yield "kind", self.kind
+        yield "type", self.type
 
 
 @dataclass
@@ -178,7 +179,7 @@ class BinaryOperation(Expression):
 
 @dataclass
 class NumberDeclaration(Statement):
-    type: NumberType
+    type: NumbeTypeRef
     names: list[Name]
     value: NumericLiteral
 
@@ -191,8 +192,8 @@ class NumberDeclaration(Statement):
 
 @dataclass
 class ArrayDeclaration(Statement):
-    element_type: NumberType
-    size_type: NumberType
+    element_type: NumbeTypeRef
+    size_type: NumbeTypeRef
     names: list[Name]
     value: NumericLiteral
 

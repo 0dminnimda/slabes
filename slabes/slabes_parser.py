@@ -618,7 +618,7 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def number_type(self) -> Optional[ast . NumberType]:
+    def number_type(self) -> Optional[ast . NumbeTypeRef]:
         # number_type: number_type_raw
         mark = self._mark()
         tok = self._tokenizer.peek()

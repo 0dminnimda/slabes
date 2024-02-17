@@ -173,7 +173,7 @@ sign: '+' | '-'
 
 
 # ugh bug in pegen
-number_type[ast.NumberType]: a=number_type_raw { self.make_number_type(a, LOCATIONS) }
+number_type[ast.NumbeTypeRef]: a=number_type_raw { self.make_number_type(a, LOCATIONS) }
 number_type_raw: TINY | SMALL | NORMAL | BIG
 
 
