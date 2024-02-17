@@ -74,7 +74,7 @@ unti a do
     unti inneer do
         inneer << inneer - 2,
     .,
-    # , print( factorial )
+    # print( factorial ),
 .,
 
 # print( factorial ).
@@ -101,5 +101,11 @@ compass,  # relative angle to the exit of the room in minutes
 check sonar do
     b << c >> a,
 .,
+
+
+big boba  tiny az, normal lok begin
+    b << c >> a,
+    # return az + lok
+. end,
 
 .

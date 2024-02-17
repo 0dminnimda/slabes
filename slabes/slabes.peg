@@ -37,8 +37,43 @@ statement_group[list[ast.Statement]]:
 statement[ast.Statement]:
     | &UNTIL ~ until_stmt { until_stmt }
     | &CHECK ~ check_stmt { check_stmt }
+    | function_definition { function_definition }
     | declaration { declaration }
     | expr=expr { ast.SingleExpression(expr, LOCATIONS) }
+
+
+function_definition[ast.Function]:
+    | ret=number_type name=identifier args=(','.argument+)? ','? BEGIN b=statement_group END {
+        ast.Function(ret, name.value, [] if args is None else args, b, LOCATIONS)
+    }
+    | recover_function_definition
+
+recover_function_definition:
+    | ret=word name=word args=(','.argument+)? ','? BEGIN b=statement_group END {
+        ast.Function(
+            self.make_number_type(ret, **self.locs(ret)),
+            self.make_name(name, **self.locs(name)).value,
+            [] if args is None else args,
+            b,
+            LOCATIONS
+        )
+    }
+
+
+argument[ast.Argument]:
+    | tp=number_type id=identifier {
+        ast.Argument(tp, id, LOCATIONS)
+    }
+    | recover_argument
+
+recover_argument:
+    | tp=word id=word {
+        ast.Argument(
+            self.make_number_type(tp, **self.locs(tp)),
+            self.make_name(id, **self.locs(id)),
+            LOCATIONS
+        )
+    }
 
 
 until_stmt[ast.Until]:

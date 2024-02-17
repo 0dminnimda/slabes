@@ -60,7 +60,7 @@ class SlabesParser(Parser):
 
     @memoize
     def statement(self) -> Optional[ast . Statement]:
-        # statement: &UNTIL ~ until_stmt | &CHECK ~ check_stmt | declaration | expr
+        # statement: &UNTIL ~ until_stmt | &CHECK ~ check_stmt | function_definition | declaration | expr
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -89,6 +89,11 @@ class SlabesParser(Parser):
         if cut:
             return None;
         if (
+            (function_definition := self.function_definition())
+        ):
+            return function_definition;
+        self._reset(mark)
+        if (
             (declaration := self.declaration())
         ):
             return declaration;
@@ -99,6 +104,104 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return ast . SingleExpression ( expr , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def function_definition(self) -> Optional[ast . Function]:
+        # function_definition: number_type identifier (','.argument+)? ','? BEGIN statement_group END | recover_function_definition
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (ret := self.number_type())
+            and
+            (name := self.identifier())
+            and
+            (args := self._gather_5(),)
+            and
+            (self.expect(','),)
+            and
+            (self.BEGIN())
+            and
+            (b := self.statement_group())
+            and
+            (self.END())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Function ( ret , name . value , [] if args is None else args , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (recover_function_definition := self.recover_function_definition())
+        ):
+            return recover_function_definition;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def recover_function_definition(self) -> Optional[Any]:
+        # recover_function_definition: word word (','.argument+)? ','? BEGIN statement_group END
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (ret := self.word())
+            and
+            (name := self.word())
+            and
+            (args := self._gather_7(),)
+            and
+            (self.expect(','),)
+            and
+            (self.BEGIN())
+            and
+            (b := self.statement_group())
+            and
+            (self.END())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Function ( self . make_number_type ( ret , ** self . locs ( ret ) ) , self . make_name ( name , ** self . locs ( name ) ) . value , [] if args is None else args , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def argument(self) -> Optional[ast . Argument]:
+        # argument: number_type identifier | recover_argument
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (tp := self.number_type())
+            and
+            (id := self.identifier())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Argument ( tp , id , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (recover_argument := self.recover_argument())
+        ):
+            return recover_argument;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def recover_argument(self) -> Optional[Any]:
+        # recover_argument: word word
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (tp := self.word())
+            and
+            (id := self.word())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Argument ( self . make_number_type ( tp , ** self . locs ( tp ) ) , self . make_name ( id , ** self . locs ( id ) ) , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -180,7 +283,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.number_type())
             and
-            (names := self._loop1_5())
+            (names := self._loop1_9())
             and
             (self.expect('<<'))
             and
@@ -210,7 +313,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.word())
             and
-            (names := self._loop1_6())
+            (names := self._loop1_10())
             and
             (self.expect('<<'))
             and
@@ -231,7 +334,7 @@ class SlabesParser(Parser):
         if (
             (type := self.number_type())
             and
-            (names := self._loop1_7())
+            (names := self._loop1_11())
             and
             (self.expect('<<'))
             and
@@ -257,7 +360,7 @@ class SlabesParser(Parser):
         if (
             (type := self.word())
             and
-            (names := self._loop1_8())
+            (names := self._loop1_12())
             and
             (self.expect('<<'))
             and
@@ -307,7 +410,7 @@ class SlabesParser(Parser):
         if (
             (start := self.comparison())
             and
-            (rest := self._loop1_9())
+            (rest := self._loop1_13())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
@@ -439,7 +542,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_10(),)
+            (exprs := self._loop0_14(),)
             and
             (self.expect(']'))
         ):
@@ -465,7 +568,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_11(),)
+            (exprs := self._loop0_15(),)
             and
             (self.expect(']'))
         ):
@@ -754,7 +857,7 @@ class SlabesParser(Parser):
         mark = self._mark()
         children = []
         while (
-            (self._loop1_12())
+            (self._loop1_16())
             and
             (elem := self.statement())
         ):
@@ -792,99 +895,159 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_5(self) -> Optional[Any]:
-        # _loop1_5: identifier
+    def _loop0_6(self) -> Optional[Any]:
+        # _loop0_6: ',' argument
         mark = self._mark()
         children = []
         while (
-            (identifier := self.identifier())
+            (self.expect(','))
+            and
+            (elem := self.argument())
         ):
-            children.append(identifier)
+            children.append(elem)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop1_6(self) -> Optional[Any]:
-        # _loop1_6: word
+    def _gather_5(self) -> Optional[Any]:
+        # _gather_5: argument _loop0_6
+        mark = self._mark()
+        if (
+            (elem := self.argument())
+            is not None
+            and
+            (seq := self._loop0_6())
+            is not None
+        ):
+            return [elem] + seq;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def _loop0_8(self) -> Optional[Any]:
+        # _loop0_8: ',' argument
         mark = self._mark()
         children = []
         while (
-            (word := self.word())
+            (self.expect(','))
+            and
+            (elem := self.argument())
         ):
-            children.append(word)
+            children.append(elem)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop1_7(self) -> Optional[Any]:
-        # _loop1_7: identifier
+    def _gather_7(self) -> Optional[Any]:
+        # _gather_7: argument _loop0_8
         mark = self._mark()
-        children = []
-        while (
-            (identifier := self.identifier())
+        if (
+            (elem := self.argument())
+            is not None
+            and
+            (seq := self._loop0_8())
+            is not None
         ):
-            children.append(identifier)
-            mark = self._mark()
+            return [elem] + seq;
         self._reset(mark)
-        return children;
-
-    @memoize
-    def _loop1_8(self) -> Optional[Any]:
-        # _loop1_8: word
-        mark = self._mark()
-        children = []
-        while (
-            (word := self.word())
-        ):
-            children.append(word)
-            mark = self._mark()
-        self._reset(mark)
-        return children;
+        return None;
 
     @memoize
     def _loop1_9(self) -> Optional[Any]:
-        # _loop1_9: (('<<' | '>>') comparison)
+        # _loop1_9: identifier
         mark = self._mark()
         children = []
         while (
-            (_tmp_13 := self._tmp_13())
+            (identifier := self.identifier())
         ):
-            children.append(_tmp_13)
+            children.append(identifier)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop0_10(self) -> Optional[Any]:
-        # _loop0_10: expr
+    def _loop1_10(self) -> Optional[Any]:
+        # _loop1_10: word
         mark = self._mark()
         children = []
         while (
-            (expr := self.expr())
+            (word := self.word())
         ):
-            children.append(expr)
+            children.append(word)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop0_11(self) -> Optional[Any]:
-        # _loop0_11: expr
+    def _loop1_11(self) -> Optional[Any]:
+        # _loop1_11: identifier
         mark = self._mark()
         children = []
         while (
-            (expr := self.expr())
+            (identifier := self.identifier())
         ):
-            children.append(expr)
+            children.append(identifier)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
     def _loop1_12(self) -> Optional[Any]:
-        # _loop1_12: ','
+        # _loop1_12: word
+        mark = self._mark()
+        children = []
+        while (
+            (word := self.word())
+        ):
+            children.append(word)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_13(self) -> Optional[Any]:
+        # _loop1_13: (('<<' | '>>') comparison)
+        mark = self._mark()
+        children = []
+        while (
+            (_tmp_17 := self._tmp_17())
+        ):
+            children.append(_tmp_17)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_14(self) -> Optional[Any]:
+        # _loop0_14: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_15(self) -> Optional[Any]:
+        # _loop0_15: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_16(self) -> Optional[Any]:
+        # _loop1_16: ','
         mark = self._mark()
         children = []
         while (
@@ -896,21 +1059,21 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _tmp_13(self) -> Optional[Any]:
-        # _tmp_13: ('<<' | '>>') comparison
+    def _tmp_17(self) -> Optional[Any]:
+        # _tmp_17: ('<<' | '>>') comparison
         mark = self._mark()
         if (
-            (_tmp_14 := self._tmp_14())
+            (_tmp_18 := self._tmp_18())
             and
             (comparison := self.comparison())
         ):
-            return [_tmp_14, comparison];
+            return [_tmp_18, comparison];
         self._reset(mark)
         return None;
 
     @memoize
-    def _tmp_14(self) -> Optional[Any]:
-        # _tmp_14: '<<' | '>>'
+    def _tmp_18(self) -> Optional[Any]:
+        # _tmp_18: '<<' | '>>'
         mark = self._mark()
         if (
             (literal := self.expect('<<'))

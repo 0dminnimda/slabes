@@ -227,6 +227,32 @@ class Check(Statement):
         yield "body", self.body
 
 
+@dataclass
+class Argument(AST):
+    type: NumbeTypeRef
+    name: Name
+
+    def fields(self):
+        yield from super().fields()
+        yield "type", self.type
+        yield "name", self.name
+
+
+@dataclass
+class Function(Statement):
+    return_type: NumbeTypeRef
+    name: str
+    args: list[Argument]
+    body: list[Statement]
+
+    def fields(self):
+        yield from super().fields()
+        yield "return_type", self.return_type
+        yield "name", self.name
+        yield "args", self.args
+        yield "body", self.body
+
+
 def dump(
     node: AST | list,
     annotate_fields: bool = True,
