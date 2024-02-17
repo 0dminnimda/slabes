@@ -214,23 +214,15 @@ def dump(
     else:
         good_indent = indent
 
-    def _next_level(node, level: int) -> int:
+    def _format(node, level: int) -> tuple[str, bool]:
         if isinstance(node, AST):
             if include_attributes:
-                return level + 1
-
-            two_or_more_fields = any(
-                i > 0 for i, _ in enumerate(node.fields())
-            )
-            if two_or_more_fields:
-                return level + 1
+                level += 1
+            elif sum(1 for _ in node.fields()) >= 2:
+                level += 1
         elif isinstance(node, list):
             if len(node) >= 2:
-                return level + 1
-        return level
-
-    def _format(node, level: int) -> tuple[str, bool]:
-        level = _next_level(node, level)
+                level += 1
 
         if good_indent is not None:
             prefix = "\n" + good_indent * level
