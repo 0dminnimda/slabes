@@ -442,30 +442,12 @@ class SlabesParser(Parser):
 
     @memoize
     def expr(self) -> Optional[ast . Expression]:
-        # expr: assignment | invalid_expr
+        # expr: assignment
         mark = self._mark()
         if (
             (assignment := self.assignment())
         ):
             return assignment;
-        self._reset(mark)
-        if (
-            self.call_invalid_rules
-            and
-            (self.invalid_expr())
-        ):
-            return None  # pragma: no cover;
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def invalid_expr(self) -> Optional[Any]:
-        # invalid_expr: declaration
-        mark = self._mark()
-        if (
-            (a := self.declaration())
-        ):
-            return self . report_syntax_error_at ( "expected expression, got declaration." " Did you mean to use '.' before/after this declaration?" , a , fatal = True , );
         self._reset(mark)
         return None;
 

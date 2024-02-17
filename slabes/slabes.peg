@@ -162,18 +162,6 @@ recover_number_declaration[ast.NumberDeclaration]:
 
 expr[ast.Expression]:
     | assignment
-    | invalid_expr
-
-invalid_expr:
-    | a=declaration {
-        self.report_syntax_error_at(
-            "expected expression, got declaration."
-            " Did you mean to use '.' before/after this declaration?",
-            a,
-            fatal=True,
-        )
-    }
-
 
 assignment:
     | start=comparison rest=(('<<' | '>>') comparison)+ { self.make_assignment(start, rest, LOCATIONS) }
