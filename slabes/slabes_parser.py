@@ -28,33 +28,33 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . Module ( a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . Module ( a [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
     @memoize
-    def statements(self) -> Optional[list [ast . Statement]]:
+    def statements(self) -> Optional[tuple [list [ast . Statement]]]:
         # statements: statement_group+
         mark = self._mark()
         if (
             (a := self._loop1_1())
         ):
-            return list ( itertools . chain . from_iterable ( a ) );
+            return ( list ( itertools . chain . from_iterable ( i [0] for i in a ) ) , );
         self._reset(mark)
         return None;
 
     @memoize
-    def statement_group(self) -> Optional[list [ast . Statement]]:
-        # statement_group: (','+).statement+ ','* '.'
+    def statement_group(self) -> Optional[tuple [list [ast . Statement]]]:
+        # statement_group: ((','+).statement+)? ','* '.'
         mark = self._mark()
         if (
-            (stmts := self._gather_2())
+            (stmts := self._gather_2(),)
             and
             (self._loop0_4(),)
             and
             (self.expect('.'))
         ):
-            return stmts;
+            return ( [] if stmts is None else stmts , );
         self._reset(mark)
         return None;
 
@@ -130,7 +130,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . Function ( ret , name . value , [] if args is None else args , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . Function ( ret , name . value , [] if args is None else args , b [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (recover_function_definition := self.recover_function_definition())
@@ -162,7 +162,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . Function ( self . make_number_type ( ret , ** self . locs ( ret ) ) , self . make_name ( name , ** self . locs ( name ) ) . value , [] if args is None else args , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . Function ( self . make_number_type ( ret , ** self . locs ( ret ) ) , self . make_name ( name , ** self . locs ( name ) ) . value , [] if args is None else args , b [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -222,7 +222,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . Until ( expr , statement_group , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . Until ( expr , statement_group [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -243,7 +243,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . Check ( expr , statement_group , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . Check ( expr , statement_group [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 

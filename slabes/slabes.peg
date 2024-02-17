@@ -25,14 +25,16 @@ if __name__ == '__main__':
 '''
 
 
-start[ast.Module]: a=statements ENDMARKER { ast.Module(a, LOCATIONS) }
+start[ast.Module]: a=statements ENDMARKER { ast.Module(a[0], LOCATIONS) }
 
-statements[list[ast.Statement]]:
-    | a=statement_group+ { list(itertools.chain.from_iterable(a)) }
+# need to return a tuple, because bool([]) == False, wihch pegen trets a rule failure
+statements[tuple[list[ast.Statement]]]:
+    | a=statement_group+ { (list(itertools.chain.from_iterable(i[0] for i in a)),) }
 
 
-statement_group[list[ast.Statement]]:
-    | stmts=(','+).statement+ ','* '.' { stmts }
+# need to return a tuple, because bool([]) == False, wihch pegen trets a rule failure
+statement_group[tuple[list[ast.Statement]]]:
+    | stmts=((','+).statement+)? ','* '.' { ([] if stmts is None else stmts,) }
 
 statement[ast.Statement]:
     | &UNTIL ~ until_stmt { until_stmt }
@@ -44,7 +46,7 @@ statement[ast.Statement]:
 
 function_definition[ast.Function]:
     | ret=number_type name=identifier args=(','.argument+)? ','? BEGIN b=statement_group END {
-        ast.Function(ret, name.value, [] if args is None else args, b, LOCATIONS)
+        ast.Function(ret, name.value, [] if args is None else args, b[0], LOCATIONS)
     }
     | recover_function_definition
 
@@ -54,7 +56,7 @@ recover_function_definition:
             self.make_number_type(ret, **self.locs(ret)),
             self.make_name(name, **self.locs(name)).value,
             [] if args is None else args,
-            b,
+            b[0],
             LOCATIONS
         )
     }
@@ -78,13 +80,13 @@ recover_argument:
 
 until_stmt[ast.Until]:
     | UNTIL expr DO statement_group { 
-        ast.Until(expr, statement_group, LOCATIONS)
+        ast.Until(expr, statement_group[0], LOCATIONS)
     }
 
 
 check_stmt[ast.Check]:
     | CHECK expr DO statement_group { 
-        ast.Check(expr, statement_group, LOCATIONS)
+        ast.Check(expr, statement_group[0], LOCATIONS)
     }
 
 

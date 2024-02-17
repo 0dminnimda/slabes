@@ -108,4 +108,7 @@ big boba  tiny az, normal lok begin
     # return az + lok
 . end,
 
+ti a  tiny az begin
+. end,
+
 .
