@@ -73,4 +73,6 @@ aaa boba  begin
 # until a  b << c  # fatal
 # aaa boba  begin  # fatal
 
+# return  # fatal
+
 .

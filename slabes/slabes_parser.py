@@ -60,7 +60,7 @@ class SlabesParser(Parser):
 
     @memoize
     def statement(self) -> Optional[ast . Statement]:
-        # statement: &UNTIL ~ until_stmt | &CHECK ~ check_stmt | function_definition | declaration | expr
+        # statement: &UNTIL ~ until_stmt | &CHECK ~ check_stmt | &RETURN ~ return_stmt | function_definition | declaration | expr
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -85,6 +85,18 @@ class SlabesParser(Parser):
             (check_stmt := self.check_stmt())
         ):
             return check_stmt;
+        self._reset(mark)
+        if cut:
+            return None;
+        cut = False
+        if (
+            (self.positive_lookahead(self.RETURN, ))
+            and
+            (cut := True)
+            and
+            (return_stmt := self.return_stmt())
+        ):
+            return return_stmt;
         self._reset(mark)
         if cut:
             return None;
@@ -230,6 +242,41 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return ast . Argument ( self . make_number_type ( tp , ** self . locs ( tp ) ) , self . make_name ( id , ** self . locs ( id ) ) , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def return_stmt(self) -> Optional[ast . Return]:
+        # return_stmt: RETURN expr | invalid_return_stmt
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (self.RETURN())
+            and
+            (expr := self.expr())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Return ( expr , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_return_stmt())
+        ):
+            return None  # pragma: no cover;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_return_stmt(self) -> Optional[Any]:
+        # invalid_return_stmt: RETURN
+        mark = self._mark()
+        if (
+            (b := self.RETURN())
+        ):
+            return self . report_syntax_error_at ( "cannot return nothing" , b , fatal = True , );
         self._reset(mark)
         return None;
 

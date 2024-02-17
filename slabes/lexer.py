@@ -26,9 +26,11 @@ class Keywords(Enum):
     RR = auto()
     SONAR = auto()
     COMPASS = auto()
+    RETURN = auto()
+    N_TOKENS = auto()
 
 
-token.N_TOKENS = Keywords.COMPASS.value + 1
+token.N_TOKENS = Keywords.N_TOKENS.value
 
 
 INITIAL_STATE = "INITIAL"
@@ -67,12 +69,18 @@ class Lexer:
     }
 
     for k, v in Keywords.__members__.items():
+        if v is Keywords.N_TOKENS:
+            continue
         token_name_to_type[k] = v.value
         token.tok_name[v.value] = k
 
     states = ((INVALID_STATE, "exclusive"),)
 
-    keywords = {k.lower(): k for k in Keywords.__members__.keys()}
+    keywords = {
+        k.lower(): k
+        for k, v in Keywords.__members__.items()
+        if v is not Keywords.N_TOKENS
+    }
 
     # keywords can be shortened while those shortenings are unique
     # small = smal = sma = sm, but not s, because of sonar
@@ -102,7 +110,7 @@ class Lexer:
         "<>", "<=", "=>",
 
         # brackets
-        "(", ")", "[", "]"
+        "(", ")", "[", "]",
     ]
     token_name_to_type.update(dict.fromkeys(multichar_literals, token.OP))
 

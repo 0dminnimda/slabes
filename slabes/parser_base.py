@@ -482,6 +482,13 @@ class ParserBase(Parser):
             return self._tokenizer.getnext()
         return None
 
+    @memoize
+    def RETURN(self):
+        tok = self._tokenizer.peek()
+        if tok.type == Keywords.RETURN.value:
+            return self._tokenizer.getnext()
+        return None
+
 
 def parser_main(parser_class: typing.Type[ParserBase]) -> None:
     argparser = argparse.ArgumentParser()

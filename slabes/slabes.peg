@@ -39,6 +39,7 @@ statement_group[tuple[list[ast.Statement]]]:
 statement[ast.Statement]:
     | &UNTIL ~ until_stmt { until_stmt }
     | &CHECK ~ check_stmt { check_stmt }
+    | &RETURN ~ return_stmt { return_stmt }
     | function_definition { function_definition }
     | declaration { declaration }
     | expr=expr { ast.SingleExpression(expr, LOCATIONS) }
@@ -84,6 +85,22 @@ recover_argument:
             self.make_number_type(tp, **self.locs(tp)),
             self.make_name(id, **self.locs(id)),
             LOCATIONS
+        )
+    }
+
+
+return_stmt[ast.Return]:
+    | RETURN expr {
+        ast.Return(expr, LOCATIONS)
+    }
+    | invalid_return_stmt
+
+invalid_return_stmt:
+    | b=RETURN {
+        self.report_syntax_error_at(
+            "cannot return nothing",
+            b,
+            fatal=True,
         )
     }
 

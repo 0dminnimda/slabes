@@ -264,6 +264,15 @@ class Function(Statement):
         yield "body", self.body
 
 
+@dataclass
+class Return(Statement):
+    value: Expression
+
+    def fields(self):
+        yield from super().fields()
+        yield "value", self.value
+
+
 def dump(
     node: AST | list,
     annotate_fields: bool = True,
