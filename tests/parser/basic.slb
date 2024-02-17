@@ -63,3 +63,20 @@ ggg1 << a >> fdgdf [ a b ] >> c >> ggg2 << c << ggg3.  # ggg1 = a, fdgdf [ b a ]
 a + c \ dpp / fll \ fll - dpp / h.
 
 ggg1 << a + b - c >> ggg2 >> c.
+
+bi factorial << 1.
+a << 5.
+
+unti a do
+    a << a - 1,
+    factorial << factorial \ (a + 1),
+    sma inneer << +5,
+    unti inneer do
+    inneer << inneer - 2
+    .
+    # , print( factorial )
+.,
+
+# print( factorial ).
+
+fi norm tin abobui babaoi << F, gpp.

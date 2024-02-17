@@ -51,8 +51,8 @@ class Type(AST):
 
 
 @dataclass
-class CompoundExpression(Statement):
-    body: list[Expression]
+class SingleExpression(Statement):
+    body: Expression
 
     def fields(self):
         yield from super().fields()
@@ -185,6 +185,17 @@ class ArrayDeclaration(Statement):
         yield "size_type", self.size_type
         yield "names", self.names
         yield "value", self.value
+
+
+@dataclass
+class Until(Statement):
+    test: Expression
+    body: list[Statement]
+
+    def fields(self):
+        yield from super().fields()
+        yield "test", self.test
+        yield "body", self.body
 
 
 def dump(

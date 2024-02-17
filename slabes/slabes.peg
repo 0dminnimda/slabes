@@ -8,6 +8,7 @@
 
 import sys
 import tokenize
+import itertools
 import typing
 
 from typing import Any, Optional
@@ -26,15 +27,23 @@ if __name__ == '__main__':
 
 start[ast.Module]: a=statements ENDMARKER { ast.Module(a, LOCATIONS) }
 
+statements[list[ast.Statement]]:
+    | a=statement_group+ { list(itertools.chain.from_iterable(a)) }
 
-statements[list[ast.Statement]]: a=statement* { a }
+
+statement_group[list[ast.Statement]]:
+    | stmts=','.statement+ '.' { stmts }
 
 statement[ast.Statement]:
-    | a=incomplete_statement '.' { a }
-
-incomplete_statement[ast.Statement]:
+    | &UNTIL ~ until_stmt { until_stmt }
     | declaration { declaration }
-    | exprs=','.expr+ { ast.CompoundExpression(exprs, LOCATIONS) }
+    | expr=expr { ast.SingleExpression(expr, LOCATIONS) }
+
+
+until_stmt[ast.Until]:
+    | UNTIL expr DO statement_group { 
+        ast.Until(expr, statement_group, LOCATIONS)
+    }
 
 
 declaration[ast.NumberDeclaration]:

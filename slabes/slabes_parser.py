@@ -4,6 +4,7 @@
 
 import sys
 import tokenize
+import itertools
 import typing
 
 from typing import Any, Optional
@@ -33,46 +34,78 @@ class SlabesParser(Parser):
 
     @memoize
     def statements(self) -> Optional[list [ast . Statement]]:
-        # statements: statement*
-        # nullable=True
+        # statements: statement_group+
         mark = self._mark()
         if (
-            (a := self._loop0_1(),)
+            (a := self._loop1_1())
         ):
-            return a;
+            return list ( itertools . chain . from_iterable ( a ) );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def statement_group(self) -> Optional[list [ast . Statement]]:
+        # statement_group: ','.statement+ '.'
+        mark = self._mark()
+        if (
+            (stmts := self._gather_2())
+            and
+            (self.expect('.'))
+        ):
+            return stmts;
         self._reset(mark)
         return None;
 
     @memoize
     def statement(self) -> Optional[ast . Statement]:
-        # statement: incomplete_statement '.'
-        mark = self._mark()
-        if (
-            (a := self.incomplete_statement())
-            and
-            (self.expect('.'))
-        ):
-            return a;
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def incomplete_statement(self) -> Optional[ast . Statement]:
-        # incomplete_statement: declaration | ','.expr+
+        # statement: &UNTIL ~ until_stmt | declaration | expr
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
+        cut = False
+        if (
+            (self.positive_lookahead(self.UNTIL, ))
+            and
+            (cut := True)
+            and
+            (until_stmt := self.until_stmt())
+        ):
+            return until_stmt;
+        self._reset(mark)
+        if cut:
+            return None;
         if (
             (declaration := self.declaration())
         ):
             return declaration;
         self._reset(mark)
         if (
-            (exprs := self._gather_2())
+            (expr := self.expr())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . CompoundExpression ( exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . SingleExpression ( expr , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def until_stmt(self) -> Optional[ast . Until]:
+        # until_stmt: UNTIL expr DO statement_group
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (self.UNTIL())
+            and
+            (expr := self.expr())
+            and
+            (self.DO())
+            and
+            (statement_group := self.statement_group())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Until ( expr , statement_group , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
@@ -637,27 +670,27 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def _loop0_1(self) -> Optional[Any]:
-        # _loop0_1: statement
+    def _loop1_1(self) -> Optional[Any]:
+        # _loop1_1: statement_group
         mark = self._mark()
         children = []
         while (
-            (statement := self.statement())
+            (statement_group := self.statement_group())
         ):
-            children.append(statement)
+            children.append(statement_group)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
     def _loop0_3(self) -> Optional[Any]:
-        # _loop0_3: ',' expr
+        # _loop0_3: ',' statement
         mark = self._mark()
         children = []
         while (
             (self.expect(','))
             and
-            (elem := self.expr())
+            (elem := self.statement())
         ):
             children.append(elem)
             mark = self._mark()
@@ -666,10 +699,10 @@ class SlabesParser(Parser):
 
     @memoize
     def _gather_2(self) -> Optional[Any]:
-        # _gather_2: expr _loop0_3
+        # _gather_2: statement _loop0_3
         mark = self._mark()
         if (
-            (elem := self.expr())
+            (elem := self.statement())
             is not None
             and
             (seq := self._loop0_3())
