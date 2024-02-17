@@ -193,9 +193,19 @@ class ParserBase(Parser):
         self,
         type: ast.NumberType,
         names: list[ast.Name],
-        value: ast.NumericLiteral,
+        value: ast.AST,
         **loc,
     ) -> ast.NumberDeclaration:
+        if not isinstance(value, ast.NumericLiteral):
+            self.report_syntax_error_at(
+                "number can be initialized only with a constant number", value
+            )
+            value = ast.NumericLiteral(
+                0,
+                ast.NumericLiteral.Signedness.UNSIGNED,
+                error_recovered=True,
+                **self.locs(value),
+            )
         return ast.NumberDeclaration(type, names, value, **loc)
 
     def make_array_declaration(
@@ -203,9 +213,19 @@ class ParserBase(Parser):
         elem_t: ast.NumberType,
         size_t: ast.NumberType,
         names: list[ast.Name],
-        value: ast.NumericLiteral,
+        value: ast.AST,
         **loc,
     ) -> ast.ArrayDeclaration:
+        if not isinstance(value, ast.NumericLiteral):
+            self.report_syntax_error_at(
+                "array can be initialized only with a constant number", value
+            )
+            value = ast.NumericLiteral(
+                0,
+                ast.NumericLiteral.Signedness.UNSIGNED,
+                error_recovered=True,
+                **self.locs(value),
+            )
         return ast.ArrayDeclaration(elem_t, size_t, names, value, **loc)
 
     def make_subscript(
@@ -370,63 +390,63 @@ class ParserBase(Parser):
         if tok.type == Keywords.BEGIN.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def END(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.END.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def UNTIL(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.UNTIL.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def DO(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.DO.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def CHECK(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.CHECK.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def GO(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.GO.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def RL(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.RL.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def RR(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.RR.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def SONAR(self):
         tok = self._tokenizer.peek()
         if tok.type == Keywords.SONAR.value:
             return self._tokenizer.getnext()
         return None
-    
+
     @memoize
     def COMPASS(self):
         tok = self._tokenizer.peek()

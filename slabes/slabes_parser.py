@@ -45,21 +45,30 @@ class SlabesParser(Parser):
 
     @memoize
     def statement(self) -> Optional[ast . Statement]:
-        # statement: declaration '.' | ','.expr+ '.'
+        # statement: incomplete_statement '.'
+        mark = self._mark()
+        if (
+            (a := self.incomplete_statement())
+            and
+            (self.expect('.'))
+        ):
+            return a;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def incomplete_statement(self) -> Optional[ast . Statement]:
+        # incomplete_statement: declaration | ','.expr+
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
         if (
             (declaration := self.declaration())
-            and
-            (self.expect('.'))
         ):
             return declaration;
         self._reset(mark)
         if (
             (exprs := self._gather_2())
-            and
-            (self.expect('.'))
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
@@ -85,7 +94,7 @@ class SlabesParser(Parser):
 
     @memoize
     def array_declaration(self) -> Optional[ast . ArrayDeclaration]:
-        # array_declaration: FIELD number_type number_type identifier+ '<<' signed_number | recover_array_declaration
+        # array_declaration: FIELD number_type number_type identifier+ '<<' expr | recover_array_declaration
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -100,11 +109,11 @@ class SlabesParser(Parser):
             and
             (self.expect('<<'))
             and
-            (signed_number := self.signed_number())
+            (val := self.expr())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return self . make_array_declaration ( elem_t , size_t , names , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return self . make_array_declaration ( elem_t , size_t , names , val , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (recover_array_declaration := self.recover_array_declaration())
@@ -115,7 +124,7 @@ class SlabesParser(Parser):
 
     @memoize
     def recover_array_declaration(self) -> Optional[ast . ArrayDeclaration]:
-        # recover_array_declaration: FIELD word word word+ '<<' signed_number
+        # recover_array_declaration: FIELD word word word+ '<<' expr
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -130,17 +139,17 @@ class SlabesParser(Parser):
             and
             (self.expect('<<'))
             and
-            (signed_number := self.signed_number())
+            (val := self.expr())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return self . make_array_declaration ( self . make_number_type ( elem_t , ** self . locs ( elem_t ) ) , self . make_number_type ( size_t , ** self . locs ( size_t ) ) , [self . make_name ( name , ** self . locs ( name ) ) for name in names] , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return self . make_array_declaration ( self . make_number_type ( elem_t , ** self . locs ( elem_t ) ) , self . make_number_type ( size_t , ** self . locs ( size_t ) ) , [self . make_name ( name , ** self . locs ( name ) ) for name in names] , val , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 
     @memoize
     def number_declaration(self) -> Optional[ast . NumberDeclaration]:
-        # number_declaration: number_type identifier+ '<<' signed_number | recover_number_declaration
+        # number_declaration: number_type identifier+ '<<' expr | recover_number_declaration
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -151,11 +160,11 @@ class SlabesParser(Parser):
             and
             (self.expect('<<'))
             and
-            (signed_number := self.signed_number())
+            (val := self.expr())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return self . make_number_declaration ( type , names , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return self . make_number_declaration ( type , names , val , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (recover_number_declaration := self.recover_number_declaration())
@@ -166,7 +175,7 @@ class SlabesParser(Parser):
 
     @memoize
     def recover_number_declaration(self) -> Optional[ast . NumberDeclaration]:
-        # recover_number_declaration: word word+ '<<' signed_number
+        # recover_number_declaration: word word+ '<<' expr
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -177,11 +186,11 @@ class SlabesParser(Parser):
             and
             (self.expect('<<'))
             and
-            (signed_number := self.signed_number())
+            (val := self.expr())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return self . make_number_declaration ( self . make_number_type ( type , ** self . locs ( type ) ) , [self . make_name ( name , ** self . locs ( name ) ) for name in names] , signed_number , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return self . make_number_declaration ( self . make_number_type ( type , ** self . locs ( type ) ) , [self . make_name ( name , ** self . locs ( name ) ) for name in names] , val , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 

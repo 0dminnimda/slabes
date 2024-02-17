@@ -30,8 +30,11 @@ start[ast.Module]: a=statements ENDMARKER { ast.Module(a, LOCATIONS) }
 statements[list[ast.Statement]]: a=statement* { a }
 
 statement[ast.Statement]:
-    | declaration '.' { declaration }
-    | exprs=','.expr+ '.' { ast.CompoundExpression(exprs, LOCATIONS) }
+    | a=incomplete_statement '.' { a }
+
+incomplete_statement[ast.Statement]:
+    | declaration { declaration }
+    | exprs=','.expr+ { ast.CompoundExpression(exprs, LOCATIONS) }
 
 
 declaration[ast.NumberDeclaration]:
@@ -40,35 +43,35 @@ declaration[ast.NumberDeclaration]:
 
 
 array_declaration[ast.ArrayDeclaration]:
-    | FIELD elem_t=number_type size_t=number_type names=identifier+ '<<' signed_number {
-        self.make_array_declaration(elem_t, size_t, names, signed_number, LOCATIONS)
+    | FIELD elem_t=number_type size_t=number_type names=identifier+ '<<' val=expr {
+        self.make_array_declaration(elem_t, size_t, names, val, LOCATIONS)
     }
     | recover_array_declaration
 
 recover_array_declaration[ast.ArrayDeclaration]:
-    | FIELD elem_t=word size_t=word names=word+ '<<' signed_number {
+    | FIELD elem_t=word size_t=word names=word+ '<<' val=expr {
         self.make_array_declaration(
             self.make_number_type(elem_t, **self.locs(elem_t)),
             self.make_number_type(size_t, **self.locs(size_t)),
             [self.make_name(name, **self.locs(name)) for name in names],
-            signed_number,
+            val,
             LOCATIONS
         )
     }
 
 
 number_declaration[ast.NumberDeclaration]:
-    | type=number_type names=identifier+ '<<' signed_number {
-        self.make_number_declaration(type, names, signed_number, LOCATIONS)
+    | type=number_type names=identifier+ '<<' val=expr {
+        self.make_number_declaration(type, names, val, LOCATIONS)
     }
     | recover_number_declaration
 
 recover_number_declaration[ast.NumberDeclaration]:
-    | type=word names=word+ '<<' signed_number {
+    | type=word names=word+ '<<' val=expr {
         self.make_number_declaration(
             self.make_number_type(type, **self.locs(type)),
             [self.make_name(name, **self.locs(name)) for name in names],
-            signed_number,
+            val,
             LOCATIONS
         )
     }
