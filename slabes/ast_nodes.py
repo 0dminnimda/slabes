@@ -51,15 +51,6 @@ class Type(AST):
 
 
 @dataclass
-class SingleExpression(Statement):
-    body: Expression
-
-    def fields(self):
-        yield from super().fields()
-        yield "body", self.body
-
-
-@dataclass
 class NumberType(Type):
     class Kind(Enum):
         TINY = auto()
@@ -135,7 +126,33 @@ class Assignment(Expression):
         yield "parts", self.parts
 
 
-class BinaryKind(Enum):
+class RobOp(Enum):
+    MOVE = auto()
+    ROT_LEFT = auto()
+    ROT_RIGHT = auto()
+    SONAR = auto()
+    COMPASS = auto()
+
+
+@dataclass
+class RobotOperation(Expression):
+    op: RobOp
+
+    def fields(self):
+        yield from super().fields()
+        yield "op", self.op
+
+
+@dataclass
+class SingleExpression(Statement):
+    body: Expression
+
+    def fields(self):
+        yield from super().fields()
+        yield "body", self.body
+
+
+class BinOp(Enum):
     ADD = auto()
     SUB = auto()
     MUL = auto()
@@ -149,7 +166,7 @@ class BinaryKind(Enum):
 @dataclass
 class BinaryOperation(Expression):
     lhs: Expression
-    op: BinaryKind
+    op: BinOp
     rhs: Expression
 
     def fields(self):

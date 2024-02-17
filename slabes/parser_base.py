@@ -349,6 +349,23 @@ class ParserBase(Parser):
 
         return ast.Assignment(basic_assigns, **loc, error_recovered=error_recovered)
 
+    def make_robot_op(self, tok: TokenInfo, **loc) -> ast.RobotOperation:
+        if tok.type == Keywords.GO.value:
+            return ast.RobotOperation(ast.RobOp.MOVE, **loc)
+        if tok.type == Keywords.RL.value:
+            return ast.RobotOperation(ast.RobOp.ROT_LEFT, **loc)
+        if tok.type == Keywords.RR.value:
+            return ast.RobotOperation(ast.RobOp.ROT_RIGHT, **loc)
+        if tok.type == Keywords.SONAR.value:
+            return ast.RobotOperation(ast.RobOp.SONAR, **loc)
+        if tok.type == Keywords.COMPASS.value:
+            return ast.RobotOperation(ast.RobOp.COMPASS, **loc)
+
+        self.report_syntax_error_at(
+            f"expected robot operation, got {token.tok_name[tok.type]}", tok, fatal=True
+        )
+        assert False, "unreachable"
+
     @memoize
     def TINY(self):
         tok = self._tokenizer.peek()

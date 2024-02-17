@@ -119,13 +119,13 @@ comparison:
     | sum
 
 sum:
-    | a=sum '+' b=term { ast.BinaryOperation(a, ast.BinaryKind.ADD, b, LOCATIONS) }
-    | a=sum '-' b=term { ast.BinaryOperation(a, ast.BinaryKind.SUB, b, LOCATIONS) }
+    | a=sum '+' b=term { ast.BinaryOperation(a, ast.BinOp.ADD, b, LOCATIONS) }
+    | a=sum '-' b=term { ast.BinaryOperation(a, ast.BinOp.SUB, b, LOCATIONS) }
     | term
 
 term:
-    | a=term '\\' b=factor { ast.BinaryOperation(a, ast.BinaryKind.MUL, b, LOCATIONS) }
-    | a=term '/' b=factor { ast.BinaryOperation(a, ast.BinaryKind.DIV, b, LOCATIONS) }
+    | a=term '\\' b=factor { ast.BinaryOperation(a, ast.BinOp.MUL, b, LOCATIONS) }
+    | a=term '/' b=factor { ast.BinaryOperation(a, ast.BinOp.DIV, b, LOCATIONS) }
     | factor
 
 factor (memo):
@@ -152,6 +152,7 @@ recover_subscript[ast.Subscript]:
 atom:
     | identifier
     | signed_number
+    | robot_operation
     | &'(' group
     | recover_atom
 
@@ -160,6 +161,10 @@ recover_atom: a=word { self.make_name(a, LOCATIONS) }
 
 group:
     | '(' a=comparison ')' { a }
+
+
+robot_operation[ast.RobotOperation]: op=robot_keyword { self.make_robot_op(op, LOCATIONS) }
+robot_keyword: GO | RL | RR | SONAR | COMPASS
 
 
 signed_number[ast.NumericLiteral]: sign=sign? num=NUMBER { self.make_number(num, sign, LOCATIONS) }
@@ -177,4 +182,4 @@ identifier[ast.Name]: a=NAME { self.make_name(a, LOCATIONS) }
 
 word: NAME | keyword
 
-keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | GO | RL | RR | SONAR | COMPASS
+keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | robot_keyword

@@ -88,4 +88,18 @@ check a do
 .,
 
 
+go,  # goes 1 unit in the current direction
+
+rl,  # rotates 60 degrees to the left
+
+rr,  # rotates 60 degrees to the right
+
+sonar,  # returns whether there is something ahead in [-120, 120] degrees from the current direction
+
+compass,  # relative angle to the exit of the room in minutes
+
+check sonar do
+    b << c >> a,
+.,
+
 .

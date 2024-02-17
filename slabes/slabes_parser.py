@@ -346,7 +346,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . BinaryOperation ( a , ast . BinaryKind . ADD , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . BinaryOperation ( a , ast . BinOp . ADD , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (a := self.sum())
@@ -357,7 +357,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . BinaryOperation ( a , ast . BinaryKind . SUB , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . BinaryOperation ( a , ast . BinOp . SUB , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (term := self.term())
@@ -381,7 +381,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . BinaryOperation ( a , ast . BinaryKind . MUL , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . BinaryOperation ( a , ast . BinOp . MUL , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (a := self.term())
@@ -392,7 +392,7 @@ class SlabesParser(Parser):
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
-            return ast . BinaryOperation ( a , ast . BinaryKind . DIV , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+            return ast . BinaryOperation ( a , ast . BinOp . DIV , b , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (factor := self.factor())
@@ -477,7 +477,7 @@ class SlabesParser(Parser):
 
     @memoize
     def atom(self) -> Optional[Any]:
-        # atom: identifier | signed_number | &'(' group | recover_atom
+        # atom: identifier | signed_number | robot_operation | &'(' group | recover_atom
         mark = self._mark()
         if (
             (identifier := self.identifier())
@@ -488,6 +488,11 @@ class SlabesParser(Parser):
             (signed_number := self.signed_number())
         ):
             return signed_number;
+        self._reset(mark)
+        if (
+            (robot_operation := self.robot_operation())
+        ):
+            return robot_operation;
         self._reset(mark)
         if (
             (self.positive_lookahead(self.expect, '('))
@@ -530,6 +535,52 @@ class SlabesParser(Parser):
             (self.expect(')'))
         ):
             return a;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def robot_operation(self) -> Optional[ast . RobotOperation]:
+        # robot_operation: robot_keyword
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (op := self.robot_keyword())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_robot_op ( op , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def robot_keyword(self) -> Optional[Any]:
+        # robot_keyword: GO | RL | RR | SONAR | COMPASS
+        mark = self._mark()
+        if (
+            (GO := self.GO())
+        ):
+            return GO;
+        self._reset(mark)
+        if (
+            (RL := self.RL())
+        ):
+            return RL;
+        self._reset(mark)
+        if (
+            (RR := self.RR())
+        ):
+            return RR;
+        self._reset(mark)
+        if (
+            (SONAR := self.SONAR())
+        ):
+            return SONAR;
+        self._reset(mark)
+        if (
+            (COMPASS := self.COMPASS())
+        ):
+            return COMPASS;
         self._reset(mark)
         return None;
 
@@ -640,7 +691,7 @@ class SlabesParser(Parser):
 
     @memoize
     def keyword(self) -> Optional[Any]:
-        # keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | GO | RL | RR | SONAR | COMPASS
+        # keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | robot_keyword
         mark = self._mark()
         if (
             (number_type_raw := self.number_type_raw())
@@ -678,29 +729,9 @@ class SlabesParser(Parser):
             return CHECK;
         self._reset(mark)
         if (
-            (GO := self.GO())
+            (robot_keyword := self.robot_keyword())
         ):
-            return GO;
-        self._reset(mark)
-        if (
-            (RL := self.RL())
-        ):
-            return RL;
-        self._reset(mark)
-        if (
-            (RR := self.RR())
-        ):
-            return RR;
-        self._reset(mark)
-        if (
-            (SONAR := self.SONAR())
-        ):
-            return SONAR;
-        self._reset(mark)
-        if (
-            (COMPASS := self.COMPASS())
-        ):
-            return COMPASS;
+            return robot_keyword;
         self._reset(mark)
         return None;
 
