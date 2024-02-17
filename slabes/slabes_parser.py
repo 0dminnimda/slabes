@@ -78,13 +78,20 @@ class SlabesParser(Parser):
 
     @memoize
     def declaration(self) -> Optional[ast . NumberDeclaration]:
-        # declaration: array_declaration | number_declaration
+        # declaration: &FIELD ~ array_declaration | number_declaration
         mark = self._mark()
+        cut = False
         if (
+            (self.positive_lookahead(self.FIELD, ))
+            and
+            (cut := True)
+            and
             (array_declaration := self.array_declaration())
         ):
             return array_declaration;
         self._reset(mark)
+        if cut:
+            return None;
         if (
             (number_declaration := self.number_declaration())
         ):
@@ -402,7 +409,7 @@ class SlabesParser(Parser):
 
     @memoize
     def atom(self) -> Optional[Any]:
-        # atom: identifier | signed_number | group | recover_atom
+        # atom: identifier | signed_number | &'(' group | recover_atom
         mark = self._mark()
         if (
             (identifier := self.identifier())
@@ -415,6 +422,8 @@ class SlabesParser(Parser):
             return signed_number;
         self._reset(mark)
         if (
+            (self.positive_lookahead(self.expect, '('))
+            and
             (group := self.group())
         ):
             return group;

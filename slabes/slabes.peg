@@ -38,7 +38,7 @@ incomplete_statement[ast.Statement]:
 
 
 declaration[ast.NumberDeclaration]:
-    | array_declaration
+    | &FIELD ~ array_declaration
     | number_declaration
 
 
@@ -136,7 +136,7 @@ recover_subscript[ast.Subscript]:
 atom:
     | identifier
     | signed_number
-    | group
+    | &'(' group
     | recover_atom
 
 recover_atom: a=word { self.make_name(a, LOCATIONS) }
