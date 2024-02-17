@@ -45,10 +45,12 @@ class SlabesParser(Parser):
 
     @memoize
     def statement_group(self) -> Optional[list [ast . Statement]]:
-        # statement_group: ','.statement+ '.'
+        # statement_group: (','+).statement+ ','* '.'
         mark = self._mark()
         if (
             (stmts := self._gather_2())
+            and
+            (self._loop0_4(),)
             and
             (self.expect('.'))
         ):
@@ -145,7 +147,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.number_type())
             and
-            (names := self._loop1_4())
+            (names := self._loop1_5())
             and
             (self.expect('<<'))
             and
@@ -175,7 +177,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.word())
             and
-            (names := self._loop1_5())
+            (names := self._loop1_6())
             and
             (self.expect('<<'))
             and
@@ -196,7 +198,7 @@ class SlabesParser(Parser):
         if (
             (type := self.number_type())
             and
-            (names := self._loop1_6())
+            (names := self._loop1_7())
             and
             (self.expect('<<'))
             and
@@ -222,7 +224,7 @@ class SlabesParser(Parser):
         if (
             (type := self.word())
             and
-            (names := self._loop1_7())
+            (names := self._loop1_8())
             and
             (self.expect('<<'))
             and
@@ -272,7 +274,7 @@ class SlabesParser(Parser):
         if (
             (start := self.comparison())
             and
-            (rest := self._loop1_8())
+            (rest := self._loop1_9())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
@@ -404,7 +406,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_9(),)
+            (exprs := self._loop0_10(),)
             and
             (self.expect(']'))
         ):
@@ -430,7 +432,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_10(),)
+            (exprs := self._loop0_11(),)
             and
             (self.expect(']'))
         ):
@@ -684,11 +686,11 @@ class SlabesParser(Parser):
 
     @memoize
     def _loop0_3(self) -> Optional[Any]:
-        # _loop0_3: ',' statement
+        # _loop0_3: (','+) statement
         mark = self._mark()
         children = []
         while (
-            (self.expect(','))
+            (self._loop1_12())
             and
             (elem := self.statement())
         ):
@@ -713,34 +715,21 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def _loop1_4(self) -> Optional[Any]:
-        # _loop1_4: identifier
+    def _loop0_4(self) -> Optional[Any]:
+        # _loop0_4: ','
         mark = self._mark()
         children = []
         while (
-            (identifier := self.identifier())
+            (literal := self.expect(','))
         ):
-            children.append(identifier)
+            children.append(literal)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
     def _loop1_5(self) -> Optional[Any]:
-        # _loop1_5: word
-        mark = self._mark()
-        children = []
-        while (
-            (word := self.word())
-        ):
-            children.append(word)
-            mark = self._mark()
-        self._reset(mark)
-        return children;
-
-    @memoize
-    def _loop1_6(self) -> Optional[Any]:
-        # _loop1_6: identifier
+        # _loop1_5: identifier
         mark = self._mark()
         children = []
         while (
@@ -752,8 +741,8 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_7(self) -> Optional[Any]:
-        # _loop1_7: word
+    def _loop1_6(self) -> Optional[Any]:
+        # _loop1_6: word
         mark = self._mark()
         children = []
         while (
@@ -765,27 +754,40 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_8(self) -> Optional[Any]:
-        # _loop1_8: (('<<' | '>>') comparison)
+    def _loop1_7(self) -> Optional[Any]:
+        # _loop1_7: identifier
         mark = self._mark()
         children = []
         while (
-            (_tmp_11 := self._tmp_11())
+            (identifier := self.identifier())
         ):
-            children.append(_tmp_11)
+            children.append(identifier)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop0_9(self) -> Optional[Any]:
-        # _loop0_9: expr
+    def _loop1_8(self) -> Optional[Any]:
+        # _loop1_8: word
         mark = self._mark()
         children = []
         while (
-            (expr := self.expr())
+            (word := self.word())
         ):
-            children.append(expr)
+            children.append(word)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_9(self) -> Optional[Any]:
+        # _loop1_9: (('<<' | '>>') comparison)
+        mark = self._mark()
+        children = []
+        while (
+            (_tmp_13 := self._tmp_13())
+        ):
+            children.append(_tmp_13)
             mark = self._mark()
         self._reset(mark)
         return children;
@@ -804,21 +806,47 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _tmp_11(self) -> Optional[Any]:
-        # _tmp_11: ('<<' | '>>') comparison
+    def _loop0_11(self) -> Optional[Any]:
+        # _loop0_11: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_12(self) -> Optional[Any]:
+        # _loop1_12: ','
+        mark = self._mark()
+        children = []
+        while (
+            (literal := self.expect(','))
+        ):
+            children.append(literal)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _tmp_13(self) -> Optional[Any]:
+        # _tmp_13: ('<<' | '>>') comparison
         mark = self._mark()
         if (
-            (_tmp_12 := self._tmp_12())
+            (_tmp_14 := self._tmp_14())
             and
             (comparison := self.comparison())
         ):
-            return [_tmp_12, comparison];
+            return [_tmp_14, comparison];
         self._reset(mark)
         return None;
 
     @memoize
-    def _tmp_12(self) -> Optional[Any]:
-        # _tmp_12: '<<' | '>>'
+    def _tmp_14(self) -> Optional[Any]:
+        # _tmp_14: '<<' | '>>'
         mark = self._mark()
         if (
             (literal := self.expect('<<'))

@@ -32,7 +32,7 @@ statements[list[ast.Statement]]:
 
 
 statement_group[list[ast.Statement]]:
-    | stmts=','.statement+ '.' { stmts }
+    | stmts=(','+).statement+ ','* '.' { stmts }
 
 statement[ast.Statement]:
     | &UNTIL ~ until_stmt { until_stmt }
