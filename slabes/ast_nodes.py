@@ -255,15 +255,18 @@ def dump(
                 return f"{type(node).__name__}({args[0]})", allsimple
             return f"{type(node).__name__}({prefix}{sep.join(args)}{postfix})", False
         elif isinstance(node, list):
-            if not node:
-                return "[]", True
-            if len(node) == 1:
-                value, simple = _format(node[0], level)
-                return f"[{value}]", simple
-            return (
-                f"[{prefix}{sep.join(_format(x, level)[0] for x in node)}{postfix}]",
-                False,
-            )
+            args = []
+            allsimple = True
+            for value in node:
+                value, simple = _format(value, level)
+                allsimple = allsimple and simple
+                args.append(value)
+
+            if allsimple and len(args) <= 3:
+                return f"[{', '.join(args)}]", not args
+            if len(args) == 1:
+                return f"[{args[0]}]", allsimple
+            return f"[{prefix}{sep.join(args)}{postfix}]", False
 
         return repr(node), True
 
