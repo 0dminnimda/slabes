@@ -64,3 +64,13 @@ aaa boba  begin
     0
 . end.
 
+# call(  # fatal
+# gg [  # fatal
+# ( 0   # fatal
+
+
+# check a  b << c  # fatal
+# until a  b << c  # fatal
+# aaa boba  begin  # fatal
+
+.

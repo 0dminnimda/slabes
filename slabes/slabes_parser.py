@@ -109,7 +109,7 @@ class SlabesParser(Parser):
 
     @memoize
     def function_definition(self) -> Optional[ast . Function]:
-        # function_definition: number_type identifier (','.argument+)? ','? BEGIN statement_group END | recover_function_definition
+        # function_definition: number_type identifier (','.argument+)? ','? BEGIN statement_group END | recover_function_definition | invalid_function_definition
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -137,6 +137,13 @@ class SlabesParser(Parser):
         ):
             return recover_function_definition;
         self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_function_definition())
+        ):
+            return None  # pragma: no cover;
+        self._reset(mark)
         return None;
 
     @memoize
@@ -163,6 +170,27 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return ast . Function ( self . make_number_type ( ret , ** self . locs ( ret ) ) , self . make_name ( name , ** self . locs ( name ) ) . value , [] if args is None else args , b [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_function_definition(self) -> Optional[Any]:
+        # invalid_function_definition: word word (','.argument+)? ','? BEGIN statement_group?
+        mark = self._mark()
+        if (
+            (self.word())
+            and
+            (self.word())
+            and
+            (self._gather_9(),)
+            and
+            (self.expect(','),)
+            and
+            (b := self.BEGIN())
+            and
+            (self.statement_group(),)
+        ):
+            return self . report_syntax_error_at ( "'BEGIN' was never matched with 'END'" , b , fatal = True , );
         self._reset(mark)
         return None;
 
@@ -207,7 +235,7 @@ class SlabesParser(Parser):
 
     @memoize
     def until_stmt(self) -> Optional[ast . Until]:
-        # until_stmt: UNTIL expr DO statement_group
+        # until_stmt: UNTIL expr DO statement_group | invalid_until_stmt
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -224,11 +252,31 @@ class SlabesParser(Parser):
             end_lineno, end_col_offset = tok.end
             return ast . Until ( expr , statement_group [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_until_stmt())
+        ):
+            return None  # pragma: no cover;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_until_stmt(self) -> Optional[Any]:
+        # invalid_until_stmt: UNTIL expr?
+        mark = self._mark()
+        if (
+            (b := self.UNTIL())
+            and
+            (self.expr(),)
+        ):
+            return self . report_syntax_error_at ( "'UNTIL' was never matched with 'DO'" , b , fatal = True , );
+        self._reset(mark)
         return None;
 
     @memoize
     def check_stmt(self) -> Optional[ast . Check]:
-        # check_stmt: CHECK expr DO statement_group
+        # check_stmt: CHECK expr DO statement_group | invalid_check_stmt
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -244,6 +292,26 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return ast . Check ( expr , statement_group [0] , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_check_stmt())
+        ):
+            return None  # pragma: no cover;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_check_stmt(self) -> Optional[Any]:
+        # invalid_check_stmt: CHECK expr?
+        mark = self._mark()
+        if (
+            (b := self.CHECK())
+            and
+            (self.expr(),)
+        ):
+            return self . report_syntax_error_at ( "'CHECK' was never matched with 'DO'" , b , fatal = True , );
         self._reset(mark)
         return None;
 
@@ -283,7 +351,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.number_type())
             and
-            (names := self._loop1_9())
+            (names := self._loop1_11())
             and
             (self.expect('<<'))
             and
@@ -313,7 +381,7 @@ class SlabesParser(Parser):
             and
             (size_t := self.word())
             and
-            (names := self._loop1_10())
+            (names := self._loop1_12())
             and
             (self.expect('<<'))
             and
@@ -334,7 +402,7 @@ class SlabesParser(Parser):
         if (
             (type := self.number_type())
             and
-            (names := self._loop1_11())
+            (names := self._loop1_13())
             and
             (self.expect('<<'))
             and
@@ -360,7 +428,7 @@ class SlabesParser(Parser):
         if (
             (type := self.word())
             and
-            (names := self._loop1_12())
+            (names := self._loop1_14())
             and
             (self.expect('<<'))
             and
@@ -410,7 +478,7 @@ class SlabesParser(Parser):
         if (
             (start := self.comparison())
             and
-            (rest := self._loop1_13())
+            (rest := self._loop1_15())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
@@ -538,7 +606,7 @@ class SlabesParser(Parser):
 
     @logger
     def subscript(self) -> Optional[ast . Subscript]:
-        # subscript: primary '[' expr* ']' | recover_subscript
+        # subscript: primary '[' expr* ']' | recover_subscript | invalid_subscript
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -547,7 +615,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_14(),)
+            (exprs := self._loop0_16(),)
             and
             (self.expect(']'))
         ):
@@ -559,6 +627,13 @@ class SlabesParser(Parser):
             (recover_subscript := self.recover_subscript())
         ):
             return recover_subscript;
+        self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_subscript())
+        ):
+            return None  # pragma: no cover;
         self._reset(mark)
         return None;
 
@@ -573,7 +648,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_15(),)
+            (exprs := self._loop0_17(),)
             and
             (self.expect(']'))
         ):
@@ -583,9 +658,24 @@ class SlabesParser(Parser):
         self._reset(mark)
         return None;
 
+    @memoize
+    def invalid_subscript(self) -> Optional[Any]:
+        # invalid_subscript: word '[' expr*
+        mark = self._mark()
+        if (
+            (self.word())
+            and
+            (b := self.expect('['))
+            and
+            (self._loop0_18(),)
+        ):
+            return self . report_syntax_error_at ( "'[' was never closed" , b , fatal = True , );
+        self._reset(mark)
+        return None;
+
     @logger
     def call(self) -> Optional[ast . Call]:
-        # call: primary '(' expr* ')' | recover_call
+        # call: primary '(' expr* ')' | recover_call | invalid_call
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -594,7 +684,7 @@ class SlabesParser(Parser):
             and
             (self.expect('('))
             and
-            (exprs := self._loop0_16(),)
+            (exprs := self._loop0_19(),)
             and
             (self.expect(')'))
         ):
@@ -606,6 +696,13 @@ class SlabesParser(Parser):
             (recover_call := self.recover_call())
         ):
             return recover_call;
+        self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_call())
+        ):
+            return None  # pragma: no cover;
         self._reset(mark)
         return None;
 
@@ -620,13 +717,28 @@ class SlabesParser(Parser):
             and
             (self.expect('('))
             and
-            (exprs := self._loop0_17(),)
+            (exprs := self._loop0_20(),)
             and
             (self.expect(')'))
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return self . make_call ( self . make_name ( a , ** self . locs ( a ) ) , exprs , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_call(self) -> Optional[Any]:
+        # invalid_call: word '(' expr*
+        mark = self._mark()
+        if (
+            (self.word())
+            and
+            (b := self.expect('('))
+            and
+            (self._loop0_21(),)
+        ):
+            return self . report_syntax_error_at ( "'(' was never closed" , b , fatal = True , );
         self._reset(mark)
         return None;
 
@@ -680,7 +792,7 @@ class SlabesParser(Parser):
 
     @memoize
     def group(self) -> Optional[Any]:
-        # group: '(' comparison ')'
+        # group: '(' comparison ')' | invalid_group
         mark = self._mark()
         if (
             (self.expect('('))
@@ -690,6 +802,26 @@ class SlabesParser(Parser):
             (self.expect(')'))
         ):
             return a;
+        self._reset(mark)
+        if (
+            self.call_invalid_rules
+            and
+            (self.invalid_group())
+        ):
+            return None  # pragma: no cover;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def invalid_group(self) -> Optional[Any]:
+        # invalid_group: '(' comparison
+        mark = self._mark()
+        if (
+            (b := self.expect('('))
+            and
+            (self.comparison())
+        ):
+            return self . report_syntax_error_at ( "'(' was never closed" , b , fatal = True , );
         self._reset(mark)
         return None;
 
@@ -909,7 +1041,7 @@ class SlabesParser(Parser):
         mark = self._mark()
         children = []
         while (
-            (self._loop1_18())
+            (self._loop1_22())
             and
             (elem := self.statement())
         ):
@@ -1007,30 +1139,34 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
-    def _loop1_9(self) -> Optional[Any]:
-        # _loop1_9: identifier
+    def _loop0_10(self) -> Optional[Any]:
+        # _loop0_10: ',' argument
         mark = self._mark()
         children = []
         while (
-            (identifier := self.identifier())
+            (self.expect(','))
+            and
+            (elem := self.argument())
         ):
-            children.append(identifier)
+            children.append(elem)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop1_10(self) -> Optional[Any]:
-        # _loop1_10: word
+    def _gather_9(self) -> Optional[Any]:
+        # _gather_9: argument _loop0_10
         mark = self._mark()
-        children = []
-        while (
-            (word := self.word())
+        if (
+            (elem := self.argument())
+            is not None
+            and
+            (seq := self._loop0_10())
+            is not None
         ):
-            children.append(word)
-            mark = self._mark()
+            return [elem] + seq;
         self._reset(mark)
-        return children;
+        return None;
 
     @memoize
     def _loop1_11(self) -> Optional[Any]:
@@ -1060,39 +1196,39 @@ class SlabesParser(Parser):
 
     @memoize
     def _loop1_13(self) -> Optional[Any]:
-        # _loop1_13: (('<<' | '>>') comparison)
+        # _loop1_13: identifier
         mark = self._mark()
         children = []
         while (
-            (_tmp_19 := self._tmp_19())
+            (identifier := self.identifier())
         ):
-            children.append(_tmp_19)
+            children.append(identifier)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop0_14(self) -> Optional[Any]:
-        # _loop0_14: expr
+    def _loop1_14(self) -> Optional[Any]:
+        # _loop1_14: word
         mark = self._mark()
         children = []
         while (
-            (expr := self.expr())
+            (word := self.word())
         ):
-            children.append(expr)
+            children.append(word)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop0_15(self) -> Optional[Any]:
-        # _loop0_15: expr
+    def _loop1_15(self) -> Optional[Any]:
+        # _loop1_15: (('<<' | '>>') comparison)
         mark = self._mark()
         children = []
         while (
-            (expr := self.expr())
+            (_tmp_23 := self._tmp_23())
         ):
-            children.append(expr)
+            children.append(_tmp_23)
             mark = self._mark()
         self._reset(mark)
         return children;
@@ -1124,8 +1260,60 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_18(self) -> Optional[Any]:
-        # _loop1_18: ','
+    def _loop0_18(self) -> Optional[Any]:
+        # _loop0_18: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_19(self) -> Optional[Any]:
+        # _loop0_19: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_20(self) -> Optional[Any]:
+        # _loop0_20: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop0_21(self) -> Optional[Any]:
+        # _loop0_21: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_22(self) -> Optional[Any]:
+        # _loop1_22: ','
         mark = self._mark()
         children = []
         while (
@@ -1137,21 +1325,21 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _tmp_19(self) -> Optional[Any]:
-        # _tmp_19: ('<<' | '>>') comparison
+    def _tmp_23(self) -> Optional[Any]:
+        # _tmp_23: ('<<' | '>>') comparison
         mark = self._mark()
         if (
-            (_tmp_20 := self._tmp_20())
+            (_tmp_24 := self._tmp_24())
             and
             (comparison := self.comparison())
         ):
-            return [_tmp_20, comparison];
+            return [_tmp_24, comparison];
         self._reset(mark)
         return None;
 
     @memoize
-    def _tmp_20(self) -> Optional[Any]:
-        # _tmp_20: '<<' | '>>'
+    def _tmp_24(self) -> Optional[Any]:
+        # _tmp_24: '<<' | '>>'
         mark = self._mark()
         if (
             (literal := self.expect('<<'))

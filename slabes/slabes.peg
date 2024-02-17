@@ -49,6 +49,7 @@ function_definition[ast.Function]:
         ast.Function(ret, name.value, [] if args is None else args, b[0], LOCATIONS)
     }
     | recover_function_definition
+    | invalid_function_definition
 
 recover_function_definition:
     | ret=word name=word args=(','.argument+)? ','? BEGIN b=statement_group END {
@@ -58,6 +59,15 @@ recover_function_definition:
             [] if args is None else args,
             b[0],
             LOCATIONS
+        )
+    }
+
+invalid_function_definition:
+    | word word (','.argument+)? ','? b=BEGIN statement_group? {
+        self.report_syntax_error_at(
+            "'BEGIN' was never matched with 'END'",
+            b,
+            fatal=True,
         )
     }
 
@@ -82,11 +92,31 @@ until_stmt[ast.Until]:
     | UNTIL expr DO statement_group { 
         ast.Until(expr, statement_group[0], LOCATIONS)
     }
+    | invalid_until_stmt
+
+invalid_until_stmt:
+    | b=UNTIL expr? {
+        self.report_syntax_error_at(
+            "'UNTIL' was never matched with 'DO'",
+            b,
+            fatal=True,
+        )
+    }
 
 
 check_stmt[ast.Check]:
     | CHECK expr DO statement_group { 
         ast.Check(expr, statement_group[0], LOCATIONS)
+    }
+    | invalid_check_stmt
+
+invalid_check_stmt:
+    | b=CHECK expr? {
+        self.report_syntax_error_at(
+            "'CHECK' was never matched with 'DO'",
+            b,
+            fatal=True,
+        )
     }
 
 
@@ -180,20 +210,40 @@ primary:
 subscript[ast.Subscript]:
     | a=primary '[' exprs=expr* ']' { self.make_subscript(a, exprs, LOCATIONS) }
     | recover_subscript
+    | invalid_subscript
 
 recover_subscript[ast.Subscript]:
     | a=word '[' exprs=expr* ']' {
         self.make_subscript(self.make_name(a, **self.locs(a)), exprs, LOCATIONS)
     }
 
+invalid_subscript:
+    | word b='[' expr* {
+        self.report_syntax_error_at(
+            "'[' was never closed",
+            b,
+            fatal=True,
+        )
+    }
+
 
 call[ast.Call]:
     | a=primary '(' exprs=expr* ')' { self.make_call(a, exprs, LOCATIONS) }
     | recover_call
+    | invalid_call
 
 recover_call[ast.Call]:
     | a=word '(' exprs=expr* ')' {
         self.make_call(self.make_name(a, **self.locs(a)), exprs, LOCATIONS)
+    }
+
+invalid_call:
+    | word b='(' expr* {
+        self.report_syntax_error_at(
+            "'(' was never closed",
+            b,
+            fatal=True,
+        )
     }
 
 
@@ -209,6 +259,16 @@ recover_atom: a=word { self.make_name(a, LOCATIONS) }
 
 group:
     | '(' a=comparison ')' { a }
+    | invalid_group
+
+invalid_group:
+    | b='(' comparison {
+        self.report_syntax_error_at(
+            "'(' was never closed",
+            b,
+            fatal=True,
+        )
+    }
 
 
 robot_operation[ast.RobotOperation]: op=robot_keyword { self.make_robot_op(op, LOCATIONS) }
