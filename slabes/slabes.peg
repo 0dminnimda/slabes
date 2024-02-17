@@ -74,9 +74,7 @@ invalid_function_definition:
 
 
 argument[ast.Argument]:
-    | tp=number_type id=identifier {
-        ast.Argument(tp, id, LOCATIONS)
-    }
+    | tp=number_type id=identifier { ast.Argument(tp, id, LOCATIONS) }
     | recover_argument
 
 recover_argument:
@@ -90,9 +88,7 @@ recover_argument:
 
 
 return_stmt[ast.Return]:
-    | RETURN expr {
-        ast.Return(expr, LOCATIONS)
-    }
+    | RETURN expr { ast.Return(expr, LOCATIONS) }
     | invalid_return_stmt
 
 invalid_return_stmt:
@@ -106,9 +102,7 @@ invalid_return_stmt:
 
 
 until_stmt[ast.Until]:
-    | UNTIL expr DO statement_group { 
-        ast.Until(expr, statement_group[0], LOCATIONS)
-    }
+    | UNTIL expr DO statement_group { ast.Until(expr, statement_group[0], LOCATIONS) }
     | invalid_until_stmt
 
 invalid_until_stmt:
@@ -122,9 +116,7 @@ invalid_until_stmt:
 
 
 check_stmt[ast.Check]:
-    | CHECK expr DO statement_group { 
-        ast.Check(expr, statement_group[0], LOCATIONS)
-    }
+    | CHECK expr DO statement_group {  ast.Check(expr, statement_group[0], LOCATIONS) }
     | invalid_check_stmt
 
 invalid_check_stmt:
