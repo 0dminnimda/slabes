@@ -193,7 +193,6 @@ def dump(
     include_attributes: bool = False,
     *,
     indent: int | str | None = None,
-    max_simple_length: int = 80,
 ) -> str:
     """
     Return a formatted dump of the tree in node.  This is mainly useful for
@@ -233,44 +232,39 @@ def dump(
             prefix = ""
             postfix = ""
             sep = ", "
-        sep2 = ", "
 
         if isinstance(node, AST):
             args = []
-            all_one_line = True
+            allsimple = True
             for name, value in node.fields():
-                value, one_line = _format(value, level)
-                all_one_line = all_one_line and one_line
+                value, simple = _format(value, level)
+                allsimple = allsimple and simple
                 if annotate_fields:
                     args.append(f"{name}={value}")
                 else:
                     args.append(value)
             if include_attributes:
                 for name, value in node.attributes():
-                    value, one_line = _format(value, level)
-                    all_one_line = all_one_line and one_line
+                    value, simple = _format(value, level)
+                    allsimple = allsimple and simple
                     args.append(f"{name}={value}")
-
-            not_too_long = (
-                all_one_line and sum(len(x) for x in args) <= max_simple_length
-            )
-            if len(args) == 1 or not_too_long:
-                return f"{type(node).__name__}({sep2.join(args)})", True
+            if allsimple and len(args) <= 3:
+                return f"{type(node).__name__}({', '.join(args)})", not args
+            if len(args) == 1:
+                return f"{type(node).__name__}({args[0]})", allsimple
             return f"{type(node).__name__}({prefix}{sep.join(args)}{postfix})", False
-
         elif isinstance(node, list):
             args = []
-            all_one_line = True
+            allsimple = True
             for value in node:
-                value, one_line = _format(value, level)
-                all_one_line = all_one_line and one_line
+                value, simple = _format(value, level)
+                allsimple = allsimple and simple
                 args.append(value)
 
-            not_too_long = (
-                all_one_line and sum(len(x) for x in args) <= max_simple_length
-            )
-            if len(args) == 1 or not_too_long:
-                return f"[{sep2.join(args)}]", True
+            if allsimple and len(args) <= 3:
+                return f"[{', '.join(args)}]", not args
+            if len(args) == 1:
+                return f"[{args[0]}]", allsimple
             return f"[{prefix}{sep.join(args)}{postfix}]", False
 
         return repr(node), True
