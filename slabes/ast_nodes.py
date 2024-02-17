@@ -198,6 +198,17 @@ class Until(Statement):
         yield "body", self.body
 
 
+@dataclass
+class Check(Statement):
+    test: Expression
+    body: list[Statement]
+
+    def fields(self):
+        yield from super().fields()
+        yield "test", self.test
+        yield "body", self.body
+
+
 def dump(
     node: AST | list,
     annotate_fields: bool = True,

@@ -60,7 +60,7 @@ class SlabesParser(Parser):
 
     @memoize
     def statement(self) -> Optional[ast . Statement]:
-        # statement: &UNTIL ~ until_stmt | declaration | expr
+        # statement: &UNTIL ~ until_stmt | &CHECK ~ check_stmt | declaration | expr
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
@@ -73,6 +73,18 @@ class SlabesParser(Parser):
             (until_stmt := self.until_stmt())
         ):
             return until_stmt;
+        self._reset(mark)
+        if cut:
+            return None;
+        cut = False
+        if (
+            (self.positive_lookahead(self.CHECK, ))
+            and
+            (cut := True)
+            and
+            (check_stmt := self.check_stmt())
+        ):
+            return check_stmt;
         self._reset(mark)
         if cut:
             return None;
@@ -108,6 +120,27 @@ class SlabesParser(Parser):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
             return ast . Until ( expr , statement_group , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def check_stmt(self) -> Optional[ast . Check]:
+        # check_stmt: CHECK expr DO statement_group
+        mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (self.CHECK())
+            and
+            (expr := self.expr())
+            and
+            (self.DO())
+            and
+            (statement_group := self.statement_group())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . Check ( expr , statement_group , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         return None;
 

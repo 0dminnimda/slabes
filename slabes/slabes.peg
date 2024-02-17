@@ -36,6 +36,7 @@ statement_group[list[ast.Statement]]:
 
 statement[ast.Statement]:
     | &UNTIL ~ until_stmt { until_stmt }
+    | &CHECK ~ check_stmt { check_stmt }
     | declaration { declaration }
     | expr=expr { ast.SingleExpression(expr, LOCATIONS) }
 
@@ -43,6 +44,12 @@ statement[ast.Statement]:
 until_stmt[ast.Until]:
     | UNTIL expr DO statement_group { 
         ast.Until(expr, statement_group, LOCATIONS)
+    }
+
+
+check_stmt[ast.Check]:
+    | CHECK expr DO statement_group { 
+        ast.Check(expr, statement_group, LOCATIONS)
     }
 
 
