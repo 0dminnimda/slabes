@@ -241,14 +241,14 @@ def dump(
                 value, simple = _format(value, level)
                 allsimple = allsimple and simple
                 if keywords:
-                    args.append("%s=%s" % (name, value))
+                    args.append(f"{name}={value}")
                 else:
                     args.append(value)
             if include_attributes:
                 for name, value in node.attributes():
                     value, simple = _format(value, level)
                     allsimple = allsimple and simple
-                    args.append("%s=%s" % (name, value))
+                    args.append(f"{name}={value}")
             if allsimple and len(args) <= 3:
                 return f"{type(node).__name__}({', '.join(args)})", not args
             if len(args) == 1:
