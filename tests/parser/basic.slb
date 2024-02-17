@@ -74,10 +74,10 @@ unti a do
     unti inneer do
         inneer << inneer - 2,
     .,
-    # print( factorial ),
+    print( factorial ),
 .,
 
-# print( factorial ).
+print( factorial ).
 
 fi norm tin abobui babaoi << F, gpp,
 
@@ -111,4 +111,8 @@ big boba  tiny az, normal lok begin
 ti a  tiny az begin
 . end,
 
+
+boba( HI 0 3 HI + a ),
+
 .
+

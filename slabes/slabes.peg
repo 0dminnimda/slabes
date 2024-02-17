@@ -173,6 +173,7 @@ factor (memo):
 
 primary:
     | subscript
+    | call
     | atom
 
 
@@ -183,6 +184,16 @@ subscript[ast.Subscript]:
 recover_subscript[ast.Subscript]:
     | a=word '[' exprs=expr* ']' {
         self.make_subscript(self.make_name(a, **self.locs(a)), exprs, LOCATIONS)
+    }
+
+
+call[ast.Call]:
+    | a=primary '(' exprs=expr* ')' { self.make_call(a, exprs, LOCATIONS) }
+    | recover_call
+
+recover_call[ast.Call]:
+    | a=word '(' exprs=expr* ')' {
+        self.make_call(self.make_name(a, **self.locs(a)), exprs, LOCATIONS)
     }
 
 

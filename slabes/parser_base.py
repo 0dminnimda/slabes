@@ -245,6 +245,17 @@ class ParserBase(Parser):
             return ast.Statement(**loc, error_recovered=True)
         return ast.Subscript(name, indices[0], indices[1], **loc)
 
+    def make_call(
+        self,
+        name: ast.AST | TokenInfo,
+        args: list[ast.Expression],
+        **loc,
+    ):
+        if not isinstance(name, ast.Name):
+            self.report_syntax_error_at("function call requires a name", name)
+            return ast.Statement(**loc, error_recovered=True)
+        return ast.Call(name, args, **loc)
+
     def is_assignment_target(self, node: ast.AST) -> bool:
         if isinstance(node, ast.Name):
             return True

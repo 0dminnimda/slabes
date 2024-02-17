@@ -178,6 +178,17 @@ class BinaryOperation(Expression):
 
 
 @dataclass
+class Call(Expression):
+    name: Name
+    args: list[Expression]
+
+    def fields(self):
+        yield from super().fields()
+        yield "name", self.name
+        yield "args", self.args
+
+
+@dataclass
 class NumberDeclaration(Statement):
     type: NumbeTypeRef
     names: list[Name]
