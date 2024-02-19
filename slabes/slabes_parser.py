@@ -522,12 +522,57 @@ class SlabesParser(Parser):
 
     @memoize
     def comparison(self) -> Optional[Any]:
-        # comparison: sum
+        # comparison: sum comparison_bits+ | sum
         mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (first := self.sum())
+            and
+            (rest := self._loop1_16())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return ast . CompareOperation ( first , * zip ( * rest ) , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
         if (
             (sum := self.sum())
         ):
             return sum;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def comparison_bits(self) -> Optional[Any]:
+        # comparison_bits: '==' sum | '<>' sum | '<=' sum | '=>' sum
+        mark = self._mark()
+        if (
+            (self.expect('=='))
+            and
+            (a := self.sum())
+        ):
+            return ( ast . CmpOp . EQ , a );
+        self._reset(mark)
+        if (
+            (self.expect('<>'))
+            and
+            (a := self.sum())
+        ):
+            return ( ast . CmpOp . NE , a );
+        self._reset(mark)
+        if (
+            (self.expect('<='))
+            and
+            (a := self.sum())
+        ):
+            return ( ast . CmpOp . LE , a );
+        self._reset(mark)
+        if (
+            (self.expect('=>'))
+            and
+            (a := self.sum())
+        ):
+            return ( ast . CmpOp . GE , a );
         self._reset(mark)
         return None;
 
@@ -664,7 +709,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_16(),)
+            (exprs := self._loop0_17(),)
             and
             (self.expect(']'))
         ):
@@ -697,7 +742,7 @@ class SlabesParser(Parser):
             and
             (self.expect('['))
             and
-            (exprs := self._loop0_17(),)
+            (exprs := self._loop0_18(),)
             and
             (self.expect(']'))
         ):
@@ -716,7 +761,7 @@ class SlabesParser(Parser):
             and
             (b := self.expect('['))
             and
-            (self._loop0_18(),)
+            (self._loop0_19(),)
         ):
             return self . report_syntax_error_at ( "'[' was never closed" , b , fatal = True , );
         self._reset(mark)
@@ -733,7 +778,7 @@ class SlabesParser(Parser):
             and
             (self.expect('('))
             and
-            (exprs := self._loop0_19(),)
+            (exprs := self._loop0_20(),)
             and
             (self.expect(')'))
         ):
@@ -766,7 +811,7 @@ class SlabesParser(Parser):
             and
             (self.expect('('))
             and
-            (exprs := self._loop0_20(),)
+            (exprs := self._loop0_21(),)
             and
             (self.expect(')'))
         ):
@@ -785,7 +830,7 @@ class SlabesParser(Parser):
             and
             (b := self.expect('('))
             and
-            (self._loop0_21(),)
+            (self._loop0_22(),)
         ):
             return self . report_syntax_error_at ( "'(' was never closed" , b , fatal = True , );
         self._reset(mark)
@@ -1061,7 +1106,7 @@ class SlabesParser(Parser):
         mark = self._mark()
         children = []
         while (
-            (self._loop1_22())
+            (self._loop1_23())
             and
             (elem := self.statement())
         ):
@@ -1246,22 +1291,22 @@ class SlabesParser(Parser):
         mark = self._mark()
         children = []
         while (
-            (_tmp_23 := self._tmp_23())
+            (_tmp_24 := self._tmp_24())
         ):
-            children.append(_tmp_23)
+            children.append(_tmp_24)
             mark = self._mark()
         self._reset(mark)
         return children;
 
     @memoize
-    def _loop0_16(self) -> Optional[Any]:
-        # _loop0_16: expr
+    def _loop1_16(self) -> Optional[Any]:
+        # _loop1_16: comparison_bits
         mark = self._mark()
         children = []
         while (
-            (expr := self.expr())
+            (comparison_bits := self.comparison_bits())
         ):
-            children.append(expr)
+            children.append(comparison_bits)
             mark = self._mark()
         self._reset(mark)
         return children;
@@ -1332,8 +1377,21 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _loop1_22(self) -> Optional[Any]:
-        # _loop1_22: ','
+    def _loop0_22(self) -> Optional[Any]:
+        # _loop0_22: expr
+        mark = self._mark()
+        children = []
+        while (
+            (expr := self.expr())
+        ):
+            children.append(expr)
+            mark = self._mark()
+        self._reset(mark)
+        return children;
+
+    @memoize
+    def _loop1_23(self) -> Optional[Any]:
+        # _loop1_23: ','
         mark = self._mark()
         children = []
         while (
@@ -1345,21 +1403,21 @@ class SlabesParser(Parser):
         return children;
 
     @memoize
-    def _tmp_23(self) -> Optional[Any]:
-        # _tmp_23: ('<<' | '>>') comparison
+    def _tmp_24(self) -> Optional[Any]:
+        # _tmp_24: ('<<' | '>>') comparison
         mark = self._mark()
         if (
-            (_tmp_24 := self._tmp_24())
+            (_tmp_25 := self._tmp_25())
             and
             (comparison := self.comparison())
         ):
-            return [_tmp_24, comparison];
+            return [_tmp_25, comparison];
         self._reset(mark)
         return None;
 
     @memoize
-    def _tmp_24(self) -> Optional[Any]:
-        # _tmp_24: '<<' | '>>'
+    def _tmp_25(self) -> Optional[Any]:
+        # _tmp_25: '<<' | '>>'
         mark = self._mark()
         if (
             (literal := self.expect('<<'))

@@ -177,10 +177,14 @@ assignment:
     | comparison
 
 comparison:
-    # | a=comparison '<>' b=sum { ast.CompareOperation(a, ast.Add(), b, LOCATIONS) }
-    # | a=comparison '<=' b=sum { ast.CompareOperation(a, ast.Add(), b, LOCATIONS) }
-    # | a=comparison '=>' b=sum { ast.CompareOperation(a, ast.Add(), b, LOCATIONS) }
+    | first=sum rest=comparison_bits+ { ast.CompareOperation(first, *zip(*rest), LOCATIONS) }
     | sum
+
+comparison_bits:
+    | '==' a=sum { (ast.CmpOp.EQ, a) }
+    | '<>' a=sum { (ast.CmpOp.NE, a) }
+    | '<=' a=sum { (ast.CmpOp.LE, a) }
+    | '=>' a=sum { (ast.CmpOp.GE, a) }
 
 sum:
     | a=sum '+' b=term { ast.BinaryOperation(a, ast.BinOp.ADD, b, LOCATIONS) }

@@ -158,10 +158,6 @@ class BinOp(Enum):
     SUB = auto()
     MUL = auto()
     DIV = auto()
-    EQ = auto()
-    NE = auto()
-    LE = auto()
-    GE = auto()
 
 
 @dataclass
@@ -191,6 +187,26 @@ class UnaryOperation(Expression):
         yield from super().fields()
         yield "op", self.op
         yield "operand", self.operand
+
+
+class CmpOp(Enum):
+    EQ = auto()
+    NE = auto()
+    LE = auto()
+    GE = auto()
+
+
+@dataclass
+class CompareOperation(Expression):
+    operand: Expression
+    ops: list[CmpOp]
+    operands: list[Expression]
+
+    def fields(self):
+        yield from super().fields()
+        yield "operand", self.operand
+        yield "ops", self.ops
+        yield "operands", self.operands
 
 
 @dataclass
