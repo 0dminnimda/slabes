@@ -8,8 +8,8 @@ import traceback
 from . import ast_nodes as ast
 from . import errors
 
-from pegen.parser import Parser, memoize
-from pegen.tokenizer import Tokenizer
+from .pegen.parser import Parser, memoize
+from .pegen.tokenizer import Tokenizer
 from tokenize import TokenInfo
 from .lexer import lex, Keywords, _lexer
 from .errors import report_fatal_at, report_at, report_collected

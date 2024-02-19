@@ -9,7 +9,7 @@ import typing
 
 from typing import Any, Optional
 
-from pegen.parser import memoize, memoize_left_rec, logger
+from .pegen.parser import memoize, memoize_left_rec, logger
 from . import ast_nodes as ast
 from .parser_base import ParserBase as Parser, parser_main
 # Keywords and soft keywords are listed at the end of the parser definition.

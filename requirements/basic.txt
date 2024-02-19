@@ -1,2 +1,2 @@
-pegen>=0.3.0
+# pegen>=0.3.0  # copied into the project so pypy3.10 would work
 # ply  # copied into the project as recommended by the PLY docs
