@@ -308,7 +308,7 @@ def dump(
     level. None (the default) selects the single line representation.
     """
 
-    if not isinstance(node, (AST, list)):
+    if not isinstance(node, (AST, list, tuple)):
         raise TypeError("expected AST, got %r" % node.__class__.__name__)
 
     if indent is not None and not isinstance(indent, str):
@@ -322,7 +322,7 @@ def dump(
                 level += 1
             elif sum(1 for _ in node.fields()) >= 2:
                 level += 1
-        elif isinstance(node, list):
+        elif isinstance(node, (list, tuple)):
             if len(node) >= 2:
                 level += 1
 
@@ -355,7 +355,9 @@ def dump(
             if len(args) == 1:
                 return f"{type(node).__name__}({args[0]})", allsimple
             return f"{type(node).__name__}({prefix}{sep.join(args)}{postfix})", False
-        elif isinstance(node, list):
+        elif isinstance(node, (list, tuple)):
+            parens = "()" if isinstance(node, tuple) else "[]"
+
             args = []
             allsimple = True
             for value in node:
@@ -364,10 +366,10 @@ def dump(
                 args.append(value)
 
             if allsimple and len(args) <= 3:
-                return f"[{', '.join(args)}]", not args
+                return f"{parens[0]}{', '.join(args)}{parens[1]}", not args
             if len(args) == 1:
-                return f"[{args[0]}]", allsimple
-            return f"[{prefix}{sep.join(args)}{postfix}]", False
+                return f"{parens[0]}{args[0]}{parens[1]}", allsimple
+            return f"{parens[0]}{prefix}{sep.join(args)}{postfix}{parens[1]}", False
 
         return repr(node), True
 
