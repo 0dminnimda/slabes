@@ -377,6 +377,15 @@ class ParserBase(Parser):
         )
         assert False, "unreachable"
 
+    def make_unary_op(self, op: ast.UnrOp, operand: ast.Expression, **loc):
+        if isinstance(operand, ast.NumericLiteral) and operand.signedness is ast.NumericLiteral.Signedness.UNSIGNED:
+            if op is ast.UnrOp.NEG:
+                operand.signedness = ast.NumericLiteral.Signedness.NEGATIVE
+            else:
+                operand.signedness = ast.NumericLiteral.Signedness.POSITIVE
+            return operand
+        return ast.UnaryOperation(op, operand, **loc)
+
     @memoize
     def TINY(self):
         tok = self._tokenizer.peek()

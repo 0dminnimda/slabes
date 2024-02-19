@@ -177,6 +177,22 @@ class BinaryOperation(Expression):
         yield "rhs", self.rhs
 
 
+class UnrOp(Enum):
+    POS = auto()
+    NEG = auto()
+
+
+@dataclass
+class UnaryOperation(Expression):
+    op: UnrOp
+    operand: Expression
+
+    def fields(self):
+        yield from super().fields()
+        yield "op", self.op
+        yield "operand", self.operand
+
+
 @dataclass
 class Call(Expression):
     name: Name

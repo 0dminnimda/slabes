@@ -193,8 +193,8 @@ term:
     | factor
 
 factor (memo):
-    # | '+' a=factor { ast.UnaryOperation(ast.UAdd(), operand=a, LOCATIONS) }
-    # | '-' a=factor { ast.UnaryOperation(ast.USub(), operand=a, LOCATIONS) }
+    | '+' a=factor { self.make_unary_op(ast.UnrOp.POS, a, LOCATIONS) }
+    | '-' a=factor { self.make_unary_op(ast.UnrOp.NEG, a, LOCATIONS) }
     | primary
 
 
@@ -246,7 +246,7 @@ invalid_call:
 
 atom:
     | identifier
-    | signed_number
+    | num=NUMBER { self.make_number(num, None, LOCATIONS) }
     | robot_operation
     | &'(' group
     | recover_atom
@@ -270,11 +270,6 @@ invalid_group:
 
 robot_operation[ast.RobotOperation]: op=robot_keyword { self.make_robot_op(op, LOCATIONS) }
 robot_keyword: GO | RL | RR | SONAR | COMPASS
-
-
-signed_number[ast.NumericLiteral]: sign=sign? num=NUMBER { self.make_number(num, sign, LOCATIONS) }
-
-sign: '+' | '-'
 
 
 # ugh bug in pegen

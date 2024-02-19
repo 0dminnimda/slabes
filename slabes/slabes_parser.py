@@ -603,8 +603,28 @@ class SlabesParser(Parser):
 
     @memoize
     def factor(self) -> Optional[Any]:
-        # factor: primary
+        # factor: '+' factor | '-' factor | primary
         mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
+        if (
+            (self.expect('+'))
+            and
+            (a := self.factor())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_unary_op ( ast . UnrOp . POS , a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
+        if (
+            (self.expect('-'))
+            and
+            (a := self.factor())
+        ):
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_unary_op ( ast . UnrOp . NEG , a , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
+        self._reset(mark)
         if (
             (primary := self.primary())
         ):
@@ -773,17 +793,21 @@ class SlabesParser(Parser):
 
     @memoize
     def atom(self) -> Optional[Any]:
-        # atom: identifier | signed_number | robot_operation | &'(' group | recover_atom
+        # atom: identifier | NUMBER | robot_operation | &'(' group | recover_atom
         mark = self._mark()
+        tok = self._tokenizer.peek()
+        start_lineno, start_col_offset = tok.start
         if (
             (identifier := self.identifier())
         ):
             return identifier;
         self._reset(mark)
         if (
-            (signed_number := self.signed_number())
+            (num := self.number())
         ):
-            return signed_number;
+            tok = self._tokenizer.get_last_non_whitespace_token()
+            end_lineno, end_col_offset = tok.end
+            return self . make_number ( num , None , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
         self._reset(mark)
         if (
             (robot_operation := self.robot_operation())
@@ -897,39 +921,6 @@ class SlabesParser(Parser):
             (COMPASS := self.COMPASS())
         ):
             return COMPASS;
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def signed_number(self) -> Optional[ast . NumericLiteral]:
-        # signed_number: sign? NUMBER
-        mark = self._mark()
-        tok = self._tokenizer.peek()
-        start_lineno, start_col_offset = tok.start
-        if (
-            (sign := self.sign(),)
-            and
-            (num := self.number())
-        ):
-            tok = self._tokenizer.get_last_non_whitespace_token()
-            end_lineno, end_col_offset = tok.end
-            return self . make_number ( num , sign , lineno=start_lineno, col_offset=start_col_offset, end_lineno=end_lineno, end_col_offset=end_col_offset );
-        self._reset(mark)
-        return None;
-
-    @memoize
-    def sign(self) -> Optional[Any]:
-        # sign: '+' | '-'
-        mark = self._mark()
-        if (
-            (literal := self.expect('+'))
-        ):
-            return literal;
-        self._reset(mark)
-        if (
-            (literal := self.expect('-'))
-        ):
-            return literal;
         self._reset(mark)
         return None;
 
