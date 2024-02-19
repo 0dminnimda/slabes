@@ -192,7 +192,7 @@ term:
     | a=term '/' b=factor { ast.BinaryOperation(a, ast.BinOp.DIV, b, LOCATIONS) }
     | factor
 
-factor (memo):
+factor:
     | '+' a=factor { self.make_unary_op(ast.UnrOp.POS, a, LOCATIONS) }
     | '-' a=factor { self.make_unary_op(ast.UnrOp.NEG, a, LOCATIONS) }
     | primary
