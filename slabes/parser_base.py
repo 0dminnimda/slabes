@@ -505,6 +505,17 @@ class ParserBase(Parser):
         return None
 
 
+def parse_cls(cls: typing.Type[ParserBase], text: str, filename: str = "<unknown>") -> ast.Module:
+    parser, tree = cls.parse_text(text, filename)
+
+    report_collected()
+    if tree is None:
+        parser.report_syntax_error_at_last_token(filename, fatal=True)
+        assert False, "unreachable"
+
+    return tree
+
+
 def parser_main(parser_class: typing.Type[ParserBase]) -> None:
     argparser = argparse.ArgumentParser()
     argparser.add_argument(

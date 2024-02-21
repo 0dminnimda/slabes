@@ -3,8 +3,7 @@ import argparse
 
 from pathlib import Path
 
-from .errors import report_collected
-from .slabes_parser import SlabesParser
+from .slabes_parser import parse
 from .name_table import NameTable, fill_name_table_from_ast
 from . import ast_nodes as ast
 
@@ -21,12 +20,7 @@ def main(argv: list[str] = sys.argv) -> None:
     else:
         text = Path(filename).read_text("utf-8")
 
-    parser, tree = SlabesParser.parse_text(text, filename)
-
-    report_collected()
-    if tree is None:
-        parser.report_syntax_error_at_last_token(filename, fatal=True)
-        assert False, "unreachable"
+    tree = parse(text, filename)
 
     table = NameTable()
     fill_name_table_from_ast(table, tree)
