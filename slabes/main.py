@@ -16,6 +16,7 @@ def main(argv: list[str] = sys.argv) -> None:
 
     filename = args.filename
     if filename == "" or filename == "-":
+        filename = "<stdin>"
         text = sys.stdin.read()
     else:
         text = Path(filename).read_text("utf-8")
