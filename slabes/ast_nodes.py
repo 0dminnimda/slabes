@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import Any, Iterable
 
 
 @dataclass
@@ -20,7 +21,7 @@ class AST:
         yield "end_col_offset", self.end_col_offset
         yield "error_recovered", self.error_recovered
 
-    def fields(self):
+    def fields(self) -> Iterable[tuple[str, Any]]:
         # yield zero, children should add their own fields
         for _ in range(0):
             yield "", None
@@ -390,3 +391,21 @@ def dump(
         return repr(node), True
 
     return _format(node, 0)[0]
+
+
+class Visitor:
+    def visit(self, node):
+        method = 'visit_' + node.__class__.__name__
+        visitor = getattr(self, method, self.generic_visit)
+        return visitor(node)
+
+    def generic_visit(self, node):
+        if not isinstance(node, AST):
+            return
+
+        for _, value in node.fields():
+            if isinstance(value, (list, tuple)):
+                for item in value:
+                    self.visit(item)
+            else:
+                self.visit(value)
