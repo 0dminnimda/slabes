@@ -75,10 +75,16 @@ class ParserBase(Parser):
         cls,
         text: str,
         filename: str = DEFAULT_FILENAME,
-    ) -> ast.Module:
-        tokenizer = Tokenizer(lex(text), path=filename)
+    ):
+        tokenizer = Tokenizer(lex(text, filename), path=filename)
         parser = cls(tokenizer, filename=filename)
-        return parser.parse("start")
+        mod: ast.Module | None = parser.parse("start")
+        return parser, mod
+
+    def report_syntax_error_at_last_token(self, message: str, fatal: bool = False):
+        last_token = self._tokenizer.diagnose()
+
+        self._report_syntax_error(message, last_token.start, last_token.end, fatal=fatal)
 
     def report_syntax_error_at(
         self, message: str, node: ast.AST | TokenInfo, fatal: bool = False
