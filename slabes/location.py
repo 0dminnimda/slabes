@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from tokenize import TokenInfo
+from . import ast_nodes as ast
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,16 @@ class Location:
             offset,
             end_lineno,
             end_offset,
+        )
+
+    @classmethod
+    def from_ast(cls, filepath: str, node: ast.AST) -> Location:
+        return cls(
+            filepath,
+            node.lineno,
+            node.col_offset,
+            node.end_lineno,
+            node.end_col_offset,
         )
 
     def without_end(self) -> Location:

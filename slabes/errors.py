@@ -13,6 +13,14 @@ class CompilerError(Exception):
     message: str
     line: str | None = field(default=None, repr=False)
 
+    @classmethod
+    def make(cls, loc: Location, error_name: str, message: str, line: str | list[str] | None = None):
+        if isinstance(line, list):
+            line = line[loc.lineno - 1]
+        return cls(
+            loc, error_name, message, line
+        )
+
     def __str__(self):
         result = f'Error in file "{self.loc.filepath}", line {self.loc.lineno}, column {self.loc.col_offset}\n\n'
         result += self.point_to_line()
@@ -34,9 +42,9 @@ def report_at(
     loc: Location,
     error_name: str,
     message: str,
-    line: str | None = None,
+    line_or_all_lines: str | list[str] | None = None,
 ):
-    _reported.append(CompilerError(loc, error_name, message, line))
+    _reported.append(CompilerError.make(loc, error_name, message, line_or_all_lines))
 
 
 def report_collected(separator: str = "\n" + "="*80 + "\n"):
@@ -56,9 +64,9 @@ def report_fatal_at(
     loc: Location,
     error_name: str,
     message: str,
-    line: str | None = None,
+    line_or_all_lines: str | list[str] | None = None,
 ) -> NoReturn:
-    print(str(CompilerError(loc, error_name, message, line)))
+    print(str(CompilerError.make(loc, error_name, message, line_or_all_lines)))
     exit(1)
 
 

@@ -409,3 +409,11 @@ class Visitor:
                     self.visit(item)
             else:
                 self.visit(value)
+
+    def visit_list(self, value: list) -> None:
+        for it in value:
+            self.visit(it)
+
+    def visit_tuple(self, value: tuple) -> None:
+        for it in value:
+            self.visit(it)
