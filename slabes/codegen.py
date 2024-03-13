@@ -18,6 +18,23 @@ TEMPLATE = """
 // GENERATED FROM /*file*/
 
 #include <stdio.h>
+#include <stdbool.h>
+
+#define make_int_type(ctype, name) \\
+typedef ctype slabes_type_##name; \\
+\\
+void assign_slabes_type_##name(ctype *var, ctype value) { \\
+    *var = value; \\
+}
+
+make_int_type(bool, unsigned_tiny)
+make_int_type(bool, tiny)
+make_int_type(char, unsigned_small)
+make_int_type(char, small)
+make_int_type(short, unsigned_normal)
+make_int_type(short, normal)
+make_int_type(short, unsigned_big)
+make_int_type(short, big)
 
 /*decl*/
 
@@ -44,6 +61,8 @@ class GenerateC:
     declaration_parts: list[str] = field(default_factory=list)
 
     current_temp: int = 0
+
+    scope: ev.ScopeValue = field(init=False)
 
     _filepath: str = field(default=DEFAULT_FILENAME)
     _lines: list[str] = field(default_factory=list)
@@ -128,13 +147,29 @@ class GenerateC:
                 if item is not None:
                     self.temporary_parts.append(item)
 
+    @contextmanager
+    def new_scope(self, new: ev.ScopeValue):
+        old = getattr(self, "scope" , None)
+        self.scope = new
+        try:
+            yield self.scope
+        finally:
+            if old is not None:
+                self.scope = old
+
     def visit_str(self, string: str) -> str:
         return string
 
-    def visit_Module(self, node: ast.Module):
+    def handle_scope(self, node: ev.ScopeValue):
+        with self.new_scope(node):
+            for it in node.body:
+                self.put(it)
+
+    def visit_Module(self, node: ev.Module):
+        self.scope = node
+
         with self.isolate() as program:
-            for sub in node.body:
-                self.put(sub)
+            self.handle_scope(node)
 
         self.save(program, self.main_parts)
 
@@ -153,11 +188,25 @@ class GenerateC:
         with self.isolate() as defn:
             self.put("{\n")
 
-            for sub in node.body:
-                self.put(sub)
+            self.handle_scope(node)
 
             self.put("}\n")
 
         self.save(decl + [";\n"], self.declaration_parts)
         self.save(decl, self.main_parts)
         self.save(defn, self.main_parts)
+
+    def type_name(self, node: ts.Type) -> str:
+        return "slabes_type_" + node.name()
+
+    def var_name(self, name: str) -> str:
+        return "slabes_var_" + name
+
+    def visit_Assign(self, node: ev.Assign):
+        for name in node.names:
+            tp = self.scope.name_to_type[name]
+            self.put(self.type_name(tp), self.var_name(name), ";;")
+            self.put("assign_" + self.type_name(tp), "(&", self.var_name(name), ",", node.value, ");;")
+
+    def visit_Int(self, node: ev.Int):
+        return str(node.value)

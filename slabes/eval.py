@@ -38,9 +38,15 @@ class ScopeContext(NameTable):
     name_to_type: dict[str, ts.Type] = field(default_factory=dict, kw_only=True)
 
 
+# @dataclass
+# class ConstantInt(Eval):
+#     value: int
+
+
 @dataclass
-class ConstantInt(Eval):
-    value: int
+class Assign(Eval):
+    names: list[str]
+    value: Eval
 
 
 @dataclass
@@ -105,11 +111,17 @@ class Ast2Eval(ast.Visitor):
             if old is not None:
                 self.scope = old
 
+    def handle_body(self, body):
+        for it in body:
+            res = self.visit(it)
+            if res is not None:
+                self.scope.body.append(res)
+
     def visit_Module(self, node: ast.Module):
         loc = self.loc(node)
 
         with self.new_scope(Module(loc)) as mod:
-            self.visit(node.body)
+            self.handle_body(node.body)
 
         return mod
 
@@ -127,15 +139,20 @@ class Ast2Eval(ast.Visitor):
         signed = node.signedness is not ast.NumericLiteral.Signedness.UNSIGNED
         return Int(self.loc(node), node.value, type=ts.IntType(kind, signed))
 
-    # def visit_NumberDeclaration(self, node: ast.NumberDeclaration):
-    #     loc = self.loc(node)
-    #     lit = self.visit_NumericLiteral(node.value, node.type.type)
+    def visit_NumberDeclaration(self, node: ast.NumberDeclaration):
+        loc = self.loc(node)
+        lit = self.visit_NumericLiteral(node.value, node.type.type)
+        names = []
+        for name in node.names:
+            self.scope.name_to_type[name.value] = lit.type
+            names.append(name.value)
+        res = Assign(loc, names, self.visit(node.value))
+        return res
 
     def visit_Function(self, node: ast.Function):
         loc = self.loc(node)
 
         with self.new_scope(Function(loc, node.name)) as func:
-            self.visit(node.body)
+            self.handle_body(node.body)
 
-        self.scope.body.append(func)
         return func
