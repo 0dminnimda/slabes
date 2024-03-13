@@ -15,8 +15,8 @@ class NameTable:
     - Where did it come from?
     """
 
-    outer: NameTable | None = None
-    local_names: set[str] = field(default_factory=set)
+    outer: NameTable | None = field(default=None, kw_only=True)
+    names: set[str] = field(default_factory=set, kw_only=True)  # Local names
 
 
 NameTableT = TypeVar("NameTableT", bound=NameTable)
@@ -27,7 +27,7 @@ class NameTableVisitor(ast.Visitor, Generic[NameTableT]):
     table: NameTableT
 
     def declare_name(self, name: str) -> None:
-        self.table.local_names.add(name)
+        self.table.names.add(name)
 
     def visit_Function(self, node: ast.Function) -> None:
         self.declare_name(node.name)
@@ -63,7 +63,7 @@ def walk_up_name_tables(table: NameTableT | None) -> Iterable[NameTableT]:
 def lookup_origin(table: NameTableT | None, name: str) -> NameTableT | None:
     start = table
     for table in walk_up_name_tables(start):
-        if name in table.local_names:
+        if name in table.names:
             return table
 
     return None

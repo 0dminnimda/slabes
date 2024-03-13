@@ -1,11 +1,10 @@
 big gg begin
-    .
-end,
+. end,
 
 big main begin
-    4.
+    4,
     
-    # ti a << 3.
-end,
+    # ti a << 3,
+. end,
 
 .
