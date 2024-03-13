@@ -25,7 +25,7 @@ TEMPLATE = """
 
 int main(int argc, char *argv[]) {
     printf("Starting...\\n");
-    program_main(argc, argv);
+    program_main();
     printf("Finishing...\\n");
     return 0;
 }
@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
 
 
 PART_SEPARATOR: str = " "
+
+MAIN_FUNCTION = "main"
 
 
 @dataclass
@@ -131,12 +133,31 @@ class GenerateC:
 
     def visit_Module(self, node: ast.Module):
         with self.isolate() as program:
-            self.put("/* program entry point */\n")
-            self.put("void program_main(int argc, char *argv[]) {\n")
+            for sub in node.body:
+                self.put(sub)
+
+        self.save(program, self.main_parts)
+
+    def function_name(self, name: str) -> str:
+        return "slabes_func_" + name
+
+    def visit_Function(self, node: ev.Function):
+        if node.name == MAIN_FUNCTION:
+            name = "program_main"
+        else:
+            name = self.function_name(node.name)
+
+        with self.isolate() as decl:
+            self.put("void", name, "()")
+
+        with self.isolate() as defn:
+            self.put("{\n")
 
             for sub in node.body:
                 self.put(sub)
 
             self.put("}\n")
 
-        self.save(program, self.main_parts)
+        self.save(decl + [";\n"], self.declaration_parts)
+        self.save(decl, self.main_parts)
+        self.save(defn, self.main_parts)

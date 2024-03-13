@@ -46,10 +46,17 @@ class Int(Value):
 
 @dataclass
 class Module(Value):
-    # context: ScopeContext
     body: list[Eval]
 
     type: ts.Type = field(default=ts.MODULE_T, init=False)
+
+
+@dataclass
+class Function(Value):
+    name: str
+    body: list[Eval]
+
+    type: ts.Type = field(default=ts.FUNCTION_T, init=False)
 
 
 @dataclass
@@ -98,7 +105,7 @@ class Ast2Eval(ast.Visitor):
     def visit_Module(self, node: ast.Module):
         loc = self.loc(node)
         with self.change_evals([]) as body:
-            self.generic_visit(node.body)
+            self.visit(node.body)
         return Module(loc, body)
 
     def visit_SingleExpression(self, node: ast.SingleExpression):
@@ -109,7 +116,20 @@ class Ast2Eval(ast.Visitor):
 
         self.block_evals.append(value)
 
-    # def visit_NumericLiteral(self, node: ast.NumericLiteral):
-    #     signed = node.signedness is not ast.NumericLiteral.Signedness.UNSIGNED
-    #     ts.IntType(, signed)
-    #     return Int(self.loc(node), node.value)
+    def visit_NumericLiteral(self, node: ast.NumericLiteral, kind: ast.NumbeType = ast.NumbeType.BIG):
+        signed = node.signedness is not ast.NumericLiteral.Signedness.UNSIGNED
+        return Int(self.loc(node), node.value, type=ts.IntType(kind, signed))
+
+    # def visit_NumberDeclaration(self, node: ast.NumberDeclaration):
+    #     loc = self.loc(node)
+    #     lit = self.visit_NumericLiteral(node.value, node.type.type)
+
+    def visit_Function(self, node: ast.Function):
+        loc = self.loc(node)
+        func = Function(loc, node.name, [])
+        
+        with self.change_evals(func.body):
+            self.visit(node.body)
+
+        self.block_evals.append(func)
+        return func

@@ -21,3 +21,11 @@ class ModuleType(Type):
 
 
 MODULE_T = ModuleType()
+
+
+@dataclass(frozen=True)
+class FunctionType(Type):
+    pass
+
+
+FUNCTION_T = FunctionType()
