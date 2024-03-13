@@ -51,7 +51,7 @@ class TypeRef(AST):
     pass
 
 
-class NumbeType(Enum):
+class NumberType(Enum):
     TINY = auto()
     SMALL = auto()
     NORMAL = auto()
@@ -59,8 +59,8 @@ class NumbeType(Enum):
 
 
 @dataclass
-class NumbeTypeRef(TypeRef):
-    type: NumbeType
+class NumberTypeRef(TypeRef):
+    type: NumberType
 
     def fields(self):
         yield from super().fields()
@@ -223,7 +223,7 @@ class Call(Expression):
 
 @dataclass
 class NumberDeclaration(Statement):
-    type: NumbeTypeRef
+    type: NumberTypeRef
     names: list[Name]
     value: NumericLiteral
 
@@ -236,8 +236,8 @@ class NumberDeclaration(Statement):
 
 @dataclass
 class ArrayDeclaration(Statement):
-    element_type: NumbeTypeRef
-    size_type: NumbeTypeRef
+    element_type: NumberTypeRef
+    size_type: NumberTypeRef
     names: list[Name]
     value: NumericLiteral
 
@@ -273,7 +273,7 @@ class Check(Statement):
 
 @dataclass
 class Argument(AST):
-    type: NumbeTypeRef
+    type: NumberTypeRef
     name: Name
 
     def fields(self):
@@ -284,7 +284,7 @@ class Argument(AST):
 
 @dataclass
 class Function(Statement):
-    return_type: NumbeTypeRef
+    return_type: NumberTypeRef
     name: str
     args: list[Argument]
     body: list[Statement]

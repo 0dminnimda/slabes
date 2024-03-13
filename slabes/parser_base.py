@@ -180,24 +180,24 @@ class ParserBase(Parser):
             error_recovered=error_recovered,
         )
 
-    def make_number_type(self, tok: TokenInfo, **loc) -> ast.NumbeTypeRef:
+    def make_number_type(self, tok: TokenInfo, **loc) -> ast.NumberTypeRef:
         if tok.type == Keywords.TINY.value:
-            return ast.NumbeTypeRef(ast.NumbeType.TINY, **loc)
+            return ast.NumberTypeRef(ast.NumberType.TINY, **loc)
         if tok.type == Keywords.SMALL.value:
-            return ast.NumbeTypeRef(ast.NumbeType.SMALL, **loc)
+            return ast.NumberTypeRef(ast.NumberType.SMALL, **loc)
         if tok.type == Keywords.NORMAL.value:
-            return ast.NumbeTypeRef(ast.NumbeType.NORMAL, **loc)
+            return ast.NumberTypeRef(ast.NumberType.NORMAL, **loc)
         if tok.type == Keywords.BIG.value:
-            return ast.NumbeTypeRef(ast.NumbeType.BIG, **loc)
+            return ast.NumberTypeRef(ast.NumberType.BIG, **loc)
 
         self.report_syntax_error_at(
             f"expected number type, got {token.tok_name[tok.type]}", tok
         )
-        return ast.NumbeTypeRef(ast.NumbeType.NORMAL, **loc, error_recovered=True)
+        return ast.NumberTypeRef(ast.NumberType.NORMAL, **loc, error_recovered=True)
 
     def make_number_declaration(
         self,
-        type: ast.NumbeTypeRef,
+        type: ast.NumberTypeRef,
         names: list[ast.Name],
         value: ast.AST,
         **loc,
@@ -216,8 +216,8 @@ class ParserBase(Parser):
 
     def make_array_declaration(
         self,
-        elem_t: ast.NumbeTypeRef,
-        size_t: ast.NumbeTypeRef,
+        elem_t: ast.NumberTypeRef,
+        size_t: ast.NumberTypeRef,
         names: list[ast.Name],
         value: ast.AST,
         **loc,

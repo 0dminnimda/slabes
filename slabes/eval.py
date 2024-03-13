@@ -134,7 +134,7 @@ class Ast2Eval(ast.Visitor):
         self.scope.body.append(value)
 
     def visit_NumericLiteral(
-        self, node: ast.NumericLiteral, kind: ast.NumbeType = ast.NumbeType.BIG
+        self, node: ast.NumericLiteral, kind: ast.NumberType = ast.NumberType.BIG
     ):
         signed = node.signedness is not ast.NumericLiteral.Signedness.UNSIGNED
         return Int(self.loc(node), node.value, type=ts.IntType(kind, signed))

@@ -12,7 +12,7 @@ class Type:
 
 @dataclass(frozen=True)
 class IntType(Type):
-    kind: ast.NumbeType
+    kind: ast.NumberType
     signed: bool = field(default=False)
 
     def name(self) -> str:
@@ -20,13 +20,13 @@ class IntType(Type):
         if not self.signed:
             res += "unsigned_"
 
-        if self.kind is ast.NumbeType.TINY:
+        if self.kind is ast.NumberType.TINY:
             res += "tiny"
-        elif self.kind is ast.NumbeType.SMALL:
+        elif self.kind is ast.NumberType.SMALL:
             res += "small"
-        elif self.kind is ast.NumbeType.NORMAL:
+        elif self.kind is ast.NumberType.NORMAL:
             res += "normal"
-        elif self.kind is ast.NumbeType.BIG:
+        elif self.kind is ast.NumberType.BIG:
             res += "big"
         else:
             assert False, f"Unknown number kind: {self.kind}"

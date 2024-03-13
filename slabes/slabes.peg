@@ -281,7 +281,7 @@ robot_keyword: GO | RL | RR | SONAR | COMPASS
 
 
 # ugh bug in pegen
-number_type[ast.NumbeTypeRef]: a=number_type_raw { self.make_number_type(a, LOCATIONS) }
+number_type[ast.NumberTypeRef]: a=number_type_raw { self.make_number_type(a, LOCATIONS) }
 number_type_raw: TINY | SMALL | NORMAL | BIG
 
 
