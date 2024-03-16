@@ -74,7 +74,7 @@ class GenerateC:
             report_fatal_at(
                 node.loc,
                 errors.SyntaxError,
-                f"analysis node '{type(node).__name__}' is currently not supported",
+                f"analysis node '{type(node).__name__}' is currently not supported for codegen",
                 self._lines
             )
         return visitor(node)
@@ -163,7 +163,7 @@ class GenerateC:
     def handle_scope(self, node: ev.ScopeValue):
         with self.new_scope(node):
             for it in node.body:
-                self.put(it)
+                self.put(it, ";;")
 
     def visit_Module(self, node: ev.Module):
         self.scope = node
@@ -210,3 +210,22 @@ class GenerateC:
 
     def visit_Int(self, node: ev.Int):
         return str(node.value)
+
+    def visit_Call(self, node: ast.Call):
+        args = self.collect(*node.args, sep=",")
+        self.put(self.function_name(node.name), "(", args, ")")
+
+    def as_format(self, node: ts.Type) -> str:
+        return "slabes_format_" + node.name()
+
+    def handle_print(self, node: ast.Call):
+        raise NotImplementedError
+        format = ""
+        for arg in node.args:
+            value = arg.evaluated
+            self.put(self.as_format(value.type))
+            # self.put(self.function_name(node.name), "(", args, ")")
+        format += "\n"
+
+    def visit_Name(self, node: ast.Name):
+        self.put(node.value)

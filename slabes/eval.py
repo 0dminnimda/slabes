@@ -14,12 +14,26 @@ from .parser_base import DEFAULT_FILENAME
 @dataclass
 class Eval:
     loc: Location = field(repr=False)
+    _evaluated: Value | None = field(default=None, init=False)
 
     def init(self, context: ScopeContext) -> None:
         raise NotImplementedError
 
     def eval(self, context: ScopeContext) -> Value:
         raise NotImplementedError
+
+    def evaluate(self, context: ScopeContext) -> Value:
+        res = self.eval(context)
+        self.evaluated = res
+        return res
+
+    @property
+    def evaluated(self):
+        assert self._evaluated is not None
+
+    @evaluated.setter
+    def evaluated(self, value):
+        self._evaluated = value
 
 
 @dataclass
@@ -47,6 +61,17 @@ class ScopeContext(NameTable):
 class Assign(Eval):
     names: list[str]
     value: Eval
+
+
+@dataclass
+class Call(Eval):
+    name: str
+    args: list[Eval]
+
+
+@dataclass
+class Name(Eval):
+    value: str
 
 
 @dataclass
@@ -86,7 +111,7 @@ class Ast2Eval(ast.Visitor):
             report_fatal_at(
                 self.loc(node),
                 errors.SyntaxError,
-                f"analysis node '{type(node).__name__}' is currently not supported",
+                f"analysis node '{type(node).__name__}' is currently not supported for evalation",
                 self._lines,
             )
         return visitor(node)
@@ -126,10 +151,12 @@ class Ast2Eval(ast.Visitor):
         return mod
 
     def visit_SingleExpression(self, node: ast.SingleExpression):
-        # if isinstance(node, ast.NumberDeclaration):
-        #     value = self.visit(node)
-        # else:
-        return
+        if isinstance(node.body, ast.Call):
+            value = self.visit(node.body)
+        else:
+            self.visit(node.body)
+            return None
+        return value
 
         self.scope.body.append(value)
 
@@ -156,3 +183,13 @@ class Ast2Eval(ast.Visitor):
             self.handle_body(node.body)
 
         return func
+
+    def visit_Call(self, node: ast.Call):
+        loc = self.loc(node)
+
+        return Call(loc, node.name.value, [self.visit(it) for it in node.args])
+
+    def visit_Name(self, node: ast.Name):
+        loc = self.loc(node)
+
+        return Name(loc, node.value)
