@@ -53,6 +53,9 @@ class Value(Eval):
             return self
         return None
 
+    def binary_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
+        return None
+
 
 @dataclass
 class ScopeContext(NameTable):
@@ -133,6 +136,29 @@ class Call(Eval):
 
 
 @dataclass
+class BinaryOperation(Eval):
+    lhs: Eval
+    op: ast.BinOp
+    rhs: Eval
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        lhs = self.lhs.evaluate(context)
+        rhs = self.rhs.evaluate(context)
+
+        res = lhs.binary_operation(self.op, rhs, False)
+        if res is None:
+            res = rhs.binary_operation(self.op, lhs, True)
+        if res is None:
+            report_fatal_at(
+                self.loc,
+                errors.TypeError,
+                f"binary operation '{self.op}' not supported for '{lhs.type}' and '{rhs.type}'"
+            )
+
+        return res
+
+
+@dataclass
 class Name(Eval):
     value: str
 
@@ -143,12 +169,19 @@ class Name(Eval):
 @dataclass
 class Int(Value):
     value: int
-    type: ts.Type = field(kw_only=True)
+    type: ts.IntType = field(kw_only=True)
 
     def convert_to(self, other: Value) -> Value | None:
         if isinstance(other.type, type(self.type)):
             return Int(self.loc, self.value, type=other.type)
         return None
+
+    def binary_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
+        if isinstance(rhs, Int):
+            kind = max(self.type.kind, rhs.type.kind)
+            return Int(self.loc, 0, type=ts.IntType(kind))
+        return None
+
 
 @dataclass
 class ScopeValue(Value, ScopeContext):
@@ -311,3 +344,8 @@ class Ast2Eval(ast.Visitor):
         loc = self.loc(node)
 
         return Name(loc, node.value)
+
+    def visit_BinaryOperation(self, node: ast.BinaryOperation):
+        loc = self.loc(node)
+
+        return BinaryOperation(loc, self.visit(node.lhs), node.op, self.visit(node.rhs))

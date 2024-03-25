@@ -16,32 +16,74 @@ typedef /*ctype*/ slabes_type_/*name*/;
 
 #define slabes_format_/*name*/ "/*format*/"
 
-void assign_slabes_type_/*name*/(/*ctype*/ *var, /*ctype*/ value) {
+void assign_slabes_type_/*name*/(slabes_type_/*name*/ *var, slabes_type_/*name*/ value) {
     *var = value;
 }
 """
 
 INT_TYPE_INFO = [
-    ("bool", "unsigned_tiny", "%hhi"),
-    ("bool", "tiny", "%hhi"),
-    ("char", "unsigned_small", "%hhi"),
-    ("char", "small", "%hhi"),
-    ("short", "unsigned_normal", "%hi"),
-    ("short", "normal", "%hi"),
-    ("short", "unsigned_big", "%hi"),
-    ("short", "big", "%hi"),
+    ("bool", "tiny", "%hh", False),
+    ("char", "small", "%hh", True),
+    ("short", "normal", "%h", True),
+    ("short", "big", "%h", True),
 ]
 
 
 def make_int_types():
-    for ctype, name, format in INT_TYPE_INFO:
+    for ctype, name, format, can_be_unsigned in INT_TYPE_INFO:
         yield (
             INT_TYPE_TEMPLATE.replace("/*ctype*/", ctype)
             .replace("/*name*/", name)
-            .replace("/*format*/", format)
+            .replace("/*format*/", format + "i")
+        )
+        ctype = ("unsigned " if can_be_unsigned else "") + ctype
+        yield (
+            INT_TYPE_TEMPLATE.replace("/*ctype*/", ctype)
+            .replace("/*name*/", "unsigned_" + name)
+            .replace("/*format*/", format + "u")
         )
 
+
 INT_TYPES = "\n".join(make_int_types())
+
+
+INT_OP_TEMPLATE = """
+slabes_type_/*name*/ slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*name1*/ lhs, slabes_type_/*name2*/ rhs) {
+    return lhs /*op*/ rhs;
+}
+"""
+
+INT_OP_INFO = [
+    ("+", "add"),
+    ("-", "sub"),
+    ("*", "mul"),
+    ("/", "div"),
+]
+
+
+def make_int_ops():
+    for i, (_, name1, *_) in enumerate(INT_TYPE_INFO):
+        for j, (_, name2, *_) in enumerate(INT_TYPE_INFO):
+            _, name = max((i, name1), (j, name2))
+
+            for op, op_name in INT_OP_INFO:
+                yield (
+                    INT_OP_TEMPLATE.replace("/*name*/", name)
+                    .replace("/*name1*/", name1)
+                    .replace("/*name2*/", name2)
+                    .replace("/*op*/", op)
+                    .replace("/*op_name*/", op_name)
+                )
+                yield (
+                    INT_OP_TEMPLATE.replace("/*name*/", "unsigned_" + name)
+                    .replace("/*name1*/", "unsigned_" + name1)
+                    .replace("/*name2*/", "unsigned_" + name2)
+                    .replace("/*op*/", op)
+                    .replace("/*op_name*/", op_name)
+                )
+
+
+INT_OPS = "\n".join(make_int_ops())
 
 
 TEMPLATE = """
@@ -51,6 +93,7 @@ TEMPLATE = """
 #include <stdbool.h>
 
 /*int-types*/
+/*int-ops*/
 
 /*decl*/
 
@@ -64,7 +107,10 @@ int main(int argc, char *argv[]) {
 }
 """
 
-TEMPLATE = TEMPLATE.replace("/*int-types*/", INT_TYPES)
+TEMPLATE = (
+    TEMPLATE.replace("/*int-types*/", INT_TYPES)
+    .replace("/*int-ops*/", INT_OPS)
+)
 
 
 PART_SEPARATOR: str = " "
@@ -180,7 +226,7 @@ class GenerateC:
         return string
 
     def handle_scope(self, node: ev.ScopeValue):
-        for name, value in node.name_to_value.items():    
+        for name, value in node.name_to_value.items():
             self.put(self.type_name(value.type), self.var_name(name), ";;")
 
         with self.new_scope(node):
@@ -239,6 +285,9 @@ class GenerateC:
     def visit_Int(self, node: ev.Int):
         return str(node.value)
 
+    def visit_Name(self, node: ev.Name):
+        self.put(self.var_name(node.value))
+
     def visit_Call(self, node: ev.Call):
         if node.name == "print":
             self.handle_print(node)
@@ -259,6 +308,15 @@ class GenerateC:
         args = self.collect(format, *node.args, sep=",")
         self.put("printf(", args, ")")
 
+    def bin_op_name(self, op: ast.BinOp) -> str:
+        return "slabes_op_" + op.name.lower()
 
-    def visit_Name(self, node: ev.Name):
-        self.put(self.var_name(node.value))
+    def visit_BinaryOperation(self, node: ev.BinaryOperation):
+        self.put(
+            self.bin_op_name(node.op)
+            + "__"
+            + node.lhs.evaluated.type.name()
+            + "__"
+            + node.rhs.evaluated.type.name()
+        )
+        self.put("(", node.lhs, ",", node.rhs, ")")

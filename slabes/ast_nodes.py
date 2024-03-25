@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum, IntEnum, auto
 from typing import Any, Iterable
 
 
@@ -51,7 +51,7 @@ class TypeRef(AST):
     pass
 
 
-class NumberType(Enum):
+class NumberType(IntEnum):
     TINY = auto()
     SMALL = auto()
     NORMAL = auto()

@@ -10,6 +10,9 @@ big main begin
     print(a b c),
     c << a << 6 >> b >> a << 8 >> b >> b,
     print(a b c),
+    
+    b << b + 1,
+    print(a b c),
 . end,
 
 .
