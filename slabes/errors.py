@@ -15,10 +15,6 @@ class CompilerError(Exception):
 
     @classmethod
     def make(cls, loc: Location, error_name: str, message: str, line: str | list[str] | None = None):
-        if line is None:
-            path = Path(self.loc.filepath)
-            if path.is_file():
-                line = path.read_text().splitlines(keepends=False)
         if isinstance(line, list):
             line = line[loc.lineno - 1]
         return cls(
@@ -75,4 +71,3 @@ def report_fatal_at(
 
 
 SyntaxError = "SyntaxError"
-TypeError = "TypeError"

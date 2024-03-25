@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from contextlib import contextmanager
 
 from . import ast_nodes as ast
-from .name_table import NameTable
+from .name_table import NameTable, fill_name_table_from_ast, lookup_origin
 from . import types as ts
 from . import errors
 from .errors import report_fatal_at
@@ -19,13 +19,14 @@ class Eval:
     def init(self, context: ScopeContext) -> None:
         raise NotImplementedError
 
-    def eval(self, context: ScopeContext) -> Value:
+    def raw_eval(self, context: ScopeContext) -> Value:
         raise NotImplementedError
 
     def evaluate(self, context: ScopeContext) -> Value:
-        res = self.eval(context)
-        self.evaluated = res
-        return res
+        if self.evaluated is None:
+            res = self.raw_eval(context)
+            self.evaluated = res
+        return self.evaluated
 
     @property
     def evaluated(self):
@@ -43,13 +44,36 @@ class Value(Eval):
     def init(self, context: ScopeContext) -> None:
         pass
 
-    def eval(self, context: ScopeContext) -> Value:
+    def raw_eval(self, context: ScopeContext) -> Value:
         return self
 
 
 @dataclass
 class ScopeContext(NameTable):
-    name_to_type: dict[str, ts.Type] = field(default_factory=dict, kw_only=True)
+    name_to_value: dict[str, Value] = field(default_factory=dict, kw_only=True)
+
+    def set_name_value(self, name: str, value: Value, loc: Location) -> None:
+        have = self.name_to_type.get(name)
+        if have is None:
+            self.name_to_type[name] = value
+        else:
+            if have.type != value.type:
+                report_at(
+                    loc,
+                    errors.TypeError,
+                    f"assigning a value of type '{tp}', declared type is '{have_tp}'"
+                )
+
+    def get_name_value(self, name: str, loc: Location) -> Value:
+        have = self.name_to_type.get(name)
+        if have is None:
+            report_fatal_at(
+                loc,
+                errors.TypeError,
+                f"cannot get a value that is not assigned"
+            )
+        else:
+            return have
 
 
 # @dataclass
@@ -62,16 +86,38 @@ class Assign(Eval):
     names: list[str]
     value: Eval
 
+    def raw_eval(self, context: ScopeContext) -> Value:
+        value = value.evaluate()
+        for name in names:
+            origin = lookup_origin(context, name)
+            origin.set_name_value(name, value)
+        return value
+
 
 @dataclass
 class Call(Eval):
     name: str
     args: list[Eval]
 
+    def raw_eval(self, context: ScopeContext) -> Value:
+        origin = lookup_origin(context, self.name)
+        func = origin.get_name_value(name)
+        if not isinstance(func, Function):
+            report_fatal_at(
+                loc,
+                errors.TypeError,
+                f"call operation expected functoin type, got '{func.type}'"
+            )
+        return Int(0, ts.IntType(ast.NumberType.TINY))
+
 
 @dataclass
 class Name(Eval):
     value: str
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        origin = lookup_origin(context, self.name)
+        return origin.get_name_value(name)
 
 
 @dataclass
@@ -83,6 +129,11 @@ class Int(Value):
 @dataclass
 class ScopeValue(Value, ScopeContext):
     body: list[Eval] = field(default_factory=list, kw_only=True)
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        for it in self.body:
+            it.evaluate()
+        return self
 
 
 @dataclass
@@ -145,7 +196,11 @@ class Ast2Eval(ast.Visitor):
     def visit_Module(self, node: ast.Module):
         loc = self.loc(node)
 
-        with self.new_scope(Module(loc)) as mod:
+        mod = Module(loc)
+        fill_name_table_from_ast(mod, node)
+        func.outer = self.scope
+
+        with self.new_scope(mod):
             self.handle_body(node.body)
 
         return mod
@@ -179,7 +234,11 @@ class Ast2Eval(ast.Visitor):
     def visit_Function(self, node: ast.Function):
         loc = self.loc(node)
 
-        with self.new_scope(Function(loc, node.name)) as func:
+        func = Function(loc, node.name)
+        fill_name_table_from_ast(func, node)
+        func.outer = self.scope
+
+        with self.new_scope(func):
             self.handle_body(node.body)
 
         return func

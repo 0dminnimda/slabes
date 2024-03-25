@@ -213,13 +213,15 @@ class GenerateC:
 
     def visit_Call(self, node: ast.Call):
         args = self.collect(*node.args, sep=",")
-        self.put(self.function_name(node.name), "(", args, ")")
+        if node.name == "print":
+            self.handle_print(node)
+        else:
+            self.put(self.function_name(node.name), "(", args, ")")
 
     def as_format(self, node: ts.Type) -> str:
         return "slabes_format_" + node.name()
 
     def handle_print(self, node: ast.Call):
-        raise NotImplementedError
         format = ""
         for arg in node.args:
             value = arg.evaluated
