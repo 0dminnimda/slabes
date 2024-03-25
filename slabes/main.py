@@ -12,6 +12,7 @@ from .eval import Ast2Eval
 from . import eval as ev
 from .codegen import GenerateC
 from . import ast_nodes as ast
+from . import errors
 
 
 IS_ANDROID = "android" in platform.platform().lower()
@@ -100,6 +101,8 @@ def main(argv: list[str] = sys.argv) -> None:
     fill_name_table_from_ast(table, tree)
 
     evalue = Ast2Eval().transform(conf.source, tree, conf.in_path)
+
+    errors.report_collected()
 
     assert isinstance(evalue, ev.Module), "got non-module evalue after ast transformation"
     c_code = GenerateC().generate(conf.source, evalue, conf.in_path)

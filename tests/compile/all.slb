@@ -6,7 +6,8 @@ big main begin
     
     ti a << 3,
     sma b << 3,
-    # print(a b)
+    print(a b),
+    a(),
     # a << 6 >> b >> a << 8 >> b >> b,
 . end,
 
