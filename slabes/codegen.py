@@ -11,6 +11,38 @@ from .location import Location
 from .parser_base import DEFAULT_FILENAME
 
 
+INT_TYPE_TEMPLATE = """
+typedef /*ctype*/ slabes_type_/*name*/;
+
+#define slabes_format_/*name*/ "/*format*/"
+
+void assign_slabes_type_/*name*/(/*ctype*/ *var, /*ctype*/ value) {
+    *var = value;
+}
+"""
+
+INT_TYPE_INFO = [
+    ("bool", "unsigned_tiny", "%hhi"),
+    ("bool", "tiny", "%hhi"),
+    ("char", "unsigned_small", "%hhi"),
+    ("char", "small", "%hhi"),
+    ("short", "unsigned_normal", "%hi"),
+    ("short", "normal", "%hi"),
+    ("short", "unsigned_big", "%hi"),
+    ("short", "big", "%hi"),
+]
+
+
+def make_int_types():
+    for ctype, name, format in INT_TYPE_INFO:
+        yield (
+            INT_TYPE_TEMPLATE.replace("/*ctype*/", ctype)
+            .replace("/*name*/", name)
+            .replace("/*format*/", format)
+        )
+
+INT_TYPES = "\n".join(make_int_types())
+
 
 TEMPLATE = """
 // GENERATED FROM /*file*/
@@ -18,21 +50,7 @@ TEMPLATE = """
 #include <stdio.h>
 #include <stdbool.h>
 
-#define make_int_type(ctype, name) \\
-typedef ctype slabes_type_##name; \\
-\\
-void assign_slabes_type_##name(ctype *var, ctype value) { \\
-    *var = value; \\
-}
-
-make_int_type(bool, unsigned_tiny)
-make_int_type(bool, tiny)
-make_int_type(char, unsigned_small)
-make_int_type(char, small)
-make_int_type(short, unsigned_normal)
-make_int_type(short, normal)
-make_int_type(short, unsigned_big)
-make_int_type(short, big)
+/*int-types*/
 
 /*decl*/
 
@@ -45,6 +63,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 """
+
+TEMPLATE = TEMPLATE.replace("/*int-types*/", INT_TYPES)
 
 
 PART_SEPARATOR: str = " "
@@ -218,10 +238,10 @@ class GenerateC:
         return str(node.value)
 
     def visit_Call(self, node: ev.Call):
-        args = self.collect(*node.args, sep=",")
         if node.name == "print":
             self.handle_print(node)
         else:
+            args = self.collect(*node.args, sep=",")
             self.put(self.function_name(node.name), "(", args, ")")
 
     def as_format(self, node: ts.Type) -> str:
@@ -231,9 +251,12 @@ class GenerateC:
         format = ""
         for arg in node.args:
             value = arg.evaluated
-            self.put(self.as_format(value.type))
-            # self.put(self.function_name(node.name), "(", args, ")")
-        format += "\n"
+            format += self.as_format(value.type) + ' " " '
+        format += r'"\n"'
+
+        args = self.collect(format, *node.args, sep=",")
+        self.put("printf(", args, ")")
+
 
     def visit_Name(self, node: ev.Name):
-        self.put(node.value)
+        self.put(self.var_name(node.value))
