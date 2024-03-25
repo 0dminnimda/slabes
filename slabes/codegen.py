@@ -79,7 +79,8 @@ slabes_type_/*name*/ slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*n
     printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")\\n", lhs, rhs);
 #endif
     /*preamble*/
-    slabes_type_/*name*/ result = lhs /*op*/ rhs;
+    slabes_type_/*name*/ result;
+    /*op*/;
     /*postamble*/
     return result;
 }
@@ -89,11 +90,17 @@ INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES = """
 #define slabes_op_/*op_name*/__/*name1*/__/*name2*/ slabes_op_/*op_name*/__/*name*/__/*name*/
 """
 
+INT_BIN_OP_CHECK_OVEFLOW = """
+if (ckd_/*op_name*/(&result, rhs, lhs)) {
+    result = slabes_max_value_/*name*/;
+}
+"""
+
 INT_BIN_OP_INFO = [
-    ("+", "add"),
-    ("-", "sub"),
-    ("*", "mul"),
-    ("/", "div"),
+    ("add", INT_BIN_OP_CHECK_OVEFLOW),
+    ("sub", INT_BIN_OP_CHECK_OVEFLOW),
+    ("mul", INT_BIN_OP_CHECK_OVEFLOW),
+    ("div", "result = rhs / lhs"),
 ]
 
 INT_BIN_OP_DIV_CODE = "if (rhs == 0) return slabes_max_value_/*name*/;"
@@ -105,32 +112,33 @@ def make_int_bin_ops():
         for j, info2 in enumerate(INT_TYPE_INFO.values()):
             _, info = max((i, info1), (j, info2))
 
-            for op, op_name in INT_BIN_OP_INFO:
+            for op_name, op in INT_BIN_OP_INFO:
                 if i != j:
                     template = INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES
                 else:
                     template = INT_BIN_OP_TEMPLATE
 
                 preamble = INT_BIN_OP_DIV_CODE if op_name == "div" else ""
-                postamble = INT_BIN_OP_GROING_CODE if op_name in ("add", "sub", "mul") else ""
+                postamble = ""
+                # INT_BIN_OP_GROING_CODE if op_name in ("add", "sub", "mul") else ""
                 yield (
                     template
                     .replace("/*preamble*/", preamble)
                     .replace("/*postamble*/", postamble)
+                    .replace("/*op*/", op)
                     .replace("/*name*/", info.name)
                     .replace("/*name1*/", info1.name)
                     .replace("/*name2*/", info2.name)
-                    .replace("/*op*/", op)
                     .replace("/*op_name*/", op_name)
                 )
                 yield (
                     template
                     .replace("/*preamble*/", preamble)
                     .replace("/*postamble*/", postamble)
+                    .replace("/*op*/", op)
                     .replace("/*name*/", "unsigned_" + info.name)
                     .replace("/*name1*/", "unsigned_" + info1.name)
                     .replace("/*name2*/", "unsigned_" + info2.name)
-                    .replace("/*op*/", op)
                     .replace("/*op_name*/", op_name)
                 )
 
@@ -143,10 +151,48 @@ TEMPLATE = """
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <limits.h>
+
+int safe_add(int a, int b) {
+    if ((a > 0 && b > INT_MAX - a) || (a < 0 && b < INT_MIN - a)) {
+        // Handle overflow
+        return -1; // or any other error handling
+    }
+    return a + b;
+}
 
 typedef bool unsigned_bool;
 typedef unsigned char unsigned_char;
 typedef unsigned short unsigned_short;
+
+#if __has_include(<stdckdint.h>)
+# include <stdckdint.h>
+#else
+# ifdef __GNUC__  /*gcc and clagn have this*/
+#  define ckd_add(R, A, B) __builtin_add_overflow ((A), (B), (R))
+#  define ckd_sub(R, A, B) __builtin_sub_overflow ((A), (B), (R))
+#  define ckd_mul(R, A, B) __builtin_mul_overflow ((A), (B), (R))
+# else
+    #define ckd_add(R, A, B) (
+        (((B) > 0 && (A) > INT_MAX - (B)) || ((B) < 0 && (A) < INT_MIN - (B))) ?
+        true : ((*(R) = (A) + (B)), false)
+    )
+    #define ckd_sub(R, A, B) (
+        (((B) < 0 && (A) > INT_MAX + (B)) || ((B) > 0 && (A) < INT_MIN + (B))) ?
+        true : ((*(R) = (A) + (B)), false)
+    )
+    // #define ckd_mul(R, A, B) __builtin_mul_overflow ((A), (B), (R))
+    // // There may be a need to check for -1 for two's complement machines.
+    // // If one number is -1 and another is INT_MIN, multiplying them we get abs(INT_MIN) which is 1 higher than INT_MAX
+    // if (a == -1 && x == INT_MIN) // `a * x` can overflow
+    // if (x == -1 && a == INT_MIN) // `a * x` (or `a / x`) can overflow
+    // // general case
+    // if (x != 0 && a > INT_MAX / x) // `a * x` would overflow
+    // if (x != 0 && a < INT_MIN / x) // `a * x` would underflow
+# endif
+#endif
+
 
 /*int-types*/
 /*int-ops*/
