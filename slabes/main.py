@@ -101,12 +101,12 @@ def main(argv: list[str] = sys.argv) -> None:
     fill_name_table_from_ast(table, tree)
 
     evalue = Ast2Eval().transform(conf.source, tree, conf.in_path)
+    assert isinstance(evalue, ev.Module), "got non-module evalue after ast transformation"
 
     errors.report_collected()
 
-    # evalue.evaluate()
+    evalue.evaluate(evalue)
 
-    assert isinstance(evalue, ev.Module), "got non-module evalue after ast transformation"
     c_code = GenerateC().generate(conf.source, evalue, conf.in_path)
 
     print(ast.dump(tree, indent=4))

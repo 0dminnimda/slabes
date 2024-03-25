@@ -23,10 +23,10 @@ class Eval:
         raise NotImplementedError
 
     def evaluate(self, context: ScopeContext) -> Value:
-        if self.evaluated is None:
+        if self._evaluated is None:
             res = self.raw_eval(context)
-            self.evaluated = res
-        return self.evaluated
+            self._evaluated = res
+        return self._evaluated
 
     @property
     def evaluated(self):
