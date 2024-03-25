@@ -31,6 +31,7 @@ class Eval:
     @property
     def evaluated(self):
         assert self._evaluated is not None
+        return self._evaluated
 
     @evaluated.setter
     def evaluated(self, value):

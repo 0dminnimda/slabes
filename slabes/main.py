@@ -101,6 +101,10 @@ def main(argv: list[str] = sys.argv) -> None:
 
     evalue = Ast2Eval().transform(conf.source, tree, conf.in_path)
 
+    errors.report_collected()
+
+    # evalue.evaluate()
+
     assert isinstance(evalue, ev.Module), "got non-module evalue after ast transformation"
     c_code = GenerateC().generate(conf.source, evalue, conf.in_path)
 
