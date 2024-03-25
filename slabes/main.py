@@ -106,8 +106,8 @@ def main(argv: list[str] = sys.argv) -> None:
 
     c_code = GenerateC().generate(conf.source, evalue, conf.in_path)
 
-    print(ast.dump(tree, indent=4))
-    print(evalue)
+    # print(ast.dump(tree, indent=4))
+    # print(evalue)
 
     conf.c_path.write_text(c_code, "utf-8")
 

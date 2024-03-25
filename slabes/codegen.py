@@ -180,6 +180,9 @@ class GenerateC:
         return string
 
     def handle_scope(self, node: ev.ScopeValue):
+        for name, value in node.name_to_value.items():    
+            self.put(self.type_name(value.type), self.var_name(name), ";;")
+
         with self.new_scope(node):
             for it in node.body:
                 self.put(it, ";;")
@@ -224,7 +227,6 @@ class GenerateC:
     def visit_Assign(self, node: ev.Assign):
         for name in node.names:
             tp = self.scope.name_to_value[name].type
-            self.put(self.type_name(tp), self.var_name(name), ";;")
             self.put(
                 "assign_" + self.type_name(tp),
                 "(&",

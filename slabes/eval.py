@@ -48,6 +48,11 @@ class Value(Eval):
     def raw_eval(self, context: ScopeContext) -> Value:
         return self
 
+    def convert_to(self, other: Value) -> Value | None:
+        if self.type == other.type:
+            return self
+        return None
+
 
 @dataclass
 class ScopeContext(NameTable):
@@ -58,12 +63,15 @@ class ScopeContext(NameTable):
         if have is None:
             self.name_to_value[name] = value
         else:
-            if have.type != value.type:
+            converted = value.convert_to(have)
+            if converted is None:
                 report_at(
                     loc,
                     errors.TypeError,
                     f"declared type '{have.type}' does not match assigned type '{value.type}'"
                 )
+            else:
+                self.name_to_value[name] = converted
 
     def get_name_value(self, name: str, loc: Location) -> Value:
         have = self.name_to_value.get(name)
@@ -118,7 +126,7 @@ class Call(Eval):
             report_fatal_at(
                 self.loc,
                 errors.TypeError,
-                f"call operation expected functoin type, got '{func.type}'"
+                f"call operation expected function type, got '{func.type}'"
             )
         args = [arg.evaluate(context) for arg in self.args]
         return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
@@ -137,6 +145,10 @@ class Int(Value):
     value: int
     type: ts.Type = field(kw_only=True)
 
+    def convert_to(self, other: Value) -> Value | None:
+        if isinstance(other.type, type(self.type)):
+            return Int(self.loc, self.value, type=other.type)
+        return None
 
 @dataclass
 class ScopeValue(Value, ScopeContext):
@@ -222,8 +234,9 @@ class Ast2Eval(ast.Visitor):
     def handle_body(self, body):
         for it in body:
             res = self.visit(it)
-            if res is not None:
-                self.scope.body.append(res)
+            if res is None:
+                continue
+            self.scope.body.append(res)
 
     def visit_Module(self, node: ast.Module):
         loc = self.loc(node)
@@ -260,8 +273,24 @@ class Ast2Eval(ast.Visitor):
         for name in node.names:
             self.scope.set_name_value(name.value, lit, self.loc(name))
             names.append(name.value)
-        res = Assign(loc, names, self.visit(node.value))
-        return res
+        self.scope.body.append(Assign(loc, names, lit))
+
+    def visit_Assignment(self, node: ast.Assignment):
+        loc = self.loc(node)
+        for assign in node.parts:
+            names = []
+            value = self.visit(assign.value)
+            for name in assign.targets:
+                if isinstance(name, ast.Subscript):
+                    report_fatal_at(
+                        loc,
+                        errors.SyntaxError,
+                        "subscript assignment is not implemeented",
+                        self._lines,
+                    )
+                self.scope.set_name_value(name.value, value, self.loc(name))
+                names.append(name.value)
+            self.scope.body.append(Assign(loc, names, value))
 
     def visit_Function(self, node: ast.Function):
         loc = self.loc(node)
