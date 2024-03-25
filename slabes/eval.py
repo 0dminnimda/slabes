@@ -271,7 +271,6 @@ class Ast2Eval(ast.Visitor):
         lit = self.visit_NumericLiteral(node.value, node.type.type)
         names = []
         for name in node.names:
-            self.scope.set_name_value(name.value, lit, self.loc(name))
             names.append(name.value)
         self.scope.body.append(Assign(loc, names, lit))
 
@@ -288,9 +287,8 @@ class Ast2Eval(ast.Visitor):
                         "subscript assignment is not implemeented",
                         self._lines,
                     )
-                self.scope.set_name_value(name.value, value, self.loc(name))
                 names.append(name.value)
-            self.scope.body.append(Assign(loc, names, value))
+            self.scope.body.append(Assign(self.loc(assign), names, value))
 
     def visit_Function(self, node: ast.Function):
         loc = self.loc(node)
