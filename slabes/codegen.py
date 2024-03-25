@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 from dataclasses import dataclass, field
 from contextlib import contextmanager
@@ -75,14 +73,16 @@ class GenerateC:
                 node.loc,
                 errors.SyntaxError,
                 f"analysis node '{type(node).__name__}' is currently not supported for codegen",
-                self._lines
+                self._lines,
             )
         return visitor(node)
 
     def merge_parts(self, parts: list[str]) -> str:
         return PART_SEPARATOR.join(parts).replace(";;", ";\n")
 
-    def generate(self, code: str, eval: ev.Module, filepath: str = DEFAULT_FILENAME) -> str:
+    def generate(
+        self, code: str, eval: ev.Module, filepath: str = DEFAULT_FILENAME
+    ) -> str:
         self._filepath = filepath
         self._lines = code.splitlines()
         self.visit(eval)
@@ -90,8 +90,7 @@ class GenerateC:
             len(self.temporary_parts) == 0
         ), "temporary_parts should be saved before generation"
         return (
-            TEMPLATE
-            .replace("/*file*/", filepath)
+            TEMPLATE.replace("/*file*/", filepath)
             .replace("/*decl*/", self.merge_parts(self.declaration_parts))
             .replace("/*main*/", self.merge_parts(self.main_parts))
         )
@@ -149,7 +148,7 @@ class GenerateC:
 
     @contextmanager
     def new_scope(self, new: ev.ScopeValue):
-        old = getattr(self, "scope" , None)
+        old = getattr(self, "scope", None)
         self.scope = new
         try:
             yield self.scope
@@ -206,7 +205,14 @@ class GenerateC:
         for name in node.names:
             tp = self.scope.name_to_value[name].type
             self.put(self.type_name(tp), self.var_name(name), ";;")
-            self.put("assign_" + self.type_name(tp), "(&", self.var_name(name), ",", node.value, ");;")
+            self.put(
+                "assign_" + self.type_name(tp),
+                "(&",
+                self.var_name(name),
+                ",",
+                node.value,
+                ");;",
+            )
 
     def visit_Int(self, node: ev.Int):
         return str(node.value)
