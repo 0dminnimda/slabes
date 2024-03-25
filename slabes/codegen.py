@@ -204,7 +204,7 @@ class GenerateC:
 
     def visit_Assign(self, node: ev.Assign):
         for name in node.names:
-            tp = self.scope.name_to_type[name]
+            tp = self.scope.name_to_value[name].type
             self.put(self.type_name(tp), self.var_name(name), ";;")
             self.put("assign_" + self.type_name(tp), "(&", self.var_name(name), ",", node.value, ");;")
 

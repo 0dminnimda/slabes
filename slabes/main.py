@@ -12,6 +12,7 @@ from .eval import Ast2Eval
 from . import eval as ev
 from .codegen import GenerateC
 from . import ast_nodes as ast
+from . import errors
 
 
 IS_ANDROID = "android" in platform.platform().lower()

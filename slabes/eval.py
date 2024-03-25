@@ -6,7 +6,7 @@ from . import ast_nodes as ast
 from .name_table import NameTable, fill_name_table_from_ast, lookup_origin
 from . import types as ts
 from . import errors
-from .errors import report_fatal_at
+from .errors import report_at, report_fatal_at
 from .location import Location
 from .parser_base import DEFAULT_FILENAME
 
@@ -54,24 +54,24 @@ class ScopeContext(NameTable):
     name_to_value: dict[str, Value] = field(default_factory=dict, kw_only=True)
 
     def set_name_value(self, name: str, value: Value, loc: Location) -> None:
-        have = self.name_to_type.get(name)
+        have = self.name_to_value.get(name)
         if have is None:
-            self.name_to_type[name] = value
+            self.name_to_value[name] = value
         else:
             if have.type != value.type:
                 report_at(
                     loc,
                     errors.TypeError,
-                    f"assigning a value of type '{tp}', declared type is '{have_tp}'"
+                    f"declared type '{have.type}' does not match assigned type '{value.type}'"
                 )
 
     def get_name_value(self, name: str, loc: Location) -> Value:
-        have = self.name_to_type.get(name)
+        have = self.name_to_value.get(name)
         if have is None:
             report_fatal_at(
                 loc,
-                errors.TypeError,
-                f"cannot get a value that is not assigned"
+                errors.NameError,
+                f"name '{name}' is not defined"
             )
         else:
             return have
@@ -82,16 +82,28 @@ class ScopeContext(NameTable):
 #     value: int
 
 
+def lookup_name(context: ScopeContext, name: str, loc: Location) -> Value:
+    origin = lookup_origin(context, name)
+    if origin is None:
+        report_fatal_at(
+            loc,
+            errors.NameError,
+            f"name '{name}' is not defined"
+        )
+    else:
+        return origin.get_name_value(name, loc)
+
+
 @dataclass
 class Assign(Eval):
     names: list[str]
     value: Eval
 
     def raw_eval(self, context: ScopeContext) -> Value:
-        value = value.evaluate()
-        for name in names:
-            origin = lookup_origin(context, name)
-            origin.set_name_value(name, value)
+        value = self.value.evaluate(context)
+        for name in self.names:
+            origin = lookup_origin(context, name) or context
+            origin.set_name_value(name, value, self.loc)
         return value
 
 
@@ -101,15 +113,14 @@ class Call(Eval):
     args: list[Eval]
 
     def raw_eval(self, context: ScopeContext) -> Value:
-        origin = lookup_origin(context, self.name)
-        func = origin.get_name_value(name)
+        func = lookup_name(context, self.name, self.loc)
         if not isinstance(func, Function):
             report_fatal_at(
-                loc,
+                self.loc,
                 errors.TypeError,
                 f"call operation expected functoin type, got '{func.type}'"
             )
-        return Int(0, ts.IntType(ast.NumberType.TINY))
+        return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
 
 
 @dataclass
@@ -117,8 +128,7 @@ class Name(Eval):
     value: str
 
     def raw_eval(self, context: ScopeContext) -> Value:
-        origin = lookup_origin(context, self.name)
-        return origin.get_name_value(name)
+        return lookup_name(context, self.value, self.loc)
 
 
 @dataclass
@@ -133,7 +143,7 @@ class ScopeValue(Value, ScopeContext):
 
     def raw_eval(self, context: ScopeContext) -> Value:
         for it in self.body:
-            it.evaluate()
+            it.evaluate(context)
         return self
 
 
@@ -199,7 +209,6 @@ class Ast2Eval(ast.Visitor):
 
         mod = Module(loc)
         fill_name_table_from_ast(mod, node)
-        func.outer = self.scope
 
         with self.new_scope(mod):
             self.handle_body(node.body)
@@ -227,7 +236,7 @@ class Ast2Eval(ast.Visitor):
         lit = self.visit_NumericLiteral(node.value, node.type.type)
         names = []
         for name in node.names:
-            self.scope.name_to_type[name.value] = lit.type
+            self.scope.set_name_value(name.value, lit, self.loc(name))
             names.append(name.value)
         res = Assign(loc, names, self.visit(node.value))
         return res
