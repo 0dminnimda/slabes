@@ -211,7 +211,7 @@ class GenerateC:
     def visit_Int(self, node: ev.Int):
         return str(node.value)
 
-    def visit_Call(self, node: ast.Call):
+    def visit_Call(self, node: ev.Call):
         args = self.collect(*node.args, sep=",")
         if node.name == "print":
             self.handle_print(node)
@@ -221,7 +221,7 @@ class GenerateC:
     def as_format(self, node: ts.Type) -> str:
         return "slabes_format_" + node.name()
 
-    def handle_print(self, node: ast.Call):
+    def handle_print(self, node: ev.Call):
         format = ""
         for arg in node.args:
             value = arg.evaluated
@@ -229,5 +229,5 @@ class GenerateC:
             # self.put(self.function_name(node.name), "(", args, ")")
         format += "\n"
 
-    def visit_Name(self, node: ast.Name):
+    def visit_Name(self, node: ev.Name):
         self.put(node.value)
