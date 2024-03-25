@@ -72,3 +72,6 @@ class Location:
         if end is not None:
             return " " * start + "^" * (end - start)
         return " " * start + "^ "
+
+
+BuiltinLoc = Location("<built-in>", -1, -1, -1, -1)

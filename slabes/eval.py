@@ -7,7 +7,7 @@ from .name_table import NameTable, fill_name_table_from_ast, lookup_origin
 from . import types as ts
 from . import errors
 from .errors import report_at, report_fatal_at
-from .location import Location
+from .location import Location, BuiltinLoc
 from .parser_base import DEFAULT_FILENAME
 
 
@@ -120,6 +120,7 @@ class Call(Eval):
                 errors.TypeError,
                 f"call operation expected functoin type, got '{func.type}'"
             )
+        args = [arg.evaluate(context) for arg in self.args]
         return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
 
 
@@ -143,7 +144,7 @@ class ScopeValue(Value, ScopeContext):
 
     def raw_eval(self, context: ScopeContext) -> Value:
         for it in self.body:
-            it.evaluate(context)
+            it.evaluate(self)
         return self
 
 
@@ -157,6 +158,26 @@ class Function(ScopeValue):
     name: str
 
     type: ts.Type = field(default=ts.FUNCTION_T, init=False)
+
+
+@dataclass
+class FuncPrint(Function):
+    name: str = field(default="print", init=False)
+
+
+BUILTINS = {
+    "print": FuncPrint(BuiltinLoc)
+}
+
+
+def make_builtin_context():
+    context = ScopeContext(names=set(BUILTINS.keys()))
+    for name, value in BUILTINS.items():
+        Assign(BuiltinLoc, [name], value).evaluate(context)
+    return context
+
+
+BUILTIN_CONTEXT = make_builtin_context()
 
 
 @dataclass
@@ -209,6 +230,7 @@ class Ast2Eval(ast.Visitor):
 
         mod = Module(loc)
         fill_name_table_from_ast(mod, node)
+        mod.outer = BUILTIN_CONTEXT
 
         with self.new_scope(mod):
             self.handle_body(node.body)

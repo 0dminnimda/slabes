@@ -97,20 +97,16 @@ def main(argv: list[str] = sys.argv) -> None:
 
     tree = parse(conf.source, conf.in_path)
 
-    table = NameTable()
-    fill_name_table_from_ast(table, tree)
-
     evalue = Ast2Eval().transform(conf.source, tree, conf.in_path)
     assert isinstance(evalue, ev.Module), "got non-module evalue after ast transformation"
 
     errors.report_collected()
 
-    evalue.evaluate(evalue)
+    evalue.evaluate(ev.BUILTIN_CONTEXT)
 
     c_code = GenerateC().generate(conf.source, evalue, conf.in_path)
 
     print(ast.dump(tree, indent=4))
-    print(table)
     print(evalue)
 
     conf.c_path.write_text(c_code, "utf-8")
