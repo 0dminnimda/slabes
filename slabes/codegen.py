@@ -15,75 +15,127 @@ INT_TYPE_TEMPLATE = """
 typedef /*ctype*/ slabes_type_/*name*/;
 
 #define slabes_format_/*name*/ "/*format*/"
+#define slabes_max_value_/*name*/ /*max_value*/
+#define slabes_min_value_/*name*/ /*min_value*/
 
 void assign_slabes_type_/*name*/(slabes_type_/*name*/ *var, slabes_type_/*name*/ value) {
     *var = value;
 }
 """
 
-INT_TYPE_INFO = [
-    ("bool", "tiny", "%hh", False),
-    ("char", "small", "%hh", True),
-    ("short", "normal", "%h", True),
-    ("short", "big", "%h", True),
-]
+
+@dataclass
+class IntTypeInfo:
+    name: str
+    bits: int
+    ctype: str
+    format: str
+    can_be_signed: bool
+
+    def signed_range(self) -> tuple[int, int]:
+        return (-(1 << (self.bits - 1)), (1 << (self.bits - 1)) - 1)
+
+    def unsigned_range(self) -> tuple[int, int]:
+        return (0, (1 << self.bits) - 1)
+
+
+INT_TYPE_INFO = {
+    "tiny": IntTypeInfo("tiny", 1, "bool", "%hh", False),
+    "small": IntTypeInfo("small", 5, "char", "%hh", True),
+    "normal": IntTypeInfo("normal", 10, "short", "%h", True),
+    "big": IntTypeInfo("big", 15, "short", "%h", True),
+}
 
 
 def make_int_types():
-    for ctype, name, format, can_be_unsigned in INT_TYPE_INFO:
+    for info in INT_TYPE_INFO.values():
+        min_unsigned, max_unsigned = info.unsigned_range()
+        if info.can_be_signed:
+            min_signed, max_signed = info.signed_range()
+        else:
+            min_signed, max_signed = min_unsigned, max_unsigned
         yield (
-            INT_TYPE_TEMPLATE.replace("/*ctype*/", ctype)
-            .replace("/*name*/", name)
-            .replace("/*format*/", format + "i")
+            INT_TYPE_TEMPLATE.replace("/*ctype*/", info.ctype)
+            .replace("/*name*/", info.name)
+            .replace("/*format*/", info.format + "i")
+            .replace("/*max_value*/", str(max_signed))
+            .replace("/*min_value*/", str(min_signed))
         )
-        ctype = ("unsigned " if can_be_unsigned else "") + ctype
         yield (
-            INT_TYPE_TEMPLATE.replace("/*ctype*/", ctype)
-            .replace("/*name*/", "unsigned_" + name)
-            .replace("/*format*/", format + "u")
+            INT_TYPE_TEMPLATE.replace("/*ctype*/", "unsigned_" + info.ctype)
+            .replace("/*name*/", "unsigned_" + info.name)
+            .replace("/*format*/", info.format + "u")
+            .replace("/*max_value*/", str(max_unsigned))
+            .replace("/*min_value*/", str(min_unsigned))
         )
 
 
 INT_TYPES = "\n".join(make_int_types())
 
 
-INT_OP_TEMPLATE = """
+INT_BIN_OP_TEMPLATE = """
 slabes_type_/*name*/ slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*name1*/ lhs, slabes_type_/*name2*/ rhs) {
-    return lhs /*op*/ rhs;
+#ifdef SLABES_DEBUG_OP
+    printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")\\n", lhs, rhs);
+#endif
+    /*preamble*/
+    slabes_type_/*name*/ result = lhs /*op*/ rhs;
+    /*postamble*/
+    return result;
 }
 """
 
-INT_OP_INFO = [
+INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES = """
+#define slabes_op_/*op_name*/__/*name1*/__/*name2*/ slabes_op_/*op_name*/__/*name*/__/*name*/
+"""
+
+INT_BIN_OP_INFO = [
     ("+", "add"),
     ("-", "sub"),
     ("*", "mul"),
     ("/", "div"),
 ]
 
+INT_BIN_OP_DIV_CODE = "if (rhs == 0) return slabes_max_value_/*name*/;"
+INT_BIN_OP_GROING_CODE = "result = result % (slabes_max_value_/*name*/ + 1);"
 
-def make_int_ops():
-    for i, (_, name1, *_) in enumerate(INT_TYPE_INFO):
-        for j, (_, name2, *_) in enumerate(INT_TYPE_INFO):
-            _, name = max((i, name1), (j, name2))
 
-            for op, op_name in INT_OP_INFO:
+def make_int_bin_ops():
+    for i, info1 in enumerate(INT_TYPE_INFO.values()):
+        for j, info2 in enumerate(INT_TYPE_INFO.values()):
+            _, info = max((i, info1), (j, info2))
+
+            for op, op_name in INT_BIN_OP_INFO:
+                if i != j:
+                    template = INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES
+                else:
+                    template = INT_BIN_OP_TEMPLATE
+
+                preamble = INT_BIN_OP_DIV_CODE if op_name == "div" else ""
+                postamble = INT_BIN_OP_GROING_CODE if op_name in ("add", "sub", "mul") else ""
                 yield (
-                    INT_OP_TEMPLATE.replace("/*name*/", name)
-                    .replace("/*name1*/", name1)
-                    .replace("/*name2*/", name2)
+                    template
+                    .replace("/*preamble*/", preamble)
+                    .replace("/*postamble*/", postamble)
+                    .replace("/*name*/", info.name)
+                    .replace("/*name1*/", info1.name)
+                    .replace("/*name2*/", info2.name)
                     .replace("/*op*/", op)
                     .replace("/*op_name*/", op_name)
                 )
                 yield (
-                    INT_OP_TEMPLATE.replace("/*name*/", "unsigned_" + name)
-                    .replace("/*name1*/", "unsigned_" + name1)
-                    .replace("/*name2*/", "unsigned_" + name2)
+                    template
+                    .replace("/*preamble*/", preamble)
+                    .replace("/*postamble*/", postamble)
+                    .replace("/*name*/", "unsigned_" + info.name)
+                    .replace("/*name1*/", "unsigned_" + info1.name)
+                    .replace("/*name2*/", "unsigned_" + info2.name)
                     .replace("/*op*/", op)
                     .replace("/*op_name*/", op_name)
                 )
 
 
-INT_OPS = "\n".join(make_int_ops())
+INT_BIN_OPS = "\n".join(make_int_bin_ops())
 
 
 TEMPLATE = """
@@ -91,6 +143,10 @@ TEMPLATE = """
 
 #include <stdio.h>
 #include <stdbool.h>
+
+typedef bool unsigned_bool;
+typedef unsigned char unsigned_char;
+typedef unsigned short unsigned_short;
 
 /*int-types*/
 /*int-ops*/
@@ -109,7 +165,7 @@ int main(int argc, char *argv[]) {
 
 TEMPLATE = (
     TEMPLATE.replace("/*int-types*/", INT_TYPES)
-    .replace("/*int-ops*/", INT_OPS)
+    .replace("/*int-ops*/", INT_BIN_OPS)
 )
 
 
