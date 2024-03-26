@@ -1,9 +1,6 @@
-big gg begin
-. end,
-
-big main begin
+big ggg begin
     4,
-    
+
     ti ti_zero << 0,
     sma sma_zero << 0,
     no no_zero << 0,
@@ -14,7 +11,7 @@ big main begin
     print(a b c),
     c << a << 6 >> b >> a << 8 >> b >> b,
     print(a b c),
-    
+
     b << b + 1,
     print(a b c),
 
@@ -88,6 +85,124 @@ big main begin
         over_no + over_help
         over_bi + over_help
     ),
+
+    over_ti << over_sma,
+    over_sma << over_no,
+    over_no << over_bi,
+
+    print(
+        over_ti
+        over_sma
+        over_no
+    ),
+. end,
+
+
+ti hhh begin
+    -4,
+
+    ti ti_zero << -0,
+    sma sma_zero << -0,
+    no no_zero << -0,
+
+    ti a << -3,
+    sma b << -3,
+    bi c << -3,
+    print(a b c),
+    c << a << -6 >> b >> a << -8 >> b >> b,
+    print(a b c),
+
+    b << b + 1,
+    print(a b c),
+
+    print(1 / -0    1 / ti_zero    1 / sma_zero    1 / no_zero),
+    print(a / -0    a / ti_zero    a / sma_zero    a / no_zero),
+    print(b / -0    b / ti_zero    b / sma_zero    b / no_zero),
+    print(c / -0    c / ti_zero    c / sma_zero    c / no_zero),
+
+    ti over_ti << -0,
+    sma over_sma << -0,
+    no over_no << -0,
+    bi over_bi << -0,
+
+    over_ti << over_ti - 1,
+    over_ti << over_ti - 1,
+
+    over_sma << over_sma - V,  # 31
+    over_sma << over_sma - 1,
+
+    over_no << over_no - VV,  # 1023
+    over_no << over_no - 1,
+
+    over_bi << over_bi - VVV,  # 32767
+    over_bi << over_bi - 1,
+
+    print(
+        over_ti
+        over_sma
+        over_no
+        over_bi
+    ),
+
+    ti over_ti_help << -1,
+    sma over_sma_help << -V,
+    no over_no_help << -VV,
+    bi over_bi_help << -VVV,
+    ti over_help << -1,
+
+    over_ti << -0,
+    over_sma << -0,
+    over_no << -0,
+    over_bi << -0,
+
+    over_ti << over_ti + over_ti_help,
+    over_ti << over_ti + over_help,
+
+    over_sma << over_sma + over_sma_help,  # 31
+    over_sma << over_sma + over_help,
+
+    over_no << over_no + over_bi_help,  # 1023
+    over_no << over_no + over_help,
+
+    over_bi << over_bi + over_bi_help,  # 32767
+    over_bi << over_bi + over_help,
+
+    print(
+        over_ti
+        over_sma
+        over_no
+        over_bi
+    ),
+
+    over_ti << over_ti_help,
+    over_sma << over_sma_help,
+    over_no << over_bi_help,
+    over_bi << over_bi_help,
+
+    print(
+        over_ti + over_help
+        over_sma + over_help
+        over_no + over_help
+        over_bi + over_help
+    ),
+
+    over_ti << over_sma,
+    over_sma << over_no,
+    over_no << over_bi,
+
+    print(
+        over_ti
+        over_sma
+        over_no
+    ),
+. end,
+
+
+big main begin
+    4,
+    print(4),
+    ggg(),
+    hhh(),
 . end,
 
 .

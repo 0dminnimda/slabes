@@ -142,13 +142,12 @@ INT_BIN_OP_INFO = [
 ]
 
 INT_BIN_OP_DIV_CODE = "if (rhs == 0) return slabes_max_value_/*name*/;"
-INT_BIN_OP_GROING_CODE = "result = result % (slabes_max_value_/*name*/ + 1);"
 
 
 def make_int_bin_ops():
     for i, info1 in enumerate(INT_TYPE_INFO.values()):
         for j, info2 in enumerate(INT_TYPE_INFO.values()):
-            _, info = max((i, info1), (j, info2))
+            _, info, ind_max = max((i, info1, 0), (j, info2, 1))
 
             for op_name, op in INT_BIN_OP_INFO:
                 if i != j:
@@ -158,30 +157,57 @@ def make_int_bin_ops():
 
                 preamble = INT_BIN_OP_DIV_CODE if op_name == "div" else ""
                 postamble = ""
-                # INT_BIN_OP_GROING_CODE if op_name in ("add", "sub", "mul") else ""
-                yield (
-                    template
-                    .replace("/*preamble*/", preamble)
-                    .replace("/*postamble*/", postamble)
-                    .replace("/*op*/", op[info.name])
-                    .replace("/*name*/", info.name)
-                    .replace("/*name1*/", info1.name)
-                    .replace("/*name2*/", info2.name)
-                    .replace("/*op_name*/", op_name)
-                )
-                yield (
-                    template
-                    .replace("/*preamble*/", preamble)
-                    .replace("/*postamble*/", postamble)
-                    .replace("/*op*/", op[info.name])
-                    .replace("/*name*/", "unsigned_" + info.name)
-                    .replace("/*name1*/", "unsigned_" + info1.name)
-                    .replace("/*name2*/", "unsigned_" + info2.name)
-                    .replace("/*op_name*/", op_name)
-                )
+                for unsig1 in ["", "unsigned_"]:
+                    for unsig2 in ["", "unsigned_"]:
+                        yield (
+                            template
+                            .replace("/*preamble*/", preamble)
+                            .replace("/*postamble*/", postamble)
+                            .replace("/*op*/", op[info.name])
+                            .replace("/*name*/", [unsig1, unsig2][ind_max] + info.name)
+                            .replace("/*name1*/", unsig1 + info1.name)
+                            .replace("/*name2*/", unsig2 + info2.name)
+                            .replace("/*op_name*/", op_name)
+                        )
 
 
 INT_BIN_OPS = "\n".join(make_int_bin_ops())
+
+
+INT_CONVERT_TEMPLATE = """
+slabes_type_/*name2*/ slabes_convert_/*name1*/_to_/*name2*/(slabes_type_/*name1*/ value) {
+    if (value > slabes_max_value_/*name2*/) {
+        return slabes_max_value_/*name2*/;
+    } else if (value < slabes_min_value_/*name2*/) {
+        return slabes_min_value_/*name2*/;
+    }
+    return value;
+}
+"""
+
+INT_CONVERT_TEMPLATE_NOOP = """
+#define slabes_convert_/*name1*/_to_/*name2*/(value) ((slabes_type_/*name2*/)value)
+"""
+
+
+def make_int_convertions():
+    for i, info1 in enumerate(INT_TYPE_INFO.values()):
+        for j, info2 in enumerate(INT_TYPE_INFO.values()):
+            if i > j:
+                template = INT_CONVERT_TEMPLATE
+            else:
+                template = INT_CONVERT_TEMPLATE_NOOP
+
+            for unsig1 in ["", "unsigned_"]:
+                for unsig2 in ["", "unsigned_"]:
+                    yield (
+                        template
+                        .replace("/*name1*/", unsig1 + info1.name)
+                        .replace("/*name2*/", unsig2 + info2.name)
+                    )
+
+
+INT_CONVERTIONS = "\n".join(make_int_convertions())
 
 
 TEMPLATE = """
@@ -191,14 +217,6 @@ TEMPLATE = """
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
-
-int safe_add(int a, int b) {
-    if ((a > 0 && b > INT_MAX - a) || (a < 0 && b < INT_MIN - a)) {
-        // Handle overflow
-        return -1; // or any other error handling
-    }
-    return a + b;
-}
 
 typedef bool unsigned_bool;
 typedef unsigned char unsigned_char;
@@ -232,6 +250,7 @@ typedef unsigned short unsigned_short;
 
 /*int-types*/
 /*int-ops*/
+/*int-conv*/
 
 /*decl*/
 
@@ -248,6 +267,7 @@ int main(int argc, char *argv[]) {
 TEMPLATE = (
     TEMPLATE.replace("/*int-types*/", INT_TYPES)
     .replace("/*int-ops*/", INT_BIN_OPS)
+    .replace("/*int-conv*/", INT_CONVERTIONS)
 )
 
 
@@ -416,9 +436,15 @@ class GenerateC:
                 "(&",
                 self.var_name(name),
                 ",",
-                node.value,
-                ");;",
             )
+
+            if isinstance(tp, ts.IntType) and isinstance(node.value.evaluated.type, ts.IntType):
+                conv = "slabes_convert_" + node.value.evaluated.type.name() + "_to_" + tp.name()
+                self.put(conv, "(", node.value, ")")
+            else:
+                self.put(node.value)
+
+            self.put(");;")
 
     def visit_Int(self, node: ev.Int):
         return str(node.value)
