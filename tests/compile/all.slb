@@ -76,6 +76,18 @@ big main begin
         over_no
         over_bi
     ),
+
+    over_ti << over_ti_help,
+    over_sma << over_sma_help,
+    over_no << over_bi_help,
+    over_bi << over_bi_help,
+
+    print(
+        over_ti + over_help
+        over_sma + over_help
+        over_no + over_help
+        over_bi + over_help
+    ),
 . end,
 
 .
