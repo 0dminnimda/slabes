@@ -90,17 +90,55 @@ INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES = """
 #define slabes_op_/*op_name*/__/*name1*/__/*name2*/ slabes_op_/*op_name*/__/*name*/__/*name*/
 """
 
-INT_BIN_OP_CHECK_OVEFLOW = """
+INT_BIN_OP_NO_CHECK = """
+result = rhs /*op*/ lhs;
+"""
+
+INT_BIN_OP_CHECK_OVEFLOW_FULL = """
 if (ckd_/*op_name*/(&result, rhs, lhs)) {
     result = slabes_max_value_/*name*/;
 }
 """
 
+INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_LESS = INT_BIN_OP_NO_CHECK + """
+if (result < slabes_min_value_/*name*/) {
+    result = slabes_min_value_/*name*/;
+}
+"""
+
+INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE = INT_BIN_OP_NO_CHECK + """
+if (result > slabes_max_value_/*name*/) {
+    result = slabes_max_value_/*name*/;
+}
+"""
+
+INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MUCH_MORE = INT_BIN_OP_CHECK_OVEFLOW_FULL + """
+else if (result > slabes_max_value_/*name*/) {
+    result = slabes_max_value_/*name*/;
+}
+"""
+
+
 INT_BIN_OP_INFO = [
-    ("add", INT_BIN_OP_CHECK_OVEFLOW),
-    ("sub", INT_BIN_OP_CHECK_OVEFLOW),
-    ("mul", INT_BIN_OP_CHECK_OVEFLOW),
-    ("div", "result = rhs / lhs"),
+    ("add", {
+        "tiny": INT_BIN_OP_NO_CHECK.replace("/*op*/", "+"),
+        "small": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE.replace("/*op*/", "+"),
+        "normal": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE.replace("/*op*/", "+"),
+        "big": INT_BIN_OP_CHECK_OVEFLOW_FULL,
+    }),
+    ("sub", {
+        "tiny": INT_BIN_OP_NO_CHECK.replace("/*op*/", "-"),
+        "small": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_LESS.replace("/*op*/", "-"),
+        "normal": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_LESS.replace("/*op*/", "-"),
+        "big": INT_BIN_OP_CHECK_OVEFLOW_FULL,
+    }),
+    ("mul", {
+        "tiny": INT_BIN_OP_NO_CHECK.replace("/*op*/", "*"),
+        "small": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MUCH_MORE.replace("/*op*/", "*"),
+        "normal": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MUCH_MORE.replace("/*op*/", "*"),
+        "big": INT_BIN_OP_CHECK_OVEFLOW_FULL,
+    }),
+    ("div", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_NO_CHECK.replace("/*op*/", "/"))),
 ]
 
 INT_BIN_OP_DIV_CODE = "if (rhs == 0) return slabes_max_value_/*name*/;"
@@ -125,7 +163,7 @@ def make_int_bin_ops():
                     template
                     .replace("/*preamble*/", preamble)
                     .replace("/*postamble*/", postamble)
-                    .replace("/*op*/", op)
+                    .replace("/*op*/", op[info.name])
                     .replace("/*name*/", info.name)
                     .replace("/*name1*/", info1.name)
                     .replace("/*name2*/", info2.name)
@@ -135,7 +173,7 @@ def make_int_bin_ops():
                     template
                     .replace("/*preamble*/", preamble)
                     .replace("/*postamble*/", postamble)
-                    .replace("/*op*/", op)
+                    .replace("/*op*/", op[info.name])
                     .replace("/*name*/", "unsigned_" + info.name)
                     .replace("/*name1*/", "unsigned_" + info1.name)
                     .replace("/*name2*/", "unsigned_" + info2.name)
@@ -168,29 +206,27 @@ typedef unsigned short unsigned_short;
 
 #if __has_include(<stdckdint.h>)
 # include <stdckdint.h>
-#else
-# ifdef __GNUC__  /*gcc and clagn have this*/
+#elif defined(__GNUC__)  /*gcc and clagn have this*/
 #  define ckd_add(R, A, B) __builtin_add_overflow ((A), (B), (R))
 #  define ckd_sub(R, A, B) __builtin_sub_overflow ((A), (B), (R))
 #  define ckd_mul(R, A, B) __builtin_mul_overflow ((A), (B), (R))
-# else
-    #define ckd_add(R, A, B) (
-        (((B) > 0 && (A) > INT_MAX - (B)) || ((B) < 0 && (A) < INT_MIN - (B))) ?
-        true : ((*(R) = (A) + (B)), false)
-    )
-    #define ckd_sub(R, A, B) (
-        (((B) < 0 && (A) > INT_MAX + (B)) || ((B) > 0 && (A) < INT_MIN + (B))) ?
-        true : ((*(R) = (A) + (B)), false)
-    )
-    // #define ckd_mul(R, A, B) __builtin_mul_overflow ((A), (B), (R))
-    // // There may be a need to check for -1 for two's complement machines.
-    // // If one number is -1 and another is INT_MIN, multiplying them we get abs(INT_MIN) which is 1 higher than INT_MAX
-    // if (a == -1 && x == INT_MIN) // `a * x` can overflow
-    // if (x == -1 && a == INT_MIN) // `a * x` (or `a / x`) can overflow
-    // // general case
-    // if (x != 0 && a > INT_MAX / x) // `a * x` would overflow
-    // if (x != 0 && a < INT_MIN / x) // `a * x` would underflow
-# endif
+#else
+#  define ckd_add(R, A, B) (
+    (((B) > 0 && (A) > INT_MAX - (B)) || ((B) < 0 && (A) < INT_MIN - (B))) ?
+    true : ((*(R) = (A) + (B)), false)
+)
+#  define ckd_sub(R, A, B) (
+    (((B) < 0 && (A) > INT_MAX + (B)) || ((B) > 0 && (A) < INT_MIN + (B))) ?
+    true : ((*(R) = (A) + (B)), false)
+)
+// #define ckd_mul(R, A, B) __builtin_mul_overflow ((A), (B), (R))
+// // There may be a need to check for -1 for two's complement machines.
+// // If one number is -1 and another is INT_MIN, multiplying them we get abs(INT_MIN) which is 1 higher than INT_MAX
+// if (a == -1 && x == INT_MIN) // `a * x` can overflow
+// if (x == -1 && a == INT_MIN) // `a * x` (or `a / x`) can overflow
+// // general case
+// if (x != 0 && a > INT_MAX / x) // `a * x` would overflow
+// if (x != 0 && a < INT_MIN / x) // `a * x` would underflow
 #endif
 
 
