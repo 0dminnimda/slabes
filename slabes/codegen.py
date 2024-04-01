@@ -40,7 +40,7 @@ class IntTypeInfo:
 
 
 INT_TYPE_INFO = {
-    "tiny": IntTypeInfo("tiny", 1, "bool", "%hh", False),
+    "tiny": IntTypeInfo("tiny", 1, "char", "%hh", False),
     "small": IntTypeInfo("small", 5, "char", "%hh", True),
     "normal": IntTypeInfo("normal", 10, "short", "%h", True),
     "big": IntTypeInfo("big", 15, "short", "%h", True),
