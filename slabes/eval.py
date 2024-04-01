@@ -296,8 +296,11 @@ class Ast2Eval(ast.Visitor):
     def visit_NumericLiteral(
         self, node: ast.NumericLiteral, kind: ast.NumberType = ast.NumberType.BIG
     ):
-        signed = node.signedness is not ast.NumericLiteral.Signedness.UNSIGNED
-        return Int(self.loc(node), node.value, type=ts.IntType(kind, signed))
+        signed = node.signedness is not ast.Signedness.POSITIVE
+        value = node.value
+        if node.signedness is ast.Signedness.NEGATIVE:
+            value = -value
+        return Int(self.loc(node), value, type=ts.IntType(kind, signed))
 
     def visit_NumberDeclaration(self, node: ast.NumberDeclaration):
         loc = self.loc(node)

@@ -448,7 +448,12 @@ class GenerateC:
                     ",",
                 )
 
-            if isinstance(tp, ts.IntType) and isinstance(node.value.evaluated.type, ts.IntType):
+            if isinstance(node.value, ev.Int):
+                assert isinstance(tp, ts.IntType), "Int evaluated not to IntType"
+                signed = "" if tp.signed else "unsigned_"
+                conv = "slabes_convert_" + signed + "big" + "_to_" + tp.name()
+                self.put(conv, "(", node.value, ")")
+            elif isinstance(tp, ts.IntType) and isinstance(node.value.evaluated.type, ts.IntType):
                 conv = "slabes_convert_" + node.value.evaluated.type.name() + "_to_" + tp.name()
                 self.put(conv, "(", node.value, ")")
             else:

@@ -85,6 +85,8 @@ class NumericLiteral(Expression):
     # def __str__(self) -> str:
     #     return str(self)
 
+Signedness = NumericLiteral.Signedness
+
 
 @dataclass
 class Name(Expression):
