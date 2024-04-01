@@ -216,7 +216,7 @@ BUILTINS = {
 
 
 def make_builtin_context():
-    context = ScopeContext(names=set(BUILTINS.keys()))
+    context = ScopeContext(outer=None, names=set(BUILTINS.keys()))
     for name, value in BUILTINS.items():
         Assign(BuiltinLoc, [name], value).evaluate(context)
     return context
@@ -330,10 +330,10 @@ class Ast2Eval(ast.Visitor):
         fill_name_table_from_ast(func, node)
         func.outer = self.scope
 
+        self.scope.body.append(Assign(loc, [node.name], func))
+
         with self.new_scope(func):
             self.handle_body(node.body)
-
-        return func
 
     def visit_Call(self, node: ast.Call):
         loc = self.loc(node)

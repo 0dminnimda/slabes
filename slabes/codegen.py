@@ -276,6 +276,12 @@ PART_SEPARATOR: str = " "
 MAIN_FUNCTION = "main"
 
 
+def is_variable(type):
+    return not (
+        isinstance(type, ts.FunctionType)
+    )
+
+
 @dataclass
 class GenerateC:
     temporary_parts: list[str] = field(default_factory=list)
@@ -385,6 +391,8 @@ class GenerateC:
 
     def handle_scope(self, node: ev.ScopeValue):
         for name, value in node.name_to_value.items():
+            if not is_variable(value.type):
+                continue
             self.put(self.type_name(value.type), self.var_name(name), ";;")
 
         with self.new_scope(node):
@@ -431,12 +439,14 @@ class GenerateC:
     def visit_Assign(self, node: ev.Assign):
         for name in node.names:
             tp = self.scope.name_to_value[name].type
-            self.put(
-                "assign_" + self.type_name(tp),
-                "(&",
-                self.var_name(name),
-                ",",
-            )
+
+            if is_variable(tp):
+                self.put(
+                    "assign_" + self.type_name(tp),
+                    "(&",
+                    self.var_name(name),
+                    ",",
+                )
 
             if isinstance(tp, ts.IntType) and isinstance(node.value.evaluated.type, ts.IntType):
                 conv = "slabes_convert_" + node.value.evaluated.type.name() + "_to_" + tp.name()
@@ -444,7 +454,8 @@ class GenerateC:
             else:
                 self.put(node.value)
 
-            self.put(");;")
+            if is_variable(tp):
+                self.put(");;")
 
     def visit_Int(self, node: ev.Int):
         return str(node.value)
