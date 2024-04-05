@@ -47,6 +47,9 @@ INT_TYPE_INFO = {
 }
 
 
+SIGN_UNSING = ["", "unsigned_"]
+
+
 def make_int_types():
     for info in INT_TYPE_INFO.values():
         min_unsigned, max_unsigned = info.unsigned_range()
@@ -87,7 +90,8 @@ slabes_type_/*name*/ slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*n
 """
 
 INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES = """
-#define slabes_op_/*op_name*/__/*name1*/__/*name2*/ slabes_op_/*op_name*/__/*name*/__/*name*/
+#define slabes_op_/*op_name*/__/*name1*/__/*name2*/(lhs, rhs) \
+    slabes_op_/*op_name*/__/*name*/__/*name*/(slabes_convert_/*name1*/_to_/*name*/(lhs), slabes_convert_/*name2*/_to_/*name*/(rhs))
 """
 
 INT_BIN_OP_NO_CHECK = """
@@ -157,8 +161,8 @@ def make_int_bin_ops():
 
                 preamble = INT_BIN_OP_DIV_CODE if op_name == "div" else ""
                 postamble = ""
-                for unsig1 in ["", "unsigned_"]:
-                    for unsig2 in ["", "unsigned_"]:
+                for unsig1 in SIGN_UNSING:
+                    for unsig2 in SIGN_UNSING:
                         yield (
                             template
                             .replace("/*preamble*/", preamble)
@@ -176,6 +180,10 @@ INT_BIN_OPS = "\n".join(make_int_bin_ops())
 
 INT_CONVERT_TEMPLATE = """
 slabes_type_/*name2*/ slabes_convert_/*name1*/_to_/*name2*/(slabes_type_/*name1*/ value) {
+#ifdef SLABES_DEBUG_OP
+    printf("slabes_convert_/*name1*/_to_/*name2*/(" slabes_format_/*name1*/ ")\\n", value);
+#endif
+    value = /*arg*/;
     if (value > slabes_max_value_/*name2*/) {
         return slabes_max_value_/*name2*/;
     } else if (value < slabes_min_value_/*name2*/) {
@@ -186,11 +194,47 @@ slabes_type_/*name2*/ slabes_convert_/*name1*/_to_/*name2*/(slabes_type_/*name1*
 """
 
 INT_CONVERT_TEMPLATE_NOOP = """
-#define slabes_convert_/*name1*/_to_/*name2*/(value) ((slabes_type_/*name2*/)value)
+#define slabes_convert_/*name1*/_to_/*name2*/(value) ((slabes_type_/*name2*/)/*arg*/)
+"""
+
+INT_REMOVE_SIGN = """
+#define slabes_remove_sign_/*name*/ slabes_convert_/*name*/_to_unsigned_/*name*/
+slabes_type_unsigned_/*name*/ slabes_convert_/*name*/_to_unsigned_/*name*/(slabes_type_/*name*/ value) {
+#ifdef SLABES_DEBUG_OP
+    printf("slabes_convert_/*name*/_to_unsigned_/*name*/(" slabes_format_/*name*/ ")\\n", value);
+#endif
+    if (value < slabes_min_value_unsigned_/*name*/) {
+        return slabes_min_value_unsigned_/*name*/;
+    }
+    return value;
+}
+"""
+
+INT_ADD_SIGN = """
+#define slabes_add_sign_/*name*/ slabes_convert_unsigned_/*name*/_to_/*name*/
+slabes_type_/*name*/ slabes_convert_unsigned_/*name*/_to_/*name*/(slabes_type_unsigned_/*name*/ value) {
+#ifdef SLABES_DEBUG_OP
+    printf("slabes_convert_unsigned_/*name*/_to_/*name*/(" slabes_format_/*name*/ ")\\n", value);
+#endif
+    if (value > slabes_max_value_/*name*/) {
+        return slabes_max_value_/*name*/;
+    }
+    return value;
+}
 """
 
 
 def make_int_convertions():
+    for info in INT_TYPE_INFO.values():
+        yield (
+            INT_REMOVE_SIGN
+            .replace("/*name*/", info.name)
+        )
+        yield (
+            INT_ADD_SIGN
+            .replace("/*name*/", info.name)
+        )
+
     for i, info1 in enumerate(INT_TYPE_INFO.values()):
         for j, info2 in enumerate(INT_TYPE_INFO.values()):
             if i > j:
@@ -198,12 +242,20 @@ def make_int_convertions():
             else:
                 template = INT_CONVERT_TEMPLATE_NOOP
 
-            for unsig1 in ["", "unsigned_"]:
-                for unsig2 in ["", "unsigned_"]:
+            for unsig1 in SIGN_UNSING:
+                for unsig2 in SIGN_UNSING:
+                    if unsig1 and not unsig2:
+                        arg = f"slabes_convert_unsigned_{info1.name}_to_{info1.name}(value)"
+                    elif not unsig1 and unsig2:
+                        arg = f"slabes_convert_{info1.name}_to_unsigned_{info1.name}(value)"
+                    else:
+                        arg = "value"
+
                     yield (
                         template
                         .replace("/*name1*/", unsig1 + info1.name)
                         .replace("/*name2*/", unsig2 + info2.name)
+                        .replace("/*arg*/", arg)
                     )
 
 
@@ -217,6 +269,8 @@ TEMPLATE = """
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
+
+#define SLABES_DEBUG_OP
 
 typedef bool unsigned_bool;
 typedef unsigned char unsigned_char;
