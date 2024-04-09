@@ -19,6 +19,9 @@ typedef /*ctype*/ slabes_type_/*name*/;
 #define slabes_min_value_/*name*/ /*min_value*/
 
 void assign_slabes_type_/*name*/(slabes_type_/*name*/ *var, slabes_type_/*name*/ value) {
+#ifdef SLABES_DEBUG_OP
+    printf("assign_slabes_type_/*name*/(%p, " slabes_format_/*name*/ ")\\n", var, value);
+#endif
     *var = value;
 }
 """
@@ -40,10 +43,10 @@ class IntTypeInfo:
 
 
 INT_TYPE_INFO = {
-    "tiny": IntTypeInfo("tiny", 1, "char", "%hh", False),
-    "small": IntTypeInfo("small", 5, "char", "%hh", True),
-    "normal": IntTypeInfo("normal", 10, "short", "%h", True),
-    "big": IntTypeInfo("big", 15, "short", "%h", True),
+    "tiny": IntTypeInfo("tiny", 1, "int8_t", "%hh", True),
+    "small": IntTypeInfo("small", 5, "int8_t", "%hh", True),
+    "normal": IntTypeInfo("normal", 10, "int16_t", "%h", True),
+    "big": IntTypeInfo("big", 15, "int16_t", "%h", True),
 }
 
 
@@ -275,6 +278,9 @@ TEMPLATE = """
 typedef bool unsigned_bool;
 typedef unsigned char unsigned_char;
 typedef unsigned short unsigned_short;
+
+typedef uint8_t unsigned_int8_t;
+typedef uint16_t unsigned_int16_t;
 
 #if __has_include(<stdckdint.h>)
 # include <stdckdint.h>

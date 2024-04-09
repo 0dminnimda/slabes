@@ -312,6 +312,16 @@ big main begin
     hhh(),
     print(),
     print(),
+    # bug  c << a << -6 >> b >> a << -8 >> b >> b,
+
+    sma b << -V,
+    print(b),
+    big haa << 0,
+    haa << b,
+    print(haa),
+    print(b + 1),
+    b << b + 1,
+    print(b),
 . end,
 
 .
