@@ -104,9 +104,7 @@ void field_print_small_upper_row(Field *field, ssize_t y) {
     char c0 = (y == field->height)? ' ' : '/';
     for (ssize_t x = 0; x < field->width; x++) {
         char c2 = field_check_at(field, x, y - 1, ' ');
-        if (c2 == Empty) {
-            c2 = '_';
-        }
+        if (c2 == Empty) { c2 = '_'; }
         printf("%c%c\\%c", c0, field_check_at(field, x, y, ' '), c2);
         c0 = '/';
     }
@@ -116,14 +114,10 @@ void field_print_small_upper_row(Field *field, ssize_t y) {
 
 void field_print_small_lower_row(Field *field, ssize_t y) {
     for (ssize_t x = 0; x < field->width; x++) {
-        char c1 = field_check_at(field, x, y, ' ');
-        if (c1 == Empty) {
-            c1 = '_';
-        }
-        char c2 = field_check_at(field, x, y + 1, ' ');
-        if (c2 == Player) {
-            c2 = '_';
-        }
+        char c1 = field_check_at(field, x, y - 1 , ' ');
+        if (c1 == Empty) { c1 = '_'; }
+        char c2 = field_check_at(field, x, y, ' ');
+        if (c2 == Player) { c2 = '_'; }
         printf("\\%c/%c", c1, c2);
     }
     if (y != field->height) { printf("\\"); }
