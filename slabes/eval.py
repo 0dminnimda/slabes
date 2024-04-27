@@ -131,8 +131,8 @@ class Call(Eval):
                 errors.TypeError,
                 f"call operation expected function type, got '{func.type}'"
             )
-        args = [arg.evaluate(context) for arg in self.args]
-        return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
+        [arg.evaluate(context) for arg in self.args]
+        return func.return_value
 
 
 @dataclass
@@ -140,15 +140,22 @@ class Return(Eval):
     evalue: Eval
 
     def raw_eval(self, context: ScopeContext) -> Value:
-        func = lookup_name(context, self.name, self.loc)
-        if not isinstance(func, Function):
+        if not isinstance(context, Function):
             report_fatal_at(
                 self.loc,
                 errors.TypeError,
-                f"call operation expected function type, got '{func.type}'"
+                f"return can be used only inside function, not '{type(context).__name__}'"
             )
-        args = [arg.evaluate(context) for arg in self.args]
-        return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
+
+        value = self.evalue.evaluate(context)
+        conv = value.convert_to(context.return_value)
+        if conv is None:
+            report_fatal_at(
+                self.loc,
+                errors.TypeError,
+                f"expression type '{value.type}' does not match return type '{context.return_value.type}'"
+            )
+        return conv
 
 
 @dataclass
@@ -217,7 +224,7 @@ class Module(ScopeValue):
 @dataclass
 class Function(ScopeValue):
     name: str
-    return_type: ts.Type
+    return_value: Value
 
     type: ts.Type = field(default=ts.FUNCTION_T, init=False)
 
@@ -225,7 +232,7 @@ class Function(ScopeValue):
 @dataclass
 class FuncPrint(Function):
     name: str = field(default="print", init=False)
-    return_type: ts.Type = field(default=ts.FUNCTION_T, init=False)
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
 BUILTINS = {
@@ -344,14 +351,26 @@ class Ast2Eval(ast.Visitor):
                 names.append(name.value)
             self.scope.body.append(Assign(self.loc(assign), names, value))
 
+    def visit_NumberTypeRef(self, node: ast.NumberTypeRef):
+        return ts.IntType(node.type)
+
     def visit_Function(self, node: ast.Function):
         loc = self.loc(node)
 
-        func = Function(loc, node.name)
+        return_type = self.visit(node.return_type)
+        if isinstance(return_type, ts.IntType):
+            ret = Int(loc, 0, type=return_type)
+        else:
+            report_fatal_at(
+                loc,
+                errors.TypeError,
+                f"return type '{return_type}' is not supported"
+            )
+
+        func = Function(loc, node.name, ret)
         fill_name_table_from_ast(func, node)
         func.outer = self.scope
 
-        # Function
         self.scope.body.append(Assign(loc, [node.name], func))
 
         with self.new_scope(func):
@@ -361,6 +380,11 @@ class Ast2Eval(ast.Visitor):
         loc = self.loc(node)
 
         return Call(loc, node.name.value, [self.visit(it) for it in node.args])
+
+    def visit_Return(self, node: ast.Return):
+        loc = self.loc(node)
+
+        return Return(loc, self.visit(node.value))
 
     def visit_Name(self, node: ast.Name):
         loc = self.loc(node)

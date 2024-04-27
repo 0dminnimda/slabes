@@ -273,7 +273,9 @@ TEMPLATE = """
 #include <stdint.h>
 #include <limits.h>
 
+#if 0
 #define SLABES_DEBUG_OP
+#endif
 
 typedef bool unsigned_bool;
 typedef unsigned char unsigned_char;
@@ -477,7 +479,8 @@ class GenerateC:
             name = self.function_name(node.name)
 
         with self.isolate() as decl:
-            self.put("void", name, "()")
+            self.put(self.type_name(node.return_value.type))
+            self.put(name, "()")
 
         with self.isolate() as defn:
             self.put("{\n")
@@ -560,3 +563,13 @@ class GenerateC:
             + node.rhs.evaluated.type.name()
         )
         self.put("(", node.lhs, ",", node.rhs, ")")
+
+    def visit_Return(self, node: ev.Return):
+        if isinstance(node.evaluated, ev.Int):
+            self.put("return ", node.evalue, ";")
+        else:
+            report_fatal_at(
+                node.loc,
+                errors.TypeError,
+                f"return type '{node.evaluated.type}' is not supported in codegen"
+            )
