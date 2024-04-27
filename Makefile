@@ -14,3 +14,7 @@ run:
 .PHONY: generate_parser
 generate_parser:
 	python -m slabes.generate_parser
+
+.PHONY: get_libtool`
+get_libtool:
+	(cd slabes && git clone git://git.savannah.gnu.org/libtool.git --depth 1)
