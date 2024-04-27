@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 
 # C extensions
-*.c
 *.out
 *.so
 
@@ -16,7 +15,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -159,3 +157,4 @@ cython_debug/
 
 # PLY serialized structures
 slabes/lextab.py
+tests/**/*.c
