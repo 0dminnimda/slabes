@@ -299,6 +299,14 @@ ti hhh begin
 . end,
 
 
+bi guhh begin
+    retur 5,
+    # check a == 5 do
+    #     print(a),
+    # .,
+. end,
+
+
 big main begin
     4,
     print(),
@@ -322,6 +330,8 @@ big main begin
     print(b + 1),
     b << b + 1,
     print(b),
+
+    print(guhh()),
 . end,
 
 .

@@ -106,6 +106,7 @@ check sonar do
 big boba  tiny az, normal lok begin
     b << c >> a,
     return az + lok,
+    retur az + lok,
 . end,
 
 ti a  tiny az begin

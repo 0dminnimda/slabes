@@ -136,6 +136,22 @@ class Call(Eval):
 
 
 @dataclass
+class Return(Eval):
+    evalue: Eval
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        func = lookup_name(context, self.name, self.loc)
+        if not isinstance(func, Function):
+            report_fatal_at(
+                self.loc,
+                errors.TypeError,
+                f"call operation expected function type, got '{func.type}'"
+            )
+        args = [arg.evaluate(context) for arg in self.args]
+        return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
+
+
+@dataclass
 class BinaryOperation(Eval):
     lhs: Eval
     op: ast.BinOp
@@ -201,6 +217,7 @@ class Module(ScopeValue):
 @dataclass
 class Function(ScopeValue):
     name: str
+    return_type: ts.Type
 
     type: ts.Type = field(default=ts.FUNCTION_T, init=False)
 
@@ -208,6 +225,7 @@ class Function(ScopeValue):
 @dataclass
 class FuncPrint(Function):
     name: str = field(default="print", init=False)
+    return_type: ts.Type = field(default=ts.FUNCTION_T, init=False)
 
 
 BUILTINS = {
@@ -333,6 +351,7 @@ class Ast2Eval(ast.Visitor):
         fill_name_table_from_ast(func, node)
         func.outer = self.scope
 
+        # Function
         self.scope.body.append(Assign(loc, [node.name], func))
 
         with self.new_scope(func):
