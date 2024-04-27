@@ -88,55 +88,62 @@ void field_fill(Field *field, Cell value) {
 \#/ \_/#\_/ \
   \_/ \#/ \_/
 
-*/
-
-
-/*
  __    __    __  
 /##\__/  \__/  \__
 \##/  \__/##\ _/  \
-/  \__/##\##/o \__/
+/  \__/##\##/oo\__/
 \__/  \##/  \__/ 
 
 */
 
-void field_print_small_upper_row(Field *field, ssize_t y) {
+void field_print_small_upper_row(Field *field, ssize_t y, bool wide) {
     char c0 = (y == field->height)? ' ' : '/';
     for (ssize_t x = 0; x < field->width; x++) {
+        char c1 = field_check_at(field, x, y, ' ');
         char c2 = field_check_at(field, x, y - 1, ' ');
         if (c2 == Empty) { c2 = '_'; }
-        printf("%c%c\\%c", c0, field_check_at(field, x, y, ' '), c2);
+        if (wide) {
+            printf("%c%c%c\\%c%c", c0, c1, c1, c2, c2);
+        } else {
+            printf("%c%c\\%c", c0, c1, c2);
+        }
         c0 = '/';
     }
     if (y) { printf("/"); }
     printf("\n");
 }
 
-void field_print_small_lower_row(Field *field, ssize_t y) {
+void field_print_small_lower_row(Field *field, ssize_t y, bool wide) {
     for (ssize_t x = 0; x < field->width; x++) {
         char c1 = field_check_at(field, x, y - 1 , ' ');
         if (c1 == Empty) { c1 = '_'; }
         if (c1 == Player) { c1 = '_'; }
-        printf("\\%c/%c", c1, field_check_at(field, x, y, ' '));
+        char c2 = field_check_at(field, x, y, ' ');
+        if (wide) {
+            printf("\\%c%c/%c%c", c1, c1, c2, c2);
+        } else {
+            printf("\\%c/%c", c1, c2);
+        }
     }
     if (y != field->height) { printf("\\"); }
     printf("\n");
 }
 
-void field_print_small(Field *field) {
+void field_print_small(Field *field, bool wide) {
     if (field->height == 0) {
         printf("<empty field>\n");
         return;
     }
 
-    for (ssize_t x = 0; x < field->width; x++) { printf(" _  "); }
+    char *first = wide? " __   " : " _  ";
+    for (ssize_t x = 0; x < field->width; x++) { printf("%s", first); }
     printf("\n");
 
     ssize_t y = 0;
     for (;;) {
-        field_print_small_upper_row(field, y);
+        field_print_small_upper_row(field, y, wide);
         if (++y > field->height) break;
-        field_print_small_lower_row(field, y);
+        field_print_small_lower_row(field, y, wide);
         if (++y > field->height) break;
     }
 }
@@ -166,7 +173,7 @@ int main() {
     FIELD_AT(&field, 2, 1) = Wall;
     FIELD_AT(&field, 3, 0) = Wall;
 
-    field_print_small(&field);
+    field_print_small(&field, true);
 
     field_destruct(&field);
 
