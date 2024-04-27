@@ -68,6 +68,12 @@ void field_construct(Field *field, size_t width, size_t height) {
     field->cells = (Cell *)SLABES_MALLOC(sizeof(Cell) * width * height);
 }
 
+// the goal is to make it so look most like a square
+// here I'm trying to make diagonals have eqaul number of cells
+void field_construct_square(Field *field, size_t side) {
+    field_construct(field, side, side*2 + 1);
+}
+
 void field_destruct(Field *field) {
     SLABES_FREE(field->cells);
 }
@@ -163,7 +169,7 @@ void field_print_small(Field *field, bool wide) {
 
 int main() {
     Field field;
-    field_construct(&field, 10, 10);
+    field_construct_square(&field, 6);
 
     field_fill(&field, Empty);
 
