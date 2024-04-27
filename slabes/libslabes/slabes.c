@@ -136,14 +136,9 @@ void field_print_small(Field *field) {
     ssize_t y = 0;
     for (;;) {
         field_print_small_upper_row(field, y);
-        if (++y >= field->height) break;
+        if (++y > field->height) break;
         field_print_small_lower_row(field, y);
-        if (++y >= field->height) break;
-    }
-    if (field->height % 2 == 0) {
-        field_print_small_upper_row(field, y);
-    } else {
-        field_print_small_lower_row(field, y);
+        if (++y > field->height) break;
     }
 }
 
