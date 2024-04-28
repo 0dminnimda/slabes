@@ -2,6 +2,10 @@ PYTHON = "$(shell (which python3 2>/dev/null || which python 2>/dev/null) | head
 
 prep_executable = $(eval $(1) := $(shell bash ./prep_exec.sh $(2)))
 
+.PHONY: install
+install: get_libtool
+	python3 -m pip install -e .
+
 .PHONY: com
 com:
 	$(PYTHON) -m slabes tests/compile/all.slb
