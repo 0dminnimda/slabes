@@ -341,7 +341,11 @@ slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
 /*main*/
 
 int main(int argc, char *argv[]) {
-    setup_game(10);
+    char *libname = "slabes_display";
+    if (argc >= 2) {
+        libname = argv[1];
+    }
+    setup_game(libname, 10);
 
     printf("Starting...\\n");
 
