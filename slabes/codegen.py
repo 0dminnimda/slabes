@@ -572,11 +572,15 @@ class GenerateC:
         self.put(self.var_name(node.value))
 
     def visit_Call(self, node: ev.Call):
-        if node.name == "print":
+        if isinstance(node.operand.evaluated, ev.FuncPrint):
             self.handle_print(node)
         else:
+            assert isinstance(node.operand.evaluated, ev.Function), report_fatal_at(
+                node.loc, errors.TypeError, "Not a function"
+            )
+
             args = self.collect(*node.args, sep=",")
-            self.put(self.function_name(node.name), "(", args, ")")
+            self.put(self.function_name(node.operand.evaluated.name), "(", args, ")")
 
     def as_format(self, node: ts.Type) -> str:
         return "slabes_format_" + node.name()

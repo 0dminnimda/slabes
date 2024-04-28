@@ -120,11 +120,11 @@ class Assign(Eval):
 
 @dataclass
 class Call(Eval):
-    name: str
+    operand: Eval
     args: list[Eval]
 
     def raw_eval(self, context: ScopeContext) -> Value:
-        func = lookup_name(context, self.name, self.loc)
+        func = self.operand.evaluate(context)
         if not isinstance(func, Function):
             report_fatal_at(
                 self.loc,
@@ -379,7 +379,7 @@ class Ast2Eval(ast.Visitor):
     def visit_Call(self, node: ast.Call):
         loc = self.loc(node)
 
-        return Call(loc, node.name.value, [self.visit(it) for it in node.args])
+        return Call(loc, self.visit(node.name), [self.visit(it) for it in node.args])
 
     def visit_Return(self, node: ast.Return):
         loc = self.loc(node)
