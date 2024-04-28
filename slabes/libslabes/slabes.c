@@ -232,7 +232,7 @@ bool setup_game(char *libname, size_t field_side) {
     game_reset(game);
     game_set_player_position(game, (Position){0, 0});
 
-    if (!load_library(libname)) {
+    if (libname && !load_library(libname)) {
         return false;
     }
 
