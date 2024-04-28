@@ -159,11 +159,11 @@ char player_lower_char(Game *game) {
 
 
 void game_print_small_upper_row(Game *game, ssize_t y, bool wide) {
-    char c0 = (y == game->field.height)? ' ' : '/';
+    char c0 = y? '/' : ' ';
     for (ssize_t x = 0; x < game->field.width; x++) {
-        char c1 = field_check_at(&game->field, x, y, ' ');
+        char c1 = field_check_at(&game->field, x, y - 1, ' ');
         if (c1 == Player) { c1 = player_upper_char(game); }
-        char c2 = field_check_at(&game->field, x, y - 1, ' ');
+        char c2 = field_check_at(&game->field, x, y, ' ');
         if (c2 == Empty) { c2 = '_'; }
         if (c2 == Player) { c2 = player_lower_char(game); }
         if (wide) {
@@ -173,16 +173,16 @@ void game_print_small_upper_row(Game *game, ssize_t y, bool wide) {
         }
         c0 = '/';
     }
-    if (y) { printf("/"); }
+    if (y != (game->field.height)) { printf("/"); }
     printf("\n");
 }
 
 void game_print_small_lower_row(Game *game, ssize_t y, bool wide) {
     for (ssize_t x = 0; x < game->field.width; x++) {
-        char c1 = field_check_at(&game->field, x, y - 1 , ' ');
+        char c1 = field_check_at(&game->field, x, y , ' ');
         if (c1 == Empty) { c1 = '_'; }
         if (c1 == Player) { c1 = player_lower_char(game); }
-        char c2 = field_check_at(&game->field, x, y, ' ');
+        char c2 = field_check_at(&game->field, x, y - 1, ' ');
         if (c2 == Player) { c2 = player_upper_char(game); }
         if (wide) {
             printf("\\%c%c/%c%c", c1, c1, c2, c2);
@@ -190,13 +190,13 @@ void game_print_small_lower_row(Game *game, ssize_t y, bool wide) {
             printf("\\%c/%c", c1, c2);
         }
     }
-    if (y != game->field.height) { printf("\\"); }
+    if (y) { printf("\\"); }
     printf("\n");
 }
 
 void game_print_small(Game *game, bool wide) {
-    if (game->field.height == 0) {
-        printf("<empty game->field>\n");
+    if (game->field.height == 0 || game->field.width == 0) {
+        printf("<empty game field>\n");
         return;
     }
 
@@ -204,12 +204,12 @@ void game_print_small(Game *game, bool wide) {
     for (ssize_t x = 0; x < game->field.width; x++) { printf("%s", first); }
     printf("\n");
 
-    ssize_t y = 0;
+    ssize_t y = game->field.height;
     for (;;) {
         game_print_small_upper_row(game, y, wide);
-        if (++y > game->field.height) break;
+        if (--y < 0) break;
         game_print_small_lower_row(game, y, wide);
-        if (++y > game->field.height) break;
+        if (--y < 0) break;
     }
 }
 
