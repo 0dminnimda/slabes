@@ -48,6 +48,21 @@ typedef struct {
     Cell *cells;
 } Field;
 
+typedef enum {
+    Up,
+    RightUp,
+    RightDown,
+    Down,
+    LeftDown,
+    LeftUp,
+} Direction;
+
+typedef struct {
+    size_t player_x, player_y;
+    Direction player_direction;
+    Field field;
+} Game;
+
 
 #define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
 
@@ -82,6 +97,23 @@ void field_fill(Field *field, Cell value) {
     memset(field->cells, value, sizeof(Cell) * field->width * field->height);
 }
 
+void game_reset(Game *game) {
+    game->player_x = 0;
+    game->player_y = 0;
+    game->player_direction = Up;
+    field_fill(&game->field, Empty);
+}
+
+void game_set_player_position(Game *game, ssize_t x, ssize_t y) {
+    if (x < 0 || x >= game->field.width) { return; }
+    if (y < 0 || y >= game->field.height) { return; }
+
+    FIELD_AT(&game->field, game->player_x, game->player_y) = Empty;
+    game->player_x = x;
+    game->player_y = y;
+    FIELD_AT(&game->field, x, y) = Player;
+}
+
 /*
  _   _   _  
 /#\_/ \_/ \_
@@ -102,12 +134,38 @@ void field_fill(Field *field, Cell value) {
 
 */
 
-void field_print_small_upper_row(Field *field, ssize_t y, bool wide) {
-    char c0 = (y == field->height)? ' ' : '/';
-    for (ssize_t x = 0; x < field->width; x++) {
-        char c1 = field_check_at(field, x, y, ' ');
-        char c2 = field_check_at(field, x, y - 1, ' ');
+
+char player_upper_char(Game *game) {
+    if (game->player_direction == Up) {
+        return '^';
+    } else if (game->player_direction == RightUp) {
+        return '>';
+    } else if (game->player_direction == LeftUp) {
+        return '<';
+    }
+    return ' ';
+}
+
+char player_lower_char(Game *game) {
+    if (game->player_direction == Down) {
+        return 'v';
+    } else if (game->player_direction == RightDown) {
+        return '>';
+    } else if (game->player_direction == LeftDown) {
+        return '<';
+    }
+    return '_';
+}
+
+
+void game_print_small_upper_row(Game *game, ssize_t y, bool wide) {
+    char c0 = (y == game->field.height)? ' ' : '/';
+    for (ssize_t x = 0; x < game->field.width; x++) {
+        char c1 = field_check_at(&game->field, x, y, ' ');
+        if (c1 == Player) { c1 = player_upper_char(game); }
+        char c2 = field_check_at(&game->field, x, y - 1, ' ');
         if (c2 == Empty) { c2 = '_'; }
+        if (c2 == Player) { c2 = player_lower_char(game); }
         if (wide) {
             printf("%c%c%c\\%c%c", c0, c1, c1, c2, c2);
         } else {
@@ -119,38 +177,39 @@ void field_print_small_upper_row(Field *field, ssize_t y, bool wide) {
     printf("\n");
 }
 
-void field_print_small_lower_row(Field *field, ssize_t y, bool wide) {
-    for (ssize_t x = 0; x < field->width; x++) {
-        char c1 = field_check_at(field, x, y - 1 , ' ');
+void game_print_small_lower_row(Game *game, ssize_t y, bool wide) {
+    for (ssize_t x = 0; x < game->field.width; x++) {
+        char c1 = field_check_at(&game->field, x, y - 1 , ' ');
         if (c1 == Empty) { c1 = '_'; }
-        if (c1 == Player) { c1 = '_'; }
-        char c2 = field_check_at(field, x, y, ' ');
+        if (c1 == Player) { c1 = player_lower_char(game); }
+        char c2 = field_check_at(&game->field, x, y, ' ');
+        if (c2 == Player) { c2 = player_upper_char(game); }
         if (wide) {
             printf("\\%c%c/%c%c", c1, c1, c2, c2);
         } else {
             printf("\\%c/%c", c1, c2);
         }
     }
-    if (y != field->height) { printf("\\"); }
+    if (y != game->field.height) { printf("\\"); }
     printf("\n");
 }
 
-void field_print_small(Field *field, bool wide) {
-    if (field->height == 0) {
-        printf("<empty field>\n");
+void game_print_small(Game *game, bool wide) {
+    if (game->field.height == 0) {
+        printf("<empty game->field>\n");
         return;
     }
 
     char *first = wide? " __   " : " _  ";
-    for (ssize_t x = 0; x < field->width; x++) { printf("%s", first); }
+    for (ssize_t x = 0; x < game->field.width; x++) { printf("%s", first); }
     printf("\n");
 
     ssize_t y = 0;
     for (;;) {
-        field_print_small_upper_row(field, y, wide);
-        if (++y > field->height) break;
-        field_print_small_lower_row(field, y, wide);
-        if (++y > field->height) break;
+        game_print_small_upper_row(game, y, wide);
+        if (++y > game->field.height) break;
+        game_print_small_lower_row(game, y, wide);
+        if (++y > game->field.height) break;
     }
 }
 
@@ -184,22 +243,31 @@ void field_print_small(Field *field, bool wide) {
 
 */
 
+static Game game;
 
 int main() {
-    Field field;
-    field_construct_square(&field, 6);
+    field_construct_square(&game.field, 6);
 
-    field_fill(&field, Empty);
+    game_reset(&game);
 
-    FIELD_AT(&field, 0, 0) = Player;
-    FIELD_AT(&field, 1, 0) = Wall;
-    FIELD_AT(&field, 1, 1) = Wall;
-    FIELD_AT(&field, 2, 1) = Wall;
-    FIELD_AT(&field, 3, 0) = Wall;
+    game_set_player_position(&game, 0, 0);
 
-    field_print_small(&field, true);
+    FIELD_AT(&game.field, 1, 0) = Wall;
+    FIELD_AT(&game.field, 1, 1) = Wall;
+    FIELD_AT(&game.field, 2, 1) = Wall;
+    FIELD_AT(&game.field, 3, 0) = Wall;
 
-    field_destruct(&field);
+    for (ssize_t i = 0; i < 6; i++) {
+        game.player_direction = (Direction)(i);
+        game_print_small(&game, true);
+    }
+
+    for (ssize_t i = 0; i < 3; i++) {
+        game_set_player_position(&game, game.player_x + 1, game.player_y);
+        game_print_small(&game, true);
+    }
+
+    field_destruct(&game.field);
 
     return 0;
 }
