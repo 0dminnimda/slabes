@@ -49,20 +49,36 @@ typedef struct {
 } Field;
 
 typedef enum {
+    UpLeft,
     Up,
-    RightUp,
-    RightDown,
+    UpRight,
+    DownRight,
     Down,
-    LeftDown,
-    LeftUp,
+    DownLeft,
 } Direction;
 
 typedef struct {
-    size_t player_x, player_y;
+    size_t x, y;
+} Position;
+
+typedef struct {
+    Position player_position;
     Direction player_direction;
     Field field;
 } Game;
 
+
+char *direction_to_string(Direction direction) {
+    switch (direction) {
+        case UpLeft: return "UpLeft";
+        case Up: return "Up";
+        case UpRight: return "UpRight";
+        case DownRight: return "DownRight";
+        case Down: return "Down";
+        case DownLeft: return "DownLeft";
+        default: return "Unknown";
+    }
+}
 
 #define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
 
@@ -98,20 +114,89 @@ void field_fill(Field *field, Cell value) {
 }
 
 void game_reset(Game *game) {
-    game->player_x = 0;
-    game->player_y = 0;
+    game->player_position.x = 0;
+    game->player_position.y = 0;
     game->player_direction = Up;
     field_fill(&game->field, Empty);
 }
 
-void game_set_player_position(Game *game, ssize_t x, ssize_t y) {
-    if (x < 0 || x >= game->field.width) { return; }
-    if (y < 0 || y >= game->field.height) { return; }
+void game_set_player_position(Game *game, Position pos) {
+    if (pos.x < 0 || pos.x >= game->field.width) { return; }
+    if (pos.y < 0 || pos.y >= game->field.height) { return; }
 
-    FIELD_AT(&game->field, game->player_x, game->player_y) = Empty;
-    game->player_x = x;
-    game->player_y = y;
-    FIELD_AT(&game->field, x, y) = Player;
+    FIELD_AT(&game->field, game->player_position.x, game->player_position.y) = Empty;
+    game->player_position = pos;
+    FIELD_AT(&game->field, pos.x, pos.y) = Player;
+}
+
+/*
+    __    __
+ __/up\__/..\
+/ul\__/ur\__/
+\__/it\__/..\
+/dl\__/dr\__/
+\__/dn\__/..\
+   \__/  \__/
+
+.. up
+ul ur
+.. it
+dl dr
+.. dn
+
+- or -
+
+up ..
+ul ur
+it ..
+dl dr
+dn ..
+
+depending whether we are at the inbetween row or on the base row
+
+*/
+
+bool game_move_position_in_direction(Game *game, Position *pos, Direction direction) {
+    Position new_pos = *pos;
+
+    if (new_pos.y % 2 == 0) {
+        if (direction == UpLeft || direction == DownLeft) {
+            new_pos.x -= 1;
+        }
+    } else {
+        if (direction == UpRight || direction == DownRight) {
+            new_pos.x += 1;
+        }
+    }
+
+    if (direction == Up) {
+        new_pos.y += 2;
+    } else if (direction == Down) {
+        new_pos.y -= 2;
+    } else if (direction == UpLeft || direction == UpRight) {
+        new_pos.y += 1;
+    } else if (direction == DownLeft || direction == DownRight) {
+        new_pos.y -= 1;
+    }
+
+    // unsigned underflow is a defined behavior,
+    // so no problems relying on it here for check if 0 - <sometihng> happened
+    if (new_pos.y >= game->field.height || new_pos.x >= game->field.width) {
+        return false;
+    }
+
+    *pos = new_pos;
+    return true;
+}
+
+bool game_make_player_take_one_step(Game *game) {
+    Position pos = game->player_position;
+    if (!game_move_position_in_direction(game, &pos, game->player_direction)) {
+        printf("cannot move in this direction (%s)\n", direction_to_string(game->player_direction));
+        return false;
+    }
+    game_set_player_position(game, pos);
+    return true;
 }
 
 /*
@@ -138,9 +223,9 @@ void game_set_player_position(Game *game, ssize_t x, ssize_t y) {
 char player_upper_char(Game *game) {
     if (game->player_direction == Up) {
         return '^';
-    } else if (game->player_direction == RightUp) {
+    } else if (game->player_direction == UpRight) {
         return '>';
-    } else if (game->player_direction == LeftUp) {
+    } else if (game->player_direction == UpLeft) {
         return '<';
     }
     return ' ';
@@ -149,9 +234,9 @@ char player_upper_char(Game *game) {
 char player_lower_char(Game *game) {
     if (game->player_direction == Down) {
         return 'v';
-    } else if (game->player_direction == RightDown) {
+    } else if (game->player_direction == DownRight) {
         return '>';
-    } else if (game->player_direction == LeftDown) {
+    } else if (game->player_direction == DownLeft) {
         return '<';
     }
     return '_';
@@ -262,25 +347,40 @@ void game_print_small(Game *game, bool wide) {
 static Game game;
 
 int main() {
-    field_construct_square(&game.field, 6);
+    field_construct_square(&game.field, 10);
 
     game_reset(&game);
 
-    game_set_player_position(&game, 0, 0);
+    game_set_player_position(&game, (Position){0, 0});
 
     FIELD_AT(&game.field, 1, 0) = Wall;
     FIELD_AT(&game.field, 1, 1) = Wall;
     FIELD_AT(&game.field, 2, 1) = Wall;
+    FIELD_AT(&game.field, 2, 2) = Wall;
     FIELD_AT(&game.field, 3, 0) = Wall;
 
-    for (ssize_t i = 0; i < 6; i++) {
-        game.player_direction = (Direction)(i);
-        game_print_small(&game, true);
-    }
+    game_print_small(&game, true);
 
-    for (ssize_t i = 0; i < 3; i++) {
-        game_set_player_position(&game, game.player_x + 1, game.player_y);
-        game_print_small(&game, true);
+    while (1) {
+        printf("> ");
+        fflush(stdout);
+        char c = getchar();
+        if (c == 'x') { break; }
+        bool move = true;
+        switch (c) {
+            case 'w': game.player_direction = Up; break;
+            case 's': game.player_direction = Down; break;
+            case 'e': game.player_direction = UpRight; break;
+            case 'd': game.player_direction = DownRight; break;
+            case 'q': game.player_direction = UpLeft; break;
+            case 'a': game.player_direction = DownLeft; break;
+            default: move = false; break;
+        }
+
+        if (move) {
+            if (!game_make_player_take_one_step(&game)) continue;
+            game_print_small(&game, true);
+        }
     }
 
     field_destruct(&game.field);
