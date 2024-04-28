@@ -237,7 +237,6 @@ bool setup_game(char *libname, size_t field_side) {
     }
 
     if (setup_display_function) {
-        printf("calling setup_display_function\n");
         if (!setup_display_function()) {
             return false;
         }
