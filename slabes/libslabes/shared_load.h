@@ -3,7 +3,7 @@
 #ifndef SHARED_LOAD_H
 #define SHARED_LOAD_H
 
-#include "../libtool/libltdl/ltdl.h"
+#include <ltdl.h>
 
 // Define EXPORTED for any platform
 #if defined _WIN32 || defined __CYGWIN__

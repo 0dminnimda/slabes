@@ -71,6 +71,7 @@ def run_cc(c_code: str, conf: Config) -> int:
     args += ["-o", str(conf.bin_path), "-std=c11"]
     args += [f"-O{conf.optimize}"]
     args += ["-I", str(DIR)]
+    args += ["-l", "ltdl"]
     # args += ["-Wall", "-Wextra", "-Werror", "-pedantic"]
 
     if conf.cc.startswith("clang"):
