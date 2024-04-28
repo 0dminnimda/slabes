@@ -276,26 +276,6 @@ TEMPLATE = """
 #define SLABES_CONSOLE_NO_MAIN
 #include "libslabes/slabes_console.c"
 
-uint8_t slabes_robot_command_go() {
-    if (game_make_player_take_one_step(get_game())) {
-        game_print_small(get_game(), true);
-        return 1;
-    }
-    return 0;
-}
-
-uint8_t slabes_robot_command_rl() {
-    get_game()->player_direction = left_rotated_direction(get_game()->player_direction);
-    game_print_small(get_game(), true);
-    return 1;
-}
-
-uint8_t slabes_robot_command_rr() {
-    get_game()->player_direction = right_rotated_direction(get_game()->player_direction);
-    game_print_small(get_game(), true);
-    return 1;
-}
-
 #if 0
 #define SLABES_DEBUG_OP
 #endif
@@ -336,6 +316,26 @@ typedef uint16_t unsigned_int16_t;
 /*int-types*/
 /*int-ops*/
 /*int-conv*/
+
+slabes_type_unsigned_tiny slabes_func___robot_command_go() {
+    if (game_make_player_take_one_step(get_game())) {
+        game_print_small(get_game(), true);
+        return 1;
+    }
+    return 0;
+}
+
+slabes_type_unsigned_tiny slabes_func___robot_command_rl() {
+    get_game()->player_direction = left_rotated_direction(get_game()->player_direction);
+    game_print_small(get_game(), true);
+    return 1;
+}
+
+slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
+    get_game()->player_direction = right_rotated_direction(get_game()->player_direction);
+    game_print_small(get_game(), true);
+    return 1;
+}
 
 /*decl*/
 

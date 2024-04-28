@@ -235,8 +235,29 @@ class FuncPrint(Function):
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
+@dataclass
+class RobotCommandGo(Function):
+    name: str = field(default="__robot_command_go", init=False)
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+
+
+@dataclass
+class RobotCommandRL(Function):
+    name: str = field(default="__robot_command_rl", init=False)
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+
+
+@dataclass
+class RobotCommandRR(Function):
+    name: str = field(default="__robot_command_rr", init=False)
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+
+
 BUILTINS = {
-    "print": FuncPrint(BuiltinLoc)
+    "print": FuncPrint(BuiltinLoc),
+    "__robot_command_go": RobotCommandGo(BuiltinLoc),
+    "__robot_command_rl": RobotCommandRL(BuiltinLoc),
+    "__robot_command_rr": RobotCommandRR(BuiltinLoc),
 }
 
 
@@ -395,3 +416,20 @@ class Ast2Eval(ast.Visitor):
         loc = self.loc(node)
 
         return BinaryOperation(loc, self.visit(node.lhs), node.op, self.visit(node.rhs))
+
+    def visit_RobotOperation(self, node: ast.RobotOperation):
+        loc = self.loc(node)
+
+        if node.op == ast.RobOp.MOVE:
+            return Call(loc, BUILTINS["__robot_command_go"], [])
+        if node.op == ast.RobOp.ROT_LEFT:
+            return Call(loc, BUILTINS["__robot_command_rl"], [])
+        if node.op == ast.RobOp.ROT_RIGHT:
+            return Call(loc, BUILTINS["__robot_command_rr"], [])
+        # if node.op == ast.RobOp.SONAR:
+        # if node.op == ast.RobOp.COMPASS:
+        report_fatal_at(
+            loc,
+            errors.SyntaxError,
+            f"robot operation '{node.op}' is not implemented for eval",
+        )

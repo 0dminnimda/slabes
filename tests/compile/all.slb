@@ -332,6 +332,23 @@ big main begin
     print(b),
 
     print(guhh()),
+
+    print(go),
+    print(go),
+
+    print(rl),
+    print(go),
+    print(go),
+
+    print(rl),
+    print(rl),
+    print(go),
+    print(go),
+    print(go),
+    print(go),
+    print(go),
+    print(go),
+
 . end,
 
 .
