@@ -3,8 +3,6 @@
 #ifndef SHARED_LOAD_H
 #define SHARED_LOAD_H
 
-#include <ltdl.h>
-
 // Define EXPORTED for any platform
 #if defined _WIN32 || defined __CYGWIN__
   #include <windows.h>
@@ -15,6 +13,7 @@
       #define EXPORTED __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
     #endif
   #else
+    // #define EXPORTED
     #ifdef __GNUC__
       #define EXPORTED __attribute__ ((dllimport))
     #else

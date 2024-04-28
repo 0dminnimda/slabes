@@ -7,8 +7,13 @@ install:
 	python3 -m pip install -e .
 
 .PHONY: com
-com:
+com: console_lib
 	$(PYTHON) -m slabes tests/compile/all.slb
+	$(PYTHON) -m slabes tests/compile/robot.slb
+
+.PHONY: console_lib
+console_lib:
+	clang -shared -fPIC -o slabes/libslabes/console_display.so slabes/libslabes/console_display.c slabes/libslabes/slabes.c -l ltdl
 
 .PHONY: run
 run:

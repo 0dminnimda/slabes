@@ -1,12 +1,6 @@
-#include "shared_load.h"
-
-// EXPORTED int add(int a, int b)
-// {
-//   return a + b;
-// }
-
 #include "slabes.h"
 
+#include <ltdl.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -187,24 +181,25 @@ bool game_make_player_take_one_step(Game *game) {
 }
 
 typedef void (*void_function_t)(void);
+typedef void (*void_game_function_t)(Game *game);
 typedef bool (*bool_function_t)(void);
 
 static lt_dlhandle library_handle = NULL;
 
 bool_function_t setup_display_function = NULL;
-void_function_t update_display_function = NULL;
+void_game_function_t update_display_function = NULL;
 void_function_t cleanup_display_function = NULL;
 
-bool load_library() {
+bool load_library(char *libname) {
     if (lt_dlinit()) {
         printf("Failed to initialize libltdl\n");
         printf("Continuing without displaying game state\n");
         return true;
     }
 
-    library_handle = lt_dlopen("slabes_display");
+    library_handle = lt_dlopen(libname);
     if (!library_handle) {
-        printf("Failed to load slabes_display: %s\n", lt_dlerror());
+        printf("Failed to load %s: %s\n", libname, lt_dlerror());
         printf("Continuing without displaying game state\n");
         return true;
     }
@@ -215,7 +210,7 @@ bool load_library() {
         return false;
     }
 
-    update_display_function = (void_function_t)lt_dlsym(library_handle, "update_display");
+    update_display_function = (void_game_function_t)lt_dlsym(library_handle, "update_display");
     if (!update_display_function) {
         fprintf(stderr, "Failed to find update_display function: %s\n", lt_dlerror());
         return false;
@@ -230,14 +225,14 @@ bool load_library() {
     return true;
 }
 
-bool setup_game(size_t field_side) {
+bool setup_game(char *libname, size_t field_side) {
     Game *game = get_game();
 
     field_construct_square(&game->field, field_side);
     game_reset(game);
     game_set_player_position(game, (Position){0, 0});
 
-    if (!load_library()) {
+    if (libname && !load_library(libname)) {
         return false;
     }
 
@@ -252,9 +247,8 @@ bool setup_game(size_t field_side) {
 
 void update_game_display() {
     if (update_display_function) {
-        update_display_function();
+        update_display_function(get_game());
     }
-    // game_print_small(get_game(), true);
 }
 
 void cleanup_game() {
