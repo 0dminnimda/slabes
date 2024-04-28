@@ -43,6 +43,10 @@ typedef struct {
 
 char *direction_to_string(Direction direction);
 
+Direction left_rotated_direction(Direction direction);
+
+Direction right_rotated_direction(Direction direction);
+
 #define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
 
 Cell field_check_at(Field *field, ssize_t x, ssize_t y, Cell default_value);

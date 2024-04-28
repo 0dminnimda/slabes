@@ -17,6 +17,8 @@ from . import errors
 
 IS_ANDROID = "android" in platform.platform().lower()
 
+DIR = Path(__file__).parent
+
 
 @dataclass
 class Config:
@@ -68,6 +70,7 @@ def run_cc(c_code: str, conf: Config) -> int:
     args = [conf.cc, "-x", "c", "-"]
     args += ["-o", str(conf.bin_path), "-std=c11"]
     args += [f"-O{conf.optimize}"]
+    args += ["-I", str(DIR)]
     # args += ["-Wall", "-Wextra", "-Werror", "-pedantic"]
 
     if conf.cc.startswith("clang"):

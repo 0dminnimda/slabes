@@ -145,6 +145,8 @@ void game_print_small(Game *game, bool wide) {
 
 */
 
+#ifndef SLABES_CONSOLE_NO_MAIN
+
 int main() {
     Game *game = get_game();
 
@@ -188,3 +190,5 @@ int main() {
 
     return 0;
 }
+
+#endif // SLABES_CONSOLE_NO_MAIN

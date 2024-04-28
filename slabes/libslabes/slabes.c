@@ -45,6 +45,30 @@ char *direction_to_string(Direction direction) {
     }
 }
 
+Direction left_rotated_direction(Direction direction) {
+    switch (direction) {
+        case UpLeft: return Up;
+        case Up: return UpRight;
+        case UpRight: return DownRight;
+        case DownRight: return Down;
+        case Down: return DownLeft;
+        case DownLeft: return UpLeft;
+        default: return direction;
+    }
+}
+
+Direction right_rotated_direction(Direction direction) {
+    switch (direction) {
+        case DownLeft: return Down;
+        case Down: return DownRight;
+        case DownRight: return UpRight;
+        case UpRight: return Up;
+        case Up: return UpLeft;
+        case UpLeft: return DownLeft;
+        default: return direction;
+    }
+}
+
 Cell field_check_at(Field *field, ssize_t x, ssize_t y, Cell default_value) {
     if (x >= field->width || x < 0) {
         return default_value;

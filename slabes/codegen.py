@@ -273,6 +273,29 @@ TEMPLATE = """
 #include <stdint.h>
 #include <limits.h>
 
+#define SLABES_CONSOLE_NO_MAIN
+#include "libslabes/slabes_console.c"
+
+uint8_t slabes_robot_command_go() {
+    if (game_make_player_take_one_step(get_game())) {
+        game_print_small(get_game(), true);
+        return 1;
+    }
+    return 0;
+}
+
+uint8_t slabes_robot_command_rl() {
+    get_game()->player_direction = left_rotated_direction(get_game()->player_direction);
+    game_print_small(get_game(), true);
+    return 1;
+}
+
+uint8_t slabes_robot_command_rr() {
+    get_game()->player_direction = right_rotated_direction(get_game()->player_direction);
+    game_print_small(get_game(), true);
+    return 1;
+}
+
 #if 0
 #define SLABES_DEBUG_OP
 #endif
@@ -319,9 +342,26 @@ typedef uint16_t unsigned_int16_t;
 /*main*/
 
 int main(int argc, char *argv[]) {
+    Game *game = get_game();
+
+    field_construct_square(&game->field, 10);
+
+    game_reset(game);
+
+    game_set_player_position(game, (Position){0, 0});
+
     printf("Starting...\\n");
+
+    game_print_small(game, true);
+
     program_main();
+
+    game_print_small(game, true);
+
     printf("Finishing...\\n");
+
+    field_destruct(&game->field);
+
     return 0;
 }
 """
