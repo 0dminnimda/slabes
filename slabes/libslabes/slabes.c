@@ -178,6 +178,7 @@ void game_print_small_upper_row(Game *game, ssize_t y, bool wide) {
 }
 
 void game_print_small_lower_row(Game *game, ssize_t y, bool wide) {
+    char c0 = (y < game->field.height)? '\\' : ' ';
     for (ssize_t x = 0; x < game->field.width; x++) {
         char c1 = field_check_at(&game->field, x, y , ' ');
         if (c1 == Empty) { c1 = '_'; }
@@ -185,10 +186,11 @@ void game_print_small_lower_row(Game *game, ssize_t y, bool wide) {
         char c2 = field_check_at(&game->field, x, y - 1, ' ');
         if (c2 == Player) { c2 = player_upper_char(game); }
         if (wide) {
-            printf("\\%c%c/%c%c", c1, c1, c2, c2);
+            printf("%c%c%c/%c%c", c0, c1, c1, c2, c2);
         } else {
-            printf("\\%c/%c", c1, c2);
+            printf("%c%c/%c", c0, c1, c2);
         }
+        c0 = '\\';
     }
     if (y) { printf("\\"); }
     printf("\n");
@@ -201,15 +203,29 @@ void game_print_small(Game *game, bool wide) {
     }
 
     char *first = wide? " __   " : " _  ";
+    if (game->field.height % 2 == 0) {
+        first = wide? "   __ " : "  _ ";
+        printf(" ");
+    }
+
     for (ssize_t x = 0; x < game->field.width; x++) { printf("%s", first); }
     printf("\n");
 
     ssize_t y = game->field.height;
-    for (;;) {
-        game_print_small_upper_row(game, y, wide);
-        if (--y < 0) break;
-        game_print_small_lower_row(game, y, wide);
-        if (--y < 0) break;
+    if (game->field.height % 2 == 0) {
+        for (;;) {
+            game_print_small_lower_row(game, y, wide);
+            if (--y < 0) break;
+            game_print_small_upper_row(game, y, wide);
+            if (--y < 0) break;
+        }
+    } else {
+        for (;;) {
+            game_print_small_upper_row(game, y, wide);
+            if (--y < 0) break;
+            game_print_small_lower_row(game, y, wide);
+            if (--y < 0) break;
+        }
     }
 }
 
