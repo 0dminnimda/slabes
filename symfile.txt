@@ -1,2 +1,0 @@
-field_check_at
-get_game

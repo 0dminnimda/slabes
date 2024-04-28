@@ -72,17 +72,6 @@ def run_cc(c_code: str, conf: Config) -> int:
     args += [f"-O{conf.optimize}"]
     args += ["-I", str(DIR)]
     args += ["-l", "ltdl"]
-    # args += ["-Wl,--dynamic-list=symfile.txt"]
-    # args += ["--exported_symbols_list symfile.txt"]
-    # args += ["-rdynamic"]
-    # args += ["-fvisibility=default"]
-    # args += ["-rdynamic"]
-    # args += ["-Wl,-export-all-symbols"]
-    # args += ["-Wl,--Bdynamic"]
-    # args += ["-Wl,--dynamicbase"]
-    # args += ["-Wl,--export-all-symbols"]
-    # args += ["-Wl,-export_dynamic"]
-    # args += ["-Wl,--export-dynamic", "-rdynamic"]
     # args += ["-Wall", "-Wextra", "-Werror", "-pedantic"]
 
     if conf.cc.startswith("clang"):

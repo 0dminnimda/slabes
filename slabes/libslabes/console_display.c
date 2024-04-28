@@ -2,8 +2,6 @@
 
 #include <stdio.h>
 
-#include "shared_load.h"
-
 /*
  _   _   _  
 /#\_/ \_/ \_
@@ -150,14 +148,10 @@ void game_print_small(Game *game, bool wide) {
 */
 
 bool setup_display() {
-    printf("ayo wazzuup from setup_display in lib\n");
     return true;
 }
 
 void update_display(Game *game) {
-    printf("ayo wazzuup from update_display in lib\n");
-    // Game *game = get_game();
-    printf("ayo wazzuup from update_display in lib, we got game %p\n", game);
     game_print_small(game, true);
 }
 

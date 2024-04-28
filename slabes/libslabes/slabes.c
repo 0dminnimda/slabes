@@ -197,8 +197,6 @@ bool load_library(char *libname) {
         return true;
     }
 
-    printf("lt_dlinit\n");
-
     library_handle = lt_dlopen(libname);
     if (!library_handle) {
         printf("Failed to load %s: %s\n", libname, lt_dlerror());
@@ -206,15 +204,11 @@ bool load_library(char *libname) {
         return true;
     }
 
-    printf("lt_dlopen\n");
-
     setup_display_function = (bool_function_t)lt_dlsym(library_handle, "setup_display");
     if (!setup_display_function) {
         fprintf(stderr, "Failed to find setup_display function: %s\n", lt_dlerror());
         return false;
     }
-
-    printf("setup_display_function\n");
 
     update_display_function = (void_game_function_t)lt_dlsym(library_handle, "update_display");
     if (!update_display_function) {
@@ -222,15 +216,11 @@ bool load_library(char *libname) {
         return false;
     }
 
-    printf("update_display_function\n");
-
     cleanup_display_function = (void_function_t)lt_dlsym(library_handle, "cleanup_display");
     if (!cleanup_display_function) {
         fprintf(stderr, "Failed to find cleanup_display function: %s\n", lt_dlerror());
         return false;
     }
-
-    printf("cleanup_display_function\n");
 
     return true;
 }
@@ -241,8 +231,6 @@ bool setup_game(char *libname, size_t field_side) {
     field_construct_square(&game->field, field_side);
     game_reset(game);
     game_set_player_position(game, (Position){0, 0});
-
-    printf("Hi\n");
 
     if (!load_library(libname)) {
         return false;
@@ -260,7 +248,6 @@ bool setup_game(char *libname, size_t field_side) {
 
 void update_game_display() {
     if (update_display_function) {
-        printf("calling update_display_function\n");
         update_display_function(get_game());
     }
 }
@@ -269,7 +256,6 @@ void cleanup_game() {
     Game *game = get_game();
 
     if (cleanup_display_function) {
-        printf("calling update_display_function\n");
         cleanup_display_function();
     }
 
