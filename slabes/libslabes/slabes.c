@@ -1,4 +1,4 @@
-// #include "shared_load.h"
+#include "shared_load.h"
 
 // EXPORTED int add(int a, int b)
 // {
@@ -184,4 +184,88 @@ bool game_make_player_take_one_step(Game *game) {
     }
     game_set_player_position(game, pos);
     return true;
+}
+
+typedef void (*void_function_t)(void);
+typedef bool (*bool_function_t)(void);
+
+static lt_dlhandle library_handle = NULL;
+
+bool_function_t setup_display_function = NULL;
+void_function_t update_display_function = NULL;
+void_function_t cleanup_display_function = NULL;
+
+bool load_library() {
+    if (lt_dlinit()) {
+        printf("Failed to initialize libltdl\n");
+        printf("Continuing without displaying game state\n");
+        return true;
+    }
+
+    library_handle = lt_dlopen("slabes_display");
+    if (!library_handle) {
+        printf("Failed to load slabes_display: %s\n", lt_dlerror());
+        printf("Continuing without displaying game state\n");
+        return true;
+    }
+
+    setup_display_function = (bool_function_t)lt_dlsym(library_handle, "setup_display");
+    if (!setup_display_function) {
+        fprintf(stderr, "Failed to find setup_display function: %s\n", lt_dlerror());
+        return false;
+    }
+
+    update_display_function = (void_function_t)lt_dlsym(library_handle, "update_display");
+    if (!update_display_function) {
+        fprintf(stderr, "Failed to find update_display function: %s\n", lt_dlerror());
+        return false;
+    }
+
+    cleanup_display_function = (void_function_t)lt_dlsym(library_handle, "cleanup_display");
+    if (!cleanup_display_function) {
+        fprintf(stderr, "Failed to find cleanup_display function: %s\n", lt_dlerror());
+        return false;
+    }
+
+    return true;
+}
+
+bool setup_game(size_t field_side) {
+    Game *game = get_game();
+
+    field_construct_square(&game->field, field_side);
+    game_reset(game);
+    game_set_player_position(game, (Position){0, 0});
+
+    if (!load_library()) {
+        return false;
+    }
+
+    if (setup_display_function) {
+        if (!setup_display_function()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void update_game_display() {
+    if (update_display_function) {
+        update_display_function();
+    }
+    // game_print_small(get_game(), true);
+}
+
+void cleanup_game() {
+    Game *game = get_game();
+
+    if (cleanup_display_function) {
+        cleanup_display_function();
+    }
+
+    lt_dlclose(library_handle);
+    lt_dlexit();
+
+    field_destruct(&game->field);
 }

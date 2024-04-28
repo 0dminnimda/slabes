@@ -273,8 +273,7 @@ TEMPLATE = """
 #include <stdint.h>
 #include <limits.h>
 
-#define SLABES_CONSOLE_NO_MAIN
-#include "libslabes/slabes_console.c"
+#include "libslabes/slabes.c"
 
 #if 0
 #define SLABES_DEBUG_OP
@@ -319,7 +318,7 @@ typedef uint16_t unsigned_int16_t;
 
 slabes_type_unsigned_tiny slabes_func___robot_command_go() {
     if (game_make_player_take_one_step(get_game())) {
-        game_print_small(get_game(), true);
+        update_game_display();
         return 1;
     }
     return 0;
@@ -327,13 +326,13 @@ slabes_type_unsigned_tiny slabes_func___robot_command_go() {
 
 slabes_type_unsigned_tiny slabes_func___robot_command_rl() {
     get_game()->player_direction = left_rotated_direction(get_game()->player_direction);
-    game_print_small(get_game(), true);
+    update_game_display();
     return 1;
 }
 
 slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
     get_game()->player_direction = right_rotated_direction(get_game()->player_direction);
-    game_print_small(get_game(), true);
+    update_game_display();
     return 1;
 }
 
@@ -342,26 +341,17 @@ slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
 /*main*/
 
 int main(int argc, char *argv[]) {
-    Game *game = get_game();
-
-    field_construct_square(&game->field, 10);
-
-    game_reset(game);
-
-    game_set_player_position(game, (Position){0, 0});
+    setup_game(10);
 
     printf("Starting...\\n");
 
-    game_print_small(game, true);
-
+    update_game_display();
     program_main();
-
-    game_print_small(game, true);
+    update_game_display();
 
     printf("Finishing...\\n");
 
-    field_destruct(&game->field);
-
+    cleanup_game();
     return 0;
 }
 """
