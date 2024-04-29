@@ -10,7 +10,7 @@ install:
 	python3 -m pip install -e .
 
 .PHONY: com
-com: console_lib ralib_display_lib
+com: console_lib ralib_display_lib console_slabes raylib_slabes
 	$(PYTHON) -m slabes tests/compile/all.slb
 	$(PYTHON) -m slabes tests/compile/robot.slb
 
@@ -26,8 +26,8 @@ ralib_display_lib:
 console_slabes:
 	clang -o slabes/libslabes/slabes_console.out slabes/libslabes/slabes_console.c -l ltdl
 
-.PHONY: ralib_slabes
-ralib_slabes:
+.PHONY: raylib_slabes
+raylib_slabes:
 	clang -o slabes/libslabes/slabes_raylib.out slabes/libslabes/slabes_raylib.c -l ltdl -l raylib
 
 .PHONY: run

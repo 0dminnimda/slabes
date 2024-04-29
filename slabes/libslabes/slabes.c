@@ -170,10 +170,20 @@ bool game_move_position_in_direction(Game *game, Position *pos, Direction direct
     return true;
 }
 
+bool cell_is_obstacle(Cell cell) {
+    switch (cell) {
+        case Wall: return true;
+        default: return false;
+    }
+}
+
 bool game_make_player_take_one_step(Game *game) {
     Position pos = game->player_position;
     if (!game_move_position_in_direction(game, &pos, game->player_direction)) {
-        printf("cannot move in this direction (%s)\n", direction_to_string(game->player_direction));
+        // printf("cannot move in this direction (%s)\n", direction_to_string(game->player_direction));
+        return false;
+    }
+    if (cell_is_obstacle(FIELD_AT(&game->field, pos.x, pos.y))) {
         return false;
     }
     game_set_player_position(game, pos);
