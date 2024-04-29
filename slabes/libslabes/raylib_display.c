@@ -29,12 +29,12 @@ Color cell_color(Cell cell) {
 
 double direction_to_angle(Direction direction) {
     switch (direction) {
-        case UpLeft: return 3.0*PI / 4.0;
+        case UpLeft: return 5.0*PI / 6.0;
         case Up: return PI / 2.0;
-        case UpRight: return PI / 4.0;
-        case DownRight: return -PI / 4.0;
+        case UpRight: return PI / 6.0;
+        case DownRight: return -PI / 6.0;
         case Down: return -PI / 2.0;
-        case DownLeft: return -3.0*PI / 4.0;
+        case DownLeft: return -5.0*PI / 6.0;
         default: return direction;
     }
 }
