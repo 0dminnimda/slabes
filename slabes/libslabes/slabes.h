@@ -49,22 +49,6 @@ typedef struct {
     Field field;
 } Game;
 
-#define GET_WALL_DOWN_RIGHT(walls) ((walls) & (1 << 2))
-#define GET_WALL_DOWN(walls) ((walls) & (1 << 1))
-#define GET_WALL_DOWN_LEFT(walls) ((walls) & (1 << 0))
-
-#define ON_WALL_DOWN_RIGHT(walls, value) ((walls) & ((value) << 2))
-#define ON_WALL_DOWN(walls, value) ((walls) & ((value) << 1))
-#define ON_WALL_DOWN_LEFT(walls, value) ((walls) & ((value) << 0))
-
-#define OFF_WALL_DOWN_RIGHT(walls, value) ((walls) & (~((value) << 2)))
-#define OFF_WALL_DOWN(walls, value) ((walls) & (~((value) << 1)))
-#define OFF_WALL_DOWN_LEFT(walls, value) ((walls) & (~((value) << 0)))
-
-#define SET_WALL_DOWN_RIGHT(walls, value) ((value)? ON_WALL_DOWN_RIGHT(walls, value) : OFF_WALL_DOWN_RIGHT(walls, value))
-#define SET_WALL_DOWN(walls, value) ((value)? ON_WALL_DOWN(walls, value) : OFF_WALL_DOWN(walls, value))
-#define SET_WALL_DOWN_LEFT(walls, value) ((value)? ON_WALL_DOWN_LEFT(walls, value) : OFF_WALL_DOWN_LEFT(walls, value))
-
 #define WALLS_AT(field, x, y) (field)->walls[(y) * (field)->width + (x)]
 
 Walls field_walls_check_at(Field *field, ssize_t x, ssize_t y);
