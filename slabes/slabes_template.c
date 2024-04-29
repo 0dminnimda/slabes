@@ -11,6 +11,26 @@
 #define SLABES_DEBUG_OP
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#elif __unix__
+#include <unistd.h>
+#endif
+
+#ifndef NO_DELAY_ON_ROBOT_OP
+void sleep_ms(int milliseconds) {
+#ifdef _WIN32
+    Sleep(milliseconds);
+#elif __unix__
+    usleep(milliseconds * 1000); // usleep takes sleep time in microseconds
+#endif
+}
+
+#define ROBOT_OP_DELAY sleep_ms(200)
+#else
+#define ROBOT_OP_DELAY
+#endif
+
 typedef bool unsigned_bool;
 typedef unsigned char unsigned_char;
 typedef unsigned short unsigned_short;
@@ -49,6 +69,7 @@ typedef uint16_t unsigned_int16_t;
 /*int-conv*/
 
 slabes_type_unsigned_tiny slabes_func___robot_command_go() {
+    ROBOT_OP_DELAY;
     if (game_make_player_take_one_step(get_game())) {
         update_game_display();
         return 1;
@@ -57,12 +78,14 @@ slabes_type_unsigned_tiny slabes_func___robot_command_go() {
 }
 
 slabes_type_unsigned_tiny slabes_func___robot_command_rl() {
+    ROBOT_OP_DELAY;
     get_game()->player_direction = left_rotated_direction(get_game()->player_direction);
     update_game_display();
     return 1;
 }
 
 slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
+    ROBOT_OP_DELAY;
     get_game()->player_direction = right_rotated_direction(get_game()->player_direction);
     update_game_display();
     return 1;
@@ -79,13 +102,14 @@ int main(int argc, char *argv[]) {
     }
     setup_game(libname, 10);
 
-    printf("Starting...\\n");
+    printf("Starting...\n");
 
     update_game_display();
+    ROBOT_OP_DELAY;
     program_main();
     update_game_display();
 
-    printf("Finishing...\\n");
+    printf("Finishing...\n");
 
     cleanup_game();
     return 0;
