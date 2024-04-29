@@ -8,14 +8,12 @@ typedef struct {
 
 State state;
 
-const int screenWidth = 800;
-const int screenHeight = 450;
+const int screen_width = 800;
+const int screen_height = 450;
 
-const double s = 20;  // Side length of the hexagon
-const int num_rows = 8;  // Number of rows
-const int num_cols = 12;  // Number of columns
-const int offsetX = 50;  // Horizontal offset to center the grid
-const int offsetY = 50;  // Vertical offset to center the grid
+const double hex_side = 20;
+const int offset_x= 50;
+const int offset_y = 50;
 
 const Color empty_color = DARKBLUE;
 const Color wall_color = GRAY;
@@ -33,20 +31,16 @@ Color cell_color(Cell cell) {
 void draw_hexagon_grid(Game *game, double s) {
     double x_delta = 3 * s;  // distance between hexagons in the same row
     double y_delta = sqrt(3) / 2 * s;  // distance between rows
-
     double total_y = (game->field.height - 1) * y_delta;
 
-    char *msg[16] = {0};
+    for (ssize_t yi = 0; yi < game->field.height; yi++) {
+        for (ssize_t xi = 0; xi < game->field.width; xi++) {
+            double y = total_y - (yi * y_delta);
+            double x = xi * x_delta + (yi % 2) * (x_delta / 2);
+            Vector2 center = {x + offset_x, y + offset_y};
 
-    for (ssize_t yi = 0; yi < game->field.height - 1; yi++) {
-        for (ssize_t xi = 0; xi < game->field.width - 1; xi++) {
-            double y = total_y - (yi * y_delta) + offsetX;
-            double x = xi * x_delta + (yi % 2) * (x_delta / 2) + offsetY;
-
-            sprintf(msg, "%d,%d", (int)yi, (int)xi);
-            Vector2 center = {x, y};
-            DrawPoly(center, 6, s * 0.95, 30.0f, DARKBLUE);
-            DrawText(msg, x - x_delta/4, y - y_delta/4, 10, DARKGRAY);
+            DrawPoly(center, 6, s, 30.0f, cell_color(FIELD_AT(&game->field, xi, yi)));
+            DrawPolyLines(center, 6, s, 30.0f, WHITE);
         }
     }
 }
@@ -54,7 +48,7 @@ void draw_hexagon_grid(Game *game, double s) {
 bool setup_display() {
     SetTraceLogLevel(LOG_ERROR);
 
-    InitWindow(screenWidth, screenHeight, "slabes");
+    InitWindow(screen_width, screen_height, "slabes");
     SetTargetFPS(60);
 
     return true;
@@ -68,7 +62,7 @@ void update_display(Game *game) {
 
         ClearBackground(BLACK);
 
-        draw_hexagon_grid(game, s);
+        draw_hexagon_grid(game, hex_side);
 
         EndDrawing();
     }
@@ -83,7 +77,7 @@ void cleanup_display() {
 
         // ClearBackground(BLACK);
 
-        // draw_hexagon_grid(game, s);
+        // draw_hexagon_grid(game, hex_side);
 
         EndDrawing();
     }
