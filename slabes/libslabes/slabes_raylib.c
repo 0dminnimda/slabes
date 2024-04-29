@@ -17,17 +17,12 @@ int main(void) {
     FIELD_AT(&game->field, 2, 2) = Wall;
     FIELD_AT(&game->field, 3, 0) = Wall;
 
-
-    SetTraceLogLevel(LOG_ERROR);
-
-    InitWindow(screen_width, screen_height, "slabes raylib");
-
-    SetTargetFPS(60);
+    setup_display();
 
     while (!WindowShouldClose())
     {
         bool move = true;
-             if (IsKeyDown(KEY_W)) game->player_direction = Up;
+        if      (IsKeyDown(KEY_W)) game->player_direction = Up;
         else if (IsKeyDown(KEY_S)) game->player_direction = Down;
         else if (IsKeyDown(KEY_E)) game->player_direction = UpRight;
         else if (IsKeyDown(KEY_D)) game->player_direction = DownRight;

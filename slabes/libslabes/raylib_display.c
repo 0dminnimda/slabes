@@ -80,6 +80,7 @@ void draw_hexagon_grid(Game *game, double hex_side) {
 bool setup_display() {
     SetTraceLogLevel(LOG_ERROR);
 
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(screen_width, screen_height, "slabes");
     SetTargetFPS(60);
 
