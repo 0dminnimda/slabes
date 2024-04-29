@@ -40,7 +40,7 @@ int main(void) {
 
         BeginDrawing();
 
-            ClearBackground(BLACK);
+            ClearBackground(background_color);
             draw_hexagon_grid(game, hex_side);
 
         EndDrawing();
