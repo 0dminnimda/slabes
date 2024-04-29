@@ -63,6 +63,43 @@ Direction right_rotated_direction(Direction direction) {
     }
 }
 
+Walls field_walls_check_at(Field *field, ssize_t x, ssize_t y) {
+    if (x >= field->width || x < 0) {
+        return 0xFF;
+    }
+    if (y >= field->height || y < 0) {
+        return 0xFF;
+    }
+    return WALLS_AT(field, x, y);
+
+}
+
+Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y) {
+    if (y % 2 == 0) {
+        if (x == 0) {
+            walls |= 0b100001;
+        }
+    }
+    if (y % 2 == game->field.height % 2) {
+        if (x == (game->field.width - 1)) {
+            walls |= 0b001100;
+        }
+    }
+    if (y == 0) {
+        walls |= 0b000111;
+    }
+    if (y == 1) {
+        walls |= 0b000010;
+    }
+    if (y == (game->field.height - 2)) {
+        walls |= 0b010000;
+    }
+    if (y == (game->field.height - 1)) {
+        walls |= 0b111000;
+    }
+    return walls;
+}
+
 Cell field_check_at(Field *field, ssize_t x, ssize_t y, Cell default_value) {
     if (x >= field->width || x < 0) {
         return default_value;
@@ -78,6 +115,7 @@ void field_construct(Field *field, size_t width, size_t height) {
     field->width = width;
     field->height = height;
     field->cells = (Cell *)SLABES_MALLOC(sizeof(Cell) * width * height);
+    field->walls = (Walls *)SLABES_MALLOC(sizeof(Walls) * width * height);
 }
 
 // the goal is to make it so look most like a square
@@ -88,17 +126,23 @@ void field_construct_square(Field *field, size_t side) {
 
 void field_destruct(Field *field) {
     SLABES_FREE(field->cells);
+    SLABES_FREE(field->walls);
 }
 
-void field_fill(Field *field, Cell value) {
+void field_fill_cells(Field *field, Cell value) {
     memset(field->cells, value, sizeof(Cell) * field->width * field->height);
+}
+
+void field_fill_walls(Field *field, Walls value) {
+    memset(field->walls, value, sizeof(Walls) * field->width * field->height);
 }
 
 void game_reset(Game *game) {
     game->player_position.x = 0;
     game->player_position.y = 0;
     game->player_direction = Up;
-    field_fill(&game->field, Empty);
+    field_fill_cells(&game->field, Empty);
+    field_fill_walls(&game->field, 0);
 }
 
 void game_set_player_position(Game *game, Position pos) {

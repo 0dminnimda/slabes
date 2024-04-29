@@ -12,6 +12,7 @@ const double hex_start_ange = 30.0;
 
 const Color empty_color = DARKBLUE;
 const Color wall_color = GRAY;
+const Color cell_wall_color = GRAY;
 const Color player_color = WHITE;
 const Color player_direction_color = GREEN;
 
@@ -39,11 +40,14 @@ double direction_to_angle(Direction direction) {
     }
 }
 
+Vector2 direction_to_vector2(Direction direction, double radius) {
+    double angle = direction_to_angle(direction);
+    return (Vector2){radius * cos(angle), -radius * sin(angle)};
+}
+
 void draw_player_direction(Game *game, double hex_side, Vector2 center) {
     const double arrow_ratio = 0.4;
-    double angle = direction_to_angle(game->player_direction);
-    double len = sqrt(3) / 2 * hex_side;
-    Vector2 direction = {len * cos(angle), -len * sin(angle)};
+    Vector2 direction = direction_to_vector2(game->player_direction, sqrt(3) / 2 * hex_side);
     Vector2 shifted_center = Vector2Add(center, (Vector2){direction.x * 0.1, direction.y * 0.1});
     direction = (Vector2){direction.x * 0.8, direction.y * 0.8};
     Vector2 perp1 = { direction.y * arrow_ratio, -direction.x * arrow_ratio};
@@ -54,6 +58,29 @@ void draw_player_direction(Game *game, double hex_side, Vector2 center) {
         Vector2Add(shifted_center, direction),
         player_direction_color
     );
+}
+
+static Vector2 hexagon_points[6];
+
+void calculate_hexagon_points() {
+    double angles[6] = {-2.0*PI / 3.0, -PI / 3.0, 0, PI / 3.0, 2.0*PI / 3.0, PI};
+    for (size_t i = 0; i < 6; i++) {
+        hexagon_points[i] = (Vector2){
+            hex_side * cos(angles[i]),
+            -hex_side * sin(angles[i])
+        };
+    }
+}
+
+void draw_cell_walls(Walls walls, double hex_side, Vector2 center) {
+    Vector2 prev = Vector2Add(center, hexagon_points[5]);
+    for (size_t i = 0; i < 6; i++) {
+        Vector2 cur = Vector2Add(center, hexagon_points[i]);
+        if (walls & (1 << i)) {
+            DrawLineEx(prev, cur, hex_side / 10.0, cell_wall_color);
+        }
+        prev = cur;
+    }
 }
 
 void draw_hexagon_grid(Game *game, double hex_side) {
@@ -70,11 +97,13 @@ void draw_hexagon_grid(Game *game, double hex_side) {
             Vector2 center = {x + offset_x, y + offset_y};
 
             Cell cell = FIELD_AT(&game->field, xi, yi);
-            DrawPoly(center, 6, hex_side, hex_start_ange, cell_color(cell));
             if (cell == Player) {
+                DrawPoly(center, 6, hex_side, hex_start_ange, player_color);
                 draw_player_direction(game, hex_side, center);
             }
-            DrawPolyLines(center, 6, hex_side, hex_start_ange, WHITE);
+            Walls walls = field_walls_check_at(&game->field, xi, yi);
+            walls = game_walls_with_map_end(game, walls, xi, yi);
+            draw_cell_walls(walls, hex_side, center);
         }
     }
 }
@@ -89,6 +118,8 @@ void recalculate_sizes(Game *game) {
     hex_width = (double)screen_width / hex_width;
 
     hex_side = fmin(hex_height, hex_width) / 2.0;
+
+    calculate_hexagon_points();
 }
 
 bool setup_display(Game *game) {
