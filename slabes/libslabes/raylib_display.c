@@ -42,10 +42,8 @@ double direction_to_angle(Direction direction) {
 void draw_player_direction(Game *game, double hex_side, Vector2 center) {
     double angle = direction_to_angle(game->player_direction);
     double len = sqrt(3) / 2 * hex_side;
-    Vector2 hand = {len * sin(angle), len * cos(angle)};
-    // Vector2 pt1 = Vector2Add(center, hand);
-    // Vector2 pt2 = Vector2Subtract(center, hand);
-    DrawLineEx(center, Vector2Add(center, hand), 10, player_direction_color);
+    Vector2 hand = {len * cos(angle), -len * sin(angle)};
+    DrawLineEx(center, Vector2Add(center, hand), hex_side / 5, player_direction_color);
 }
 
 void draw_hexagon_grid(Game *game, double hex_side) {
