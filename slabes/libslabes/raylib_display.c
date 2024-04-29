@@ -9,6 +9,12 @@ typedef struct {
 
 State state;
 
+#if RAYLIB_VERSION_MAJOR >= 5
+const double hex_start_ange = 0.0;
+#else
+const double hex_start_ange = 30.0;
+#endif
+
 const int screen_width = 800;
 const int screen_height = 450;
 
@@ -62,11 +68,11 @@ void draw_hexagon_grid(Game *game, double hex_side) {
             Vector2 center = {x + offset_x, y + offset_y};
 
             Cell cell = FIELD_AT(&game->field, xi, yi);
-            DrawPoly(center, 6, hex_side, 30.0f, cell_color(cell));
+            DrawPoly(center, 6, hex_side, hex_start_ange, cell_color(cell));
             if (cell == Player) {
                 draw_player_direction(game, hex_side, center);
             }
-            DrawPolyLines(center, 6, hex_side, 30.0f, WHITE);
+            DrawPolyLines(center, 6, hex_side, hex_start_ange, WHITE);
         }
     }
 }
