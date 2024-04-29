@@ -11,11 +11,17 @@ int main() {
 
     game_set_player_position(game, (Position){0, 0});
 
-    FIELD_AT(&game->field, 1, 0) = Wall;
-    FIELD_AT(&game->field, 1, 1) = Wall;
-    FIELD_AT(&game->field, 2, 1) = Wall;
-    FIELD_AT(&game->field, 2, 2) = Wall;
-    FIELD_AT(&game->field, 3, 0) = Wall;
+    field_checked_update_walls(&game->field, 0, 0, UpRight | DownRight, true);
+    field_checked_update_walls(&game->field, 0, 2, UpRight | DownRight, true);
+    field_checked_update_walls(&game->field, 0, 4, UpRight | DownRight, true);
+    field_checked_update_walls(&game->field, 0, 6, UpRight | DownRight, true);
+    field_checked_update_walls(&game->field, 0, 8, UpRight | DownRight, true);
+    field_checked_update_walls(&game->field, 0, 10, UpRight | DownRight, true);
+    field_checked_update_walls(&game->field, 0, 12, DownRight, true);
+    field_checked_update_walls(&game->field, 0, 13, Down, true);
+    field_checked_update_walls(&game->field, 0, 14, Down | DownRight, true);
+
+    field_checked_update_walls(&game->field, 5, 5, UpLeft | DownLeft, true);
 
     game_print_small(game, true);
 

@@ -23,12 +23,17 @@ typedef enum : char {
 } Cell;
 
 typedef enum : uint8_t {
+    DirectionCount =      6,
     UpLeft    = 1 << 5,
     Up        = 1 << 4,
     UpRight   = 1 << 3,
     DownRight = 1 << 2,
     Down      = 1 << 1,
     DownLeft  = 1 << 0,
+    DirectionMax = UpLeft,
+    UpDirection = UpLeft | Up | UpRight, 
+    DownDirection = DownLeft | Down | DownRight, 
+    AllDirections = UpDirection | DownDirection,
 } Direction;
 
 typedef Direction Walls;
@@ -53,7 +58,11 @@ typedef struct {
 
 Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y);
 
-void field_checked_set_walls(Field *field, ssize_t x, ssize_t y, Walls value);
+// void field_checked_set_walls(Field *field, ssize_t x, ssize_t y, Walls value);
+void field_checked_update_walls(Field *field, ssize_t x, ssize_t y, Walls value, bool add);
+
+// #define field_checked_update_walls(field, x, y, value) \
+//     field_checked_set_walls((field), (x), (y), field_checked_get_walls((field), (x), (y)) | (value))
 
 #define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
 
@@ -66,6 +75,8 @@ char *direction_to_string(Direction direction);
 Direction left_rotated_direction(Direction direction);
 
 Direction right_rotated_direction(Direction direction);
+
+Direction reverse_direction(Direction direction);
 
 Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y);
 

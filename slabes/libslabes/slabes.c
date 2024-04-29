@@ -63,6 +63,18 @@ Direction right_rotated_direction(Direction direction) {
     }
 }
 
+Direction reverse_direction(Direction direction) {
+    switch (direction) {
+        case DownLeft: return UpRight;
+        case Down: return Up;
+        case DownRight: return UpLeft;
+        case UpRight: return DownLeft;
+        case Up: return Down;
+        case UpLeft: return DownRight;
+        default: return direction;
+    }
+}
+
 Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y) {
     if (x >= field->width || x < 0) {
         return 0xFF;
@@ -74,14 +86,34 @@ Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y) {
 
 }
 
-void field_checked_set_walls(Field *field, ssize_t x, ssize_t y, Walls value) {
+bool field_move_position_in_direction(Field *field, Position *pos, Direction direction);
+
+void field_checked_update_walls(Field *field, ssize_t x, ssize_t y, Walls value, bool add) {
     if (x >= field->width || x < 0) {
         return;
     }
     if (y >= field->height || y < 0) {
         return;
     }
-    WALLS_AT(field, x, y) = value;
+
+    for (size_t i = 1; i <= DirectionMax; i <<= 1) {
+        if (!(value & i)) continue;
+
+        Position pos = {x, y};
+        if (field_move_position_in_direction(field, &pos, i)) {
+            if (add) {
+                WALLS_AT(field, pos.x, pos.y) |= reverse_direction(i);
+            } else {
+                WALLS_AT(field, pos.x, pos.y) &= ~reverse_direction(i);
+            }
+        }
+    }
+
+    if (add) {
+        WALLS_AT(field, x, y) |= value;
+    } else {
+        WALLS_AT(field, x, y) &= ~value;
+    }
 }
 
 Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y) {
@@ -96,7 +128,7 @@ Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y) {
         }
     }
     if (y == 0) {
-        walls |= DownLeft | Down | DownRight;
+        walls |= DownDirection;
     }
     if (y == 1) {
         walls |= Down;
@@ -105,7 +137,7 @@ Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y) {
         walls |= Up;
     }
     if (y == (game->field.height - 1)) {
-        walls |= UpLeft | Up | UpRight;
+        walls |= UpDirection;
     }
     return walls;
 }
@@ -200,7 +232,7 @@ depending whether we are at the inbetween row or on the base row
 
 */
 
-bool game_move_position_in_direction(Game *game, Position *pos, Direction direction) {
+bool field_move_position_in_direction(Field *field, Position *pos, Direction direction) {
     Position new_pos = *pos;
 
     if (new_pos.y % 2 == 0) {
@@ -225,7 +257,7 @@ bool game_move_position_in_direction(Game *game, Position *pos, Direction direct
 
     // unsigned underflow is a defined behavior,
     // so no problems relying on it here for check if 0 - <sometihng> happened
-    if (new_pos.y >= game->field.height || new_pos.x >= game->field.width) {
+    if (new_pos.y >= field->height || new_pos.x >= field->width) {
         return false;
     }
 
@@ -242,7 +274,7 @@ bool cell_is_obstacle(Cell cell) {
 
 bool game_make_player_take_one_step(Game *game) {
     Position pos = game->player_position;
-    if (!game_move_position_in_direction(game, &pos, game->player_direction)) {
+    if (!field_move_position_in_direction(&game->field, &pos, game->player_direction)) {
         // printf("cannot move in this direction (%s)\n", direction_to_string(game->player_direction));
         return false;
     }

@@ -61,11 +61,11 @@ void draw_player_direction(Game *game, double hex_side, Vector2 center) {
     );
 }
 
-static Vector2 hexagon_points[6];
+static Vector2 hexagon_points[DirectionCount];
 
 void calculate_hexagon_points() {
-    double angles[6] = {-2.0*PI / 3.0, -PI / 3.0, 0, PI / 3.0, 2.0*PI / 3.0, PI};
-    for (size_t i = 0; i < 6; i++) {
+    double angles[DirectionCount] = {-2.0*PI / 3.0, -PI / 3.0, 0, PI / 3.0, 2.0*PI / 3.0, PI};
+    for (size_t i = 0; i < DirectionCount; i++) {
         hexagon_points[i] = (Vector2){
             hex_side * cos(angles[i]),
             -hex_side * sin(angles[i])
