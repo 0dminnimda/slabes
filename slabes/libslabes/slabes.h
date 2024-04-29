@@ -58,11 +58,7 @@ typedef struct {
 
 Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y);
 
-// void field_checked_set_walls(Field *field, ssize_t x, ssize_t y, Walls value);
 void field_checked_update_walls(Field *field, ssize_t x, ssize_t y, Walls value, bool add);
-
-// #define field_checked_update_walls(field, x, y, value) \
-//     field_checked_set_walls((field), (x), (y), field_checked_get_walls((field), (x), (y)) | (value))
 
 #define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
 
