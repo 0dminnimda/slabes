@@ -17,7 +17,7 @@ int main(void) {
     FIELD_AT(&game->field, 2, 2) = Wall;
     FIELD_AT(&game->field, 3, 0) = Wall;
 
-    setup_display();
+    setup_display(game);
 
     while (!WindowShouldClose())
     {

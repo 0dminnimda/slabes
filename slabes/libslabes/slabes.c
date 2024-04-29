@@ -190,15 +190,14 @@ bool game_make_player_take_one_step(Game *game) {
     return true;
 }
 
-typedef void (*void_function_t)(void);
 typedef void (*void_game_function_t)(Game *game);
-typedef bool (*bool_function_t)(void);
+typedef bool (*bool_game_function_t)(Game *game);
 
 static lt_dlhandle library_handle = NULL;
 
-bool_function_t setup_display_function = NULL;
+bool_game_function_t setup_display_function = NULL;
 void_game_function_t update_display_function = NULL;
-void_function_t cleanup_display_function = NULL;
+void_game_function_t cleanup_display_function = NULL;
 
 bool load_library(char *libname) {
     if (lt_dlinit()) {
@@ -214,7 +213,7 @@ bool load_library(char *libname) {
         return true;
     }
 
-    setup_display_function = (bool_function_t)lt_dlsym(library_handle, "setup_display");
+    setup_display_function = (bool_game_function_t)lt_dlsym(library_handle, "setup_display");
     if (!setup_display_function) {
         fprintf(stderr, "Failed to find setup_display function: %s\n", lt_dlerror());
         return false;
@@ -226,7 +225,7 @@ bool load_library(char *libname) {
         return false;
     }
 
-    cleanup_display_function = (void_function_t)lt_dlsym(library_handle, "cleanup_display");
+    cleanup_display_function = (void_game_function_t)lt_dlsym(library_handle, "cleanup_display");
     if (!cleanup_display_function) {
         fprintf(stderr, "Failed to find cleanup_display function: %s\n", lt_dlerror());
         return false;
@@ -247,7 +246,7 @@ bool setup_game(char *libname, size_t field_side) {
     }
 
     if (setup_display_function) {
-        if (!setup_display_function()) {
+        if (!setup_display_function(game)) {
             return false;
         }
     }
@@ -265,7 +264,7 @@ void cleanup_game() {
     Game *game = get_game();
 
     if (cleanup_display_function) {
-        cleanup_display_function();
+        cleanup_display_function(game);
     }
 
     lt_dlclose(library_handle);

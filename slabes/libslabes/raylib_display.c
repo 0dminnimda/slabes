@@ -77,7 +77,7 @@ void draw_hexagon_grid(Game *game, double hex_side) {
     }
 }
 
-bool setup_display() {
+bool setup_display(Game *game) {
     SetTraceLogLevel(LOG_ERROR);
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
@@ -102,7 +102,7 @@ void update_display(Game *game) {
     
 }
 
-void cleanup_display() {
+void cleanup_display(Game *game) {
     while (!WindowShouldClose()) {
         state.elapsed_time += GetFrameTime();
 

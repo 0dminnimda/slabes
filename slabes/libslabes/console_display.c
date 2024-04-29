@@ -147,7 +147,7 @@ void game_print_small(Game *game, bool wide) {
 
 */
 
-bool setup_display() {
+bool setup_display(Game *game) {
     return true;
 }
 
@@ -155,6 +155,6 @@ void update_display(Game *game) {
     game_print_small(game, true);
 }
 
-void cleanup_display() {}
+void cleanup_display(Game *game) {}
 
 
