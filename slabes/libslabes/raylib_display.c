@@ -1,5 +1,6 @@
 #include "slabes.h"
 #include "raylib.h"
+#include "raymath.h"
 #include <math.h>
 
 typedef struct {
@@ -18,6 +19,7 @@ const int offset_y = 50;
 const Color empty_color = DARKBLUE;
 const Color wall_color = GRAY;
 const Color player_color = WHITE;
+const Color player_direction_color = GREEN;
 
 Color cell_color(Cell cell) {
     switch (cell) {
@@ -27,10 +29,30 @@ Color cell_color(Cell cell) {
     }
 }
 
+double direction_to_angle(Direction direction) {
+    switch (direction) {
+        case UpLeft: return 3.0*PI / 4.0;
+        case Up: return PI / 2.0;
+        case UpRight: return PI / 4.0;
+        case DownRight: return -PI / 4.0;
+        case Down: return -PI / 2.0;
+        case DownLeft: return -3.0*PI / 4.0;
+        default: return direction;
+    }
+}
 
-void draw_hexagon_grid(Game *game, double s) {
-    double x_delta = 3 * s;  // distance between hexagons in the same row
-    double y_delta = sqrt(3) / 2 * s;  // distance between rows
+void draw_player_direction(Game *game, double hex_side, Vector2 center) {
+    double angle = direction_to_angle(game->player_direction);
+    double len = sqrt(3) / 2 * hex_side;
+    Vector2 hand = {len * sin(angle), len * cos(angle)};
+    // Vector2 pt1 = Vector2Add(center, hand);
+    // Vector2 pt2 = Vector2Subtract(center, hand);
+    DrawLineEx(center, Vector2Add(center, hand), 10, player_direction_color);
+}
+
+void draw_hexagon_grid(Game *game, double hex_side) {
+    double x_delta = 3 * hex_side;  // distance between hexagons in the same row
+    double y_delta = sqrt(3) / 2 * hex_side;  // distance between rows
     double total_y = (game->field.height - 1) * y_delta;
 
     for (ssize_t yi = 0; yi < game->field.height; yi++) {
@@ -39,8 +61,12 @@ void draw_hexagon_grid(Game *game, double s) {
             double x = xi * x_delta + (yi % 2) * (x_delta / 2);
             Vector2 center = {x + offset_x, y + offset_y};
 
-            DrawPoly(center, 6, s, 30.0f, cell_color(FIELD_AT(&game->field, xi, yi)));
-            DrawPolyLines(center, 6, s, 30.0f, WHITE);
+            Cell cell = FIELD_AT(&game->field, xi, yi);
+            DrawPoly(center, 6, hex_side, 30.0f, cell_color(cell));
+            if (cell == Player) {
+                draw_player_direction(game, hex_side, center);
+            }
+            DrawPolyLines(center, 6, hex_side, 30.0f, WHITE);
         }
     }
 }

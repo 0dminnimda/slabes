@@ -20,7 +20,7 @@ console_lib:
 
 .PHONY: ralib_display_lib
 ralib_display_lib:
-	clang -shared -fPIC -o slabes/libslabes/raylib_display.so slabes/libslabes/raylib_display.c slabes/libslabes/slabes.c -l ltdl -l raylib
+	clang -shared -fPIC -o slabes/libslabes/raylib_display.so slabes/libslabes/raylib_display.c slabes/libslabes/slabes.c -l ltdl -l raylib -l m
 
 .PHONY: console_slabes
 console_slabes:
@@ -28,7 +28,7 @@ console_slabes:
 
 .PHONY: raylib_slabes
 raylib_slabes:
-	clang -o slabes/libslabes/slabes_raylib.out slabes/libslabes/slabes_raylib.c -l ltdl -l raylib
+	clang -o slabes/libslabes/slabes_raylib.out slabes/libslabes/slabes_raylib.c -l ltdl -l raylib -l m
 
 .PHONY: run
 run:
