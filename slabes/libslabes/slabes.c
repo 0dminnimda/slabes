@@ -63,7 +63,7 @@ Direction right_rotated_direction(Direction direction) {
     }
 }
 
-Walls field_walls_check_at(Field *field, ssize_t x, ssize_t y) {
+Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y) {
     if (x >= field->width || x < 0) {
         return 0xFF;
     }
@@ -72,6 +72,16 @@ Walls field_walls_check_at(Field *field, ssize_t x, ssize_t y) {
     }
     return WALLS_AT(field, x, y);
 
+}
+
+void field_checked_set_walls(Field *field, ssize_t x, ssize_t y, Walls value) {
+    if (x >= field->width || x < 0) {
+        return;
+    }
+    if (y >= field->height || y < 0) {
+        return;
+    }
+    WALLS_AT(field, x, y) = value;
 }
 
 Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y) {
@@ -100,7 +110,7 @@ Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y) {
     return walls;
 }
 
-Cell field_check_at(Field *field, ssize_t x, ssize_t y, Cell default_value) {
+Cell field_checked_get_cell(Field *field, ssize_t x, ssize_t y, Cell default_value) {
     if (x >= field->width || x < 0) {
         return default_value;
     }
@@ -110,6 +120,15 @@ Cell field_check_at(Field *field, ssize_t x, ssize_t y, Cell default_value) {
     return FIELD_AT(field, x, y);
 }
 
+void field_checked_set_cell(Field *field, ssize_t x, ssize_t y, Cell value) {
+    if (x >= field->width || x < 0) {
+        return;
+    }
+    if (y >= field->height || y < 0) {
+        return;
+    }
+    FIELD_AT(field, x, y) = value;
+}
 
 void field_construct(Field *field, size_t width, size_t height) {
     field->width = width;

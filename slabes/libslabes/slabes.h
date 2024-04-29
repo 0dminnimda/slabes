@@ -51,11 +51,15 @@ typedef struct {
 
 #define WALLS_AT(field, x, y) (field)->walls[(y) * (field)->width + (x)]
 
-Walls field_walls_check_at(Field *field, ssize_t x, ssize_t y);
+Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y);
+
+void field_checked_set_walls(Field *field, ssize_t x, ssize_t y, Walls value);
 
 #define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
 
-Cell field_check_at(Field *field, ssize_t x, ssize_t y, Cell default_value);
+Cell field_checked_get_cell(Field *field, ssize_t x, ssize_t y, Cell default_value);
+
+void field_checked_set_cell(Field *field, ssize_t x, ssize_t y, Cell value);
 
 char *direction_to_string(Direction direction);
 

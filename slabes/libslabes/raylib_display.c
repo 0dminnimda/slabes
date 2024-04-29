@@ -102,7 +102,7 @@ void draw_hexagon_grid(Game *game, double hex_side) {
                 DrawPoly(center, 6, hex_side, hex_start_ange, player_color);
                 draw_player_direction(game, hex_side, center);
             }
-            Walls walls = field_walls_check_at(&game->field, xi, yi);
+            Walls walls = field_checked_get_walls(&game->field, xi, yi);
             walls = game_walls_with_map_end(game, walls, xi, yi);
             draw_cell_walls(walls, hex_side, center);
         }

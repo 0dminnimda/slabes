@@ -49,9 +49,9 @@ char player_lower_char(Game *game) {
 void game_print_small_upper_row(Game *game, ssize_t y, bool wide) {
     char c0 = y? '/' : ' ';
     for (ssize_t x = 0; x < game->field.width; x++) {
-        char c1 = field_check_at(&game->field, x, y - 1, ' ');
+        char c1 = field_checked_get_cell(&game->field, x, y - 1, ' ');
         if (c1 == Player) { c1 = player_upper_char(game); }
-        char c2 = field_check_at(&game->field, x, y, ' ');
+        char c2 = field_checked_get_cell(&game->field, x, y, ' ');
         if (c2 == Empty) { c2 = '_'; }
         if (c2 == Player) { c2 = player_lower_char(game); }
         if (wide) {
@@ -68,10 +68,10 @@ void game_print_small_upper_row(Game *game, ssize_t y, bool wide) {
 void game_print_small_lower_row(Game *game, ssize_t y, bool wide) {
     char c0 = (y < game->field.height)? '\\' : ' ';
     for (ssize_t x = 0; x < game->field.width; x++) {
-        char c1 = field_check_at(&game->field, x, y , ' ');
+        char c1 = field_checked_get_cell(&game->field, x, y , ' ');
         if (c1 == Empty) { c1 = '_'; }
         if (c1 == Player) { c1 = player_lower_char(game); }
-        char c2 = field_check_at(&game->field, x, y - 1, ' ');
+        char c2 = field_checked_get_cell(&game->field, x, y - 1, ' ');
         if (c2 == Player) { c2 = player_upper_char(game); }
         if (wide) {
             printf("%c%c%c/%c%c", c0, c1, c1, c2, c2);
