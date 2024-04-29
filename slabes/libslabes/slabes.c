@@ -77,25 +77,25 @@ Walls field_walls_check_at(Field *field, ssize_t x, ssize_t y) {
 Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y) {
     if (y % 2 == 0) {
         if (x == 0) {
-            walls |= 0b100001;
+            walls |= UpLeft | DownLeft;
         }
     }
     if (y % 2 == game->field.height % 2) {
         if (x == (game->field.width - 1)) {
-            walls |= 0b001100;
+            walls |= UpRight | DownRight;
         }
     }
     if (y == 0) {
-        walls |= 0b000111;
+        walls |= DownLeft | Down | DownRight;
     }
     if (y == 1) {
-        walls |= 0b000010;
+        walls |= Down;
     }
     if (y == (game->field.height - 2)) {
-        walls |= 0b010000;
+        walls |= Up;
     }
     if (y == (game->field.height - 1)) {
-        walls |= 0b111000;
+        walls |= UpLeft | Up | UpRight;
     }
     return walls;
 }

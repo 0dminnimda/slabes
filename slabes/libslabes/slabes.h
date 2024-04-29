@@ -22,22 +22,22 @@ typedef enum : char {
     Empty = ' ',
 } Cell;
 
-typedef uint8_t Walls;
+typedef enum : uint8_t {
+    UpLeft    = 1 << 5,
+    Up        = 1 << 4,
+    UpRight   = 1 << 3,
+    DownRight = 1 << 2,
+    Down      = 1 << 1,
+    DownLeft  = 1 << 0,
+} Direction;
+
+typedef Direction Walls;
 
 typedef struct {
     size_t width, height;
     Cell *cells;
     Walls *walls;
 } Field;
-
-typedef enum {
-    UpLeft,
-    Up,
-    UpRight,
-    DownRight,
-    Down,
-    DownLeft,
-} Direction;
 
 typedef struct {
     size_t x, y;
