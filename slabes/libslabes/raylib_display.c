@@ -34,11 +34,13 @@ void draw_hexagon_grid(Game *game, double s) {
     double x_delta = 3 * s;  // distance between hexagons in the same row
     double y_delta = sqrt(3) / 2 * s;  // distance between rows
 
+    double total_y = (game->field.height - 1) * y_delta;
+
     char *msg[16] = {0};
 
     for (ssize_t yi = 0; yi < game->field.height - 1; yi++) {
         for (ssize_t xi = 0; xi < game->field.width - 1; xi++) {
-            double y = yi * y_delta + offsetX;
+            double y = total_y - (yi * y_delta) + offsetX;
             double x = xi * x_delta + (yi % 2) * (x_delta / 2) + offsetY;
 
             sprintf(msg, "%d,%d", (int)yi, (int)xi);
