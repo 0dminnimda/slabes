@@ -281,6 +281,9 @@ bool game_make_player_take_one_step(Game *game) {
     if (cell_is_obstacle(FIELD_AT(&game->field, pos.x, pos.y))) {
         return false;
     }
+    if (field_checked_get_walls(&game->field, game->player_position.x, game->player_position.y) & game->player_direction) {
+        return false;
+    }
     game_set_player_position(game, pos);
     return true;
 }
