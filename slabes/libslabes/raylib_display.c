@@ -2,12 +2,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include <math.h>
-
-typedef struct {
-    float elapsed_time;
-} State;
-
-State state;
+#include <stdio.h>
 
 #if RAYLIB_VERSION_MAJOR >= 5
 const double hex_start_ange = 0.0;
@@ -15,17 +10,14 @@ const double hex_start_ange = 0.0;
 const double hex_start_ange = 30.0;
 #endif
 
-const int screen_width = 800;
-const int screen_height = 450;
-
-const double hex_side = 20;
-const int offset_x= 50;
-const int offset_y = 50;
-
 const Color empty_color = DARKBLUE;
 const Color wall_color = GRAY;
 const Color player_color = WHITE;
 const Color player_direction_color = GREEN;
+
+int screen_width = 800;
+int screen_height = 450;
+double hex_side = 20;
 
 Color cell_color(Cell cell) {
     switch (cell) {
@@ -60,6 +52,8 @@ void draw_hexagon_grid(Game *game, double hex_side) {
     double x_delta = 3 * hex_side;  // distance between hexagons in the same row
     double y_delta = sqrt(3) / 2 * hex_side;  // distance between rows
     double total_y = (game->field.height - 1) * y_delta;
+    double offset_x = 2*hex_side;
+    double offset_y = 2*hex_side;
 
     for (ssize_t yi = 0; yi < game->field.height; yi++) {
         for (ssize_t xi = 0; xi < game->field.width; xi++) {
@@ -77,6 +71,18 @@ void draw_hexagon_grid(Game *game, double hex_side) {
     }
 }
 
+void recalculate_sizes(Game *game) {
+    screen_width = GetScreenWidth();
+    screen_height = GetScreenHeight();
+
+    double hex_height = (double)game->field.height / 2.0;
+    hex_height = (double)screen_height / hex_height;
+    double hex_width = (double)game->field.width / 2.0 * 3.0 + 1.25;
+    hex_width = (double)screen_width / hex_width;
+
+    hex_side = fmin(hex_height, hex_width) / 2.0;
+}
+
 bool setup_display(Game *game) {
     SetTraceLogLevel(LOG_ERROR);
 
@@ -84,13 +90,17 @@ bool setup_display(Game *game) {
     InitWindow(screen_width, screen_height, "slabes");
     SetTargetFPS(60);
 
+    recalculate_sizes(game);
+
     return true;
 }
 
 void update_display(Game *game) {
-    state.elapsed_time += GetFrameTime();
-
     if (!WindowShouldClose()) {
+        if (IsWindowResized()) {
+            recalculate_sizes(game);
+        }
+        
         BeginDrawing();
 
         ClearBackground(BLACK);
@@ -104,8 +114,6 @@ void update_display(Game *game) {
 
 void cleanup_display(Game *game) {
     while (!WindowShouldClose()) {
-        state.elapsed_time += GetFrameTime();
-
         BeginDrawing();
 
         // ClearBackground(BLACK);

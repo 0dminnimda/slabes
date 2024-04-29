@@ -21,6 +21,10 @@ int main(void) {
 
     while (!WindowShouldClose())
     {
+        if (IsWindowResized()) {
+            recalculate_sizes(game);
+        }
+
         bool move = true;
         if      (IsKeyDown(KEY_W)) game->player_direction = Up;
         else if (IsKeyDown(KEY_S)) game->player_direction = Down;
