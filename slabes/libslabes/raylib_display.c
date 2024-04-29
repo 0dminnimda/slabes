@@ -40,10 +40,20 @@ double direction_to_angle(Direction direction) {
 }
 
 void draw_player_direction(Game *game, double hex_side, Vector2 center) {
+    const double arrow_ratio = 0.4;
     double angle = direction_to_angle(game->player_direction);
     double len = sqrt(3) / 2 * hex_side;
-    Vector2 hand = {len * cos(angle), -len * sin(angle)};
-    DrawLineEx(center, Vector2Add(center, hand), hex_side / 5, player_direction_color);
+    Vector2 direction = {len * cos(angle), -len * sin(angle)};
+    Vector2 shifted_center = Vector2Add(center, (Vector2){direction.x * 0.1, direction.y * 0.1});
+    direction = (Vector2){direction.x * 0.8, direction.y * 0.8};
+    Vector2 perp1 = { direction.y * arrow_ratio, -direction.x * arrow_ratio};
+    Vector2 perp2 = {-direction.y * arrow_ratio,  direction.x * arrow_ratio};
+    DrawTriangle(
+        Vector2Add(shifted_center, perp1),
+        Vector2Add(shifted_center, perp2),
+        Vector2Add(shifted_center, direction),
+        player_direction_color
+    );
 }
 
 void draw_hexagon_grid(Game *game, double hex_side) {
