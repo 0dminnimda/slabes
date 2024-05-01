@@ -5,6 +5,8 @@
 int main() {
     Game *game = get_game();
 
+    srand(time(NULL));
+
     field_construct_square(&game->field, 10);
 
     game_reset(game);

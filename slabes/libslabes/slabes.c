@@ -3,6 +3,7 @@
 #include <ltdl.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 
 #ifndef SLABES_MALLOC
@@ -324,6 +325,56 @@ bool game_make_player_take_one_step(Game *game) {
     return true;
 }
 
+void game_generate_a_maze(Game *game) {
+    field_fill_walls(&game->field, 0xFF);
+
+    bool *visited = (bool *)SLABES_MALLOC(sizeof(bool) * game->field.width * game->field.height);
+    memset(visited, 0, sizeof(bool) * game->field.width * game->field.height);
+
+    Position *stack_base = (Position *)SLABES_MALLOC(sizeof(Position) * game->field.width * game->field.height);
+    Position *stack_head = stack_base;
+
+    Position current_pos = game->player_position;
+    visited[INDEX_OF(&game->field, current_pos.x, current_pos.y)] = true;
+    *stack_head++ = current_pos;
+
+    ssize_t max_distance = 0;
+    Position fartherst_pos = current_pos;
+
+    while (stack_head - stack_base) {
+        if (stack_head - stack_base > max_distance) {
+            max_distance = stack_head - stack_base;
+            fartherst_pos = *(stack_head - 1);
+        }
+
+        current_pos = *--stack_head;
+
+        size_t direction_shift = rand();
+        for (size_t i = 0; i < DirectionCount; ++i) {
+            Direction dir = 1 << ((direction_shift + i) % DirectionCount);
+
+            Position neighbour_pos = current_pos;
+            if (!field_move_position_in_direction(&game->field, &neighbour_pos, dir)) { continue; }
+            if (visited[INDEX_OF(&game->field, neighbour_pos.x, neighbour_pos.y)]) { continue; }
+
+            // remove the wall between current and neighbour
+            WALLS_AT(&game->field, current_pos.x, current_pos.y) &= ~dir;
+            WALLS_AT(&game->field, neighbour_pos.x, neighbour_pos.y) &= ~reverse_direction(dir);
+
+            visited[INDEX_OF(&game->field, neighbour_pos.x, neighbour_pos.y)] = true;
+            
+            *stack_head++ = current_pos;
+            *stack_head++ = neighbour_pos;
+            break;
+        }
+    }
+
+    field_checked_set_cell(&game->field, fartherst_pos.x, fartherst_pos.y, Finish);
+
+    SLABES_FREE(stack_base);
+    SLABES_FREE(visited);
+}
+
 typedef void (*void_game_function_t)(Game *game);
 typedef bool (*bool_game_function_t)(Game *game);
 
@@ -370,6 +421,8 @@ bool load_library(char *libname) {
 
 bool setup_game(char *libname, size_t field_side) {
     Game *game = get_game();
+
+    srand(time(NULL));
 
     field_construct_square(&game->field, field_side);
     game_reset(game);
