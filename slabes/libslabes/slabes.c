@@ -88,6 +88,41 @@ Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y) {
 
 bool field_move_position_in_direction(Field *field, Position *pos, Direction direction);
 
+void field_checked_update_walls_one_direction(Field *field, ssize_t x, ssize_t y, Walls value, bool add) {
+    if (x >= field->width || x < 0) {
+        return;
+    }
+    if (y >= field->height || y < 0) {
+        return;
+    }
+
+    Direction direction;
+    switch (value) {
+        case UpLeft: direction = UpLeft; break;
+        case Up: direction = Up; break;
+        case UpRight: direction = UpRight; break;
+        case DownRight: direction = DownRight; break;
+        case Down: direction = Down; break;
+        case DownLeft: direction = DownLeft; break;
+        default: return;
+    }
+
+    Position pos = {x, y};
+    if (field_move_position_in_direction(field, &pos, direction)) {
+        if (add) {
+            WALLS_AT(field, pos.x, pos.y) |= reverse_direction(direction);
+        } else {
+            WALLS_AT(field, pos.x, pos.y) &= ~reverse_direction(direction);
+        }
+    }
+
+    if (add) {
+        WALLS_AT(field, x, y) |= direction;
+    } else {
+        WALLS_AT(field, x, y) &= ~direction;
+    }
+}
+
 void field_checked_update_walls(Field *field, ssize_t x, ssize_t y, Walls value, bool add) {
     if (x >= field->width || x < 0) {
         return;

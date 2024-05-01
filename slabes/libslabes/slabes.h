@@ -61,6 +61,8 @@ Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y);
 void field_checked_update_walls(Field *field, ssize_t x, ssize_t y, Walls value, bool add);
 
 #define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
+void field_checked_update_walls_one_direction(Field *field, ssize_t x, ssize_t y, Walls value, bool add);
+
 
 Cell field_checked_get_cell(Field *field, ssize_t x, ssize_t y, Cell default_value);
 
