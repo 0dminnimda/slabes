@@ -16,6 +16,7 @@ const Color wall_color = DARKBLUE;
 const Color cell_wall_color = BLACK;
 const Color player_color = WHITE;
 const Color player_direction_color = GREEN;
+const Color finish_color = RED;
 
 int screen_width = 800;
 int screen_height = 450;
@@ -25,6 +26,7 @@ Color cell_color(Cell cell) {
     switch (cell) {
         case Player: return player_color;
         case Wall: return wall_color;
+        case Finish: return finish_color;
         default: return empty_color;
     }
 }
@@ -98,8 +100,8 @@ void draw_hexagon_grid(Game *game, double hex_side) {
             Vector2 center = {x + offset_x, y + offset_y};
 
             Cell cell = FIELD_AT(&game->field, xi, yi);
+            DrawPoly(center, 6, hex_side, hex_start_ange, cell_color(cell));
             if (cell == Player) {
-                DrawPoly(center, 6, hex_side, hex_start_ange, player_color);
                 draw_player_direction(game, hex_side, center);
             }
             Walls walls = field_checked_get_walls(&game->field, xi, yi);

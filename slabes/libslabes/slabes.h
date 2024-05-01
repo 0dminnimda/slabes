@@ -19,11 +19,12 @@
 typedef enum : char {
     Wall = '#',
     Player = 'o',
+    Finish = 'F',
     Empty = ' ',
 } Cell;
 
 typedef enum : uint8_t {
-    DirectionCount =      6,
+    DirectionCount = 6,
     UpLeft    = 1 << 5,
     Up        = 1 << 4,
     UpRight   = 1 << 3,
