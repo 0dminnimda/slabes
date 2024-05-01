@@ -104,7 +104,7 @@ void field_checked_update_walls_one_direction(Field *field, ssize_t x, ssize_t y
         case DownRight: direction = DownRight; break;
         case Down: direction = Down; break;
         case DownLeft: direction = DownLeft; break;
-        default: return;
+        default: return;  // short curcuit - nothing is changed
     }
 
     Position pos = {x, y};
@@ -130,6 +130,7 @@ void field_checked_update_walls(Field *field, ssize_t x, ssize_t y, Walls value,
     if (y >= field->height || y < 0) {
         return;
     }
+    if (!value) return;  // short curcuit - nothing is changed
 
     for (size_t i = 1; i <= DirectionMax; i <<= 1) {
         if (!(value & i)) continue;
