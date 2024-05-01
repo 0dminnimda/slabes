@@ -11,8 +11,8 @@ const double hex_start_ange = 30.0;
 #endif
 
 const Color background_color = GRAY;
-const Color empty_color = DARKBLUE;
-const Color wall_color = GRAY;
+const Color empty_color = BLANK;
+const Color wall_color = DARKBLUE;
 const Color cell_wall_color = BLACK;
 const Color player_color = WHITE;
 const Color player_direction_color = GREEN;
