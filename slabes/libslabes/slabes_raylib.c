@@ -108,18 +108,7 @@ int main(void) {
 
     setup_display(game);
 
-    // while (!WindowShouldClose()) {
-    //     if (IsWindowResized()) {
-    //         recalculate_sizes(game);
-    //     }
-
-    //     BeginDrawing();
-    //         ClearBackground(background_color);
-    //     EndDrawing();
-    // }
-
-    game_generate_a_maze_animated(game);
-    // game_generate_a_maze(game);
+    game_generate_a_maze(game);
 
     while (!WindowShouldClose()) {
         if (IsWindowResized()) {
