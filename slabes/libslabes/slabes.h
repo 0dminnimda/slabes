@@ -55,15 +55,17 @@ typedef struct {
     Field field;
 } Game;
 
-#define WALLS_AT(field, x, y) (field)->walls[(y) * (field)->width + (x)]
+#define INDEX_OF(field, x, y) ((y) * (field)->width + (x))
+
+#define WALLS_AT(field, x, y) (field)->walls[INDEX_OF(field, x, y)]
 
 Walls field_checked_get_walls(Field *field, ssize_t x, ssize_t y);
 
 void field_checked_update_walls(Field *field, ssize_t x, ssize_t y, Walls value, bool add);
 
-#define FIELD_AT(field, x, y) (field)->cells[(y) * (field)->width + (x)]
 void field_checked_update_walls_one_direction(Field *field, ssize_t x, ssize_t y, Walls value, bool add);
 
+#define FIELD_AT(field, x, y) (field)->cells[INDEX_OF(field, x, y)]
 
 Cell field_checked_get_cell(Field *field, ssize_t x, ssize_t y, Cell default_value);
 
