@@ -15,3 +15,7 @@ pacman -S mingw-libltdl
 ```
 
 or `mingw-w64-clang-x86_64-libltdl` or any other specific one
+
+## Preview
+
+![maze_generation.gif](resources/maze_generation.gif)
