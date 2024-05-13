@@ -440,6 +440,8 @@ class GenerateC:
 
     def handle_scope(self, node: ev.ScopeValue):
         for name, value in node.name_to_value.items():
+            if node.names[name].is_arg:
+                continue
             if not is_variable(value.type):
                 continue
             self.put(self.type_name(value.type), self.var_name(name), ";;")

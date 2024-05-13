@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Iterable, TypeVar, Generic
 
 from . import ast_nodes as ast
+
+
+@dataclass
+class NameInfo:
+    is_arg: bool = False
 
 
 @dataclass
@@ -16,7 +22,7 @@ class NameTable:
     """
 
     outer: NameTable | None = field(default=None, kw_only=True, repr=False)
-    names: set[str] = field(default_factory=set, kw_only=True)  # Local names
+    names: defaultdict[str, NameInfo] = field(default_factory=lambda: defaultdict(NameInfo), kw_only=True)  # Local names
 
 
 NameTableT = TypeVar("NameTableT", bound=NameTable)
@@ -26,8 +32,8 @@ NameTableT = TypeVar("NameTableT", bound=NameTable)
 class NameTableVisitor(ast.Visitor, Generic[NameTableT]):
     table: NameTableT
 
-    def declare_name(self, name: str) -> None:
-        self.table.names.add(name)
+    def declare_name(self, name: str) -> NameInfo:
+        return self.table.names[name]
 
     def visit_Function(self, node: ast.Function) -> None:
         self.declare_name(node.name)
@@ -41,7 +47,7 @@ class NameTableVisitor(ast.Visitor, Generic[NameTableT]):
             self.declare_name(name.value)
 
     def visit_Argument(self, node: ast.Argument) -> None:
-        self.declare_name(node.name.value)
+        self.declare_name(node.name.value).is_arg = True
 
     def visit_Check(self, node: ast.Check) -> None:
         pass

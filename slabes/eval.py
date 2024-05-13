@@ -350,7 +350,9 @@ BUILTINS = {
 
 
 def make_builtin_context():
-    context = ScopeContext(outer=None, names=set(BUILTINS.keys()))
+    context = ScopeContext(outer=None)
+    for name in BUILTINS.keys():
+        context.names[name]
     for name, value in BUILTINS.items():
         Assign(BuiltinLoc, [name], value).evaluate(context)
     return context
