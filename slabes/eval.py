@@ -147,7 +147,7 @@ class Call(Eval):
                 f"call operation expected function type, got '{func.type}'"
             )
         args = [arg.evaluate(context) for arg in self.args]
-        func.check_args(args)
+        func.check_args(args, self.loc)
         return func.return_value
 
 
@@ -281,20 +281,20 @@ class Function(ScopeValue):
 
     type: ts.Type = field(default=ts.FUNCTION_T, init=False)
 
-    def check_args(self, args: list[Value]) -> None:
+    def check_args(self, args: list[Value], loc: Location) -> None:
         if self.args is None:
             return
 
         if len(args)!= len(self.args):
             report_fatal_at(
-                self.loc,
+                loc,
                 errors.TypeError,
                 f"function '{self.name}' expected {len(self.args)} arguments, got {len(args)}"
             )
         for (name, arg), got in zip(self.args.items(), args):
             if got.convert_to(arg) is None:
                 report_fatal_at(
-                    self.loc,
+                    loc,
                     errors.TypeError,
                     f"function '{self.name}' expected argument '{name}' of type '{arg.type}', got '{got.type}'"
                 )
