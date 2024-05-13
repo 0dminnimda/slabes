@@ -234,14 +234,14 @@ class SlabesParser(Parser):
 
     @memoize
     def recover_argument(self) -> Optional[Any]:
-        # recover_argument: word word
+        # recover_argument: word_not_begin word_not_begin
         mark = self._mark()
         tok = self._tokenizer.peek()
         start_lineno, start_col_offset = tok.start
         if (
-            (tp := self.word())
+            (tp := self.word_not_begin())
             and
-            (id := self.word())
+            (id := self.word_not_begin())
         ):
             tok = self._tokenizer.get_last_non_whitespace_token()
             end_lineno, end_col_offset = tok.end
@@ -1046,6 +1046,22 @@ class SlabesParser(Parser):
         return None;
 
     @memoize
+    def word_not_begin(self) -> Optional[Any]:
+        # word_not_begin: NAME | keyword_not_begin
+        mark = self._mark()
+        if (
+            (name := self.name())
+        ):
+            return name;
+        self._reset(mark)
+        if (
+            (keyword_not_begin := self.keyword_not_begin())
+        ):
+            return keyword_not_begin;
+        self._reset(mark)
+        return None;
+
+    @memoize
     def keyword(self) -> Optional[Any]:
         # keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | robot_keyword
         mark = self._mark()
@@ -1063,6 +1079,47 @@ class SlabesParser(Parser):
             (BEGIN := self.BEGIN())
         ):
             return BEGIN;
+        self._reset(mark)
+        if (
+            (END := self.END())
+        ):
+            return END;
+        self._reset(mark)
+        if (
+            (UNTIL := self.UNTIL())
+        ):
+            return UNTIL;
+        self._reset(mark)
+        if (
+            (DO := self.DO())
+        ):
+            return DO;
+        self._reset(mark)
+        if (
+            (CHECK := self.CHECK())
+        ):
+            return CHECK;
+        self._reset(mark)
+        if (
+            (robot_keyword := self.robot_keyword())
+        ):
+            return robot_keyword;
+        self._reset(mark)
+        return None;
+
+    @memoize
+    def keyword_not_begin(self) -> Optional[Any]:
+        # keyword_not_begin: number_type_raw | FIELD | END | UNTIL | DO | CHECK | robot_keyword
+        mark = self._mark()
+        if (
+            (number_type_raw := self.number_type_raw())
+        ):
+            return number_type_raw;
+        self._reset(mark)
+        if (
+            (FIELD := self.FIELD())
+        ):
+            return FIELD;
         self._reset(mark)
         if (
             (END := self.END())

@@ -82,7 +82,7 @@ argument[ast.Argument]:
     | recover_argument
 
 recover_argument:
-    | tp=word id=word {
+    | tp=word_not_begin id=word_not_begin {
         ast.Argument(
             self.make_number_type(tp, **self.locs(tp)),
             self.make_name(id, **self.locs(id)),
@@ -289,5 +289,7 @@ identifier[ast.Name]: a=NAME { self.make_name(a, LOCATIONS) }
 
 
 word: NAME | keyword
+word_not_begin: NAME | keyword_not_begin
 
 keyword: number_type_raw | FIELD | BEGIN | END | UNTIL | DO | CHECK | robot_keyword
+keyword_not_begin: number_type_raw | FIELD | END | UNTIL | DO | CHECK | robot_keyword
