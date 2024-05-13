@@ -110,7 +110,7 @@ result = rhs /*op*/ lhs;
 """
 
 INT_BIN_OP_CHECK_OVEFLOW_FULL = """
-if (ckd_/*op_name*/(&result, rhs, lhs)) {
+if (ckd_/*op_name*/(&result, lhs, rhs)) {
     result = slabes_max_value_/*name*/;
 }
 """
