@@ -234,6 +234,20 @@ class Name(Eval):
 
 
 @dataclass
+class Condition(Eval):
+    test: Eval
+    body: list[Eval]
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        test = self.test.evaluate(context)
+
+        for stmt in self.body:
+            stmt.evaluate(context)
+
+        return test
+
+
+@dataclass
 class Int(Value):
     value: int
     type: ts.IntType = field(kw_only=True)
@@ -506,6 +520,12 @@ class Ast2Eval(ast.Visitor):
         loc = self.loc(node)
 
         return Name(loc, node.value)
+
+    def visit_Check(self, node: ast.Check):
+        loc = self.loc(node)
+
+        body = [self.visit(it) for it in node.body]
+        return Condition(loc, self.visit(node.test), body)
 
     def visit_CompareOperation(self, node: ast.CompareOperation):
         loc = self.loc(node)

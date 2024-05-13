@@ -641,3 +641,9 @@ class GenerateC:
                 errors.TypeError,
                 f"return type '{node.evaluated.type}' is not supported in codegen"
             )
+
+    def visit_Condition(self, node: ev.Condition):
+        self.put("if (", node.test, ") {\n")
+        for it in node.body:
+            self.put(it, ";;")
+        self.put("}\n")
