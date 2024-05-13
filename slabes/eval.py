@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from contextlib import contextmanager
+from typing import ClassVar, cast
 
 from . import ast_nodes as ast
 from .name_table import NameTable, fill_name_table_from_ast, lookup_origin
@@ -114,10 +116,20 @@ class Assign(Eval):
     value: Eval
 
     def raw_eval(self, context: ScopeContext) -> Value:
-        value = self.value.evaluate(context)
+        is_value = isinstance(self.value, Value)
+        # Allow for recursive functions to find themselves in the outer scope
+        if is_value:
+            value = cast(Value, self.value)
+        else:
+            value = self.value.evaluate(context)
+
         for name in self.names:
             origin = lookup_origin(context, name) or context
             origin.set_name_value(name, value, self.loc)
+
+        if is_value:
+            self.value.evaluate(context)
+
         return value
 
 
@@ -134,7 +146,8 @@ class Call(Eval):
                 errors.TypeError,
                 f"call operation expected function type, got '{func.type}'"
             )
-        [arg.evaluate(context) for arg in self.args]
+        args = [arg.evaluate(context) for arg in self.args]
+        func.check_args(args)
         return func.return_value
 
 
@@ -244,7 +257,7 @@ class Int(Value):
 
 @dataclass
 class ScopeValue(Value, ScopeContext):
-    body: list[Eval] = field(default_factory=list, kw_only=True)
+    body: list[Eval] = field(default_factory=list, kw_only=True, repr=False)
 
     def raw_eval(self, context: ScopeContext) -> Value:
         for it in self.body:
@@ -257,40 +270,73 @@ class Module(ScopeValue):
     type: ts.Type = field(default=ts.MODULE_T, init=False)
 
 
+FunctionArgs = dict[str, Value] | None
+
+
 @dataclass
 class Function(ScopeValue):
     name: str
+    args: FunctionArgs  # None is to disable argument checking & evaluation
     return_value: Value
 
     type: ts.Type = field(default=ts.FUNCTION_T, init=False)
+
+    def check_args(self, args: list[Value]) -> None:
+        if self.args is None:
+            return
+
+        if len(args)!= len(self.args):
+            report_fatal_at(
+                self.loc,
+                errors.TypeError,
+                f"function '{self.name}' expected {len(self.args)} arguments, got {len(args)}"
+            )
+        for (name, arg), got in zip(self.args.items(), args):
+            if got.convert_to(arg) is None:
+                report_fatal_at(
+                    self.loc,
+                    errors.TypeError,
+                    f"function '{self.name}' expected argument '{name}' of type '{arg.type}', got '{got.type}'"
+                )
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        if self.args is not None:
+            for name, arg in self.args.items():
+                self.set_name_value(name, arg, BuiltinLoc)
+        return super().raw_eval(context)
 
 
 @dataclass
 class FuncPrint(Function):
     name: str = field(default="print", init=False)
+    args: ClassVar[FunctionArgs] = None
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 @dataclass
 class FuncAssert(Function):
     name: str = field(default="__assert", init=False)
+    args: ClassVar[FunctionArgs] = None
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
 @dataclass
 class RobotCommandGo(Function):
     name: str = field(default="__robot_command_go", init=False)
+    args: ClassVar[FunctionArgs] = {}
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
 @dataclass
 class RobotCommandRL(Function):
     name: str = field(default="__robot_command_rl", init=False)
+    args: ClassVar[FunctionArgs] = {}
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
 @dataclass
 class RobotCommandRR(Function):
     name: str = field(default="__robot_command_rr", init=False)
+    args: ClassVar[FunctionArgs] = {}
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
@@ -430,7 +476,12 @@ class Ast2Eval(ast.Visitor):
                 f"return type '{return_type}' is not supported"
             )
 
-        func = Function(loc, node.name, ret)
+        args: FunctionArgs = {}
+        for arg in node.args:
+            arg_val = Int(loc, 0, type=self.visit(arg.type))
+            args[arg.name.value] = arg_val
+
+        func = Function(loc, node.name, args, ret)
         fill_name_table_from_ast(func, node)
         func.outer = self.scope
 

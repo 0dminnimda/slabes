@@ -467,7 +467,10 @@ class GenerateC:
 
         with self.isolate() as decl:
             self.put(self.type_name(node.return_value.type))
-            self.put(name, "()")
+            args = []
+            for arg_name, arg in (node.args or {}).items():
+                args.append(self.type_name(arg.type) + " " + self.var_name(arg_name))
+            self.put(name, "(", ", ".join(args) or "void", ")")
 
         with self.isolate() as defn:
             self.put("{\n")
