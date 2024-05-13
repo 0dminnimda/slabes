@@ -191,7 +191,8 @@ class CompareOperation(Eval):
     operands: list[Eval]
 
     def raw_eval(self, context: ScopeContext) -> Value:
-        lhs = self.operand.evaluate(context)
+        lhs_e = self.operand
+        lhs = lhs_e.evaluate(context)
         for op, rhs_e in zip(self.ops, self.operands):
             rhs = rhs_e.evaluate(context)
 
@@ -200,11 +201,12 @@ class CompareOperation(Eval):
                 res = rhs.compare_operation(op, lhs, True)
             if res is None:
                 report_fatal_at(
-                    lhs.loc.merge(rhs.loc),
+                    lhs_e.loc.merge(lhs_e.loc),
                     errors.TypeError,
                     f"compare operation '{op}' not supported for '{lhs.type}' and '{rhs.type}'"
                 )
 
+            lhs_e = rhs_e
             lhs = rhs
 
         return res
