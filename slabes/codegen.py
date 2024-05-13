@@ -40,6 +40,10 @@ class IntTypeInfo:
     can_be_signed: bool
 
     def signed_range(self) -> tuple[int, int]:
+        if self.bits <= 0:
+            return (0, 0)
+        if self.bits == 1:
+            return (0, 1)
         return (-(1 << (self.bits - 1)), (1 << (self.bits - 1)) - 1)
 
     def unsigned_range(self) -> tuple[int, int]:
