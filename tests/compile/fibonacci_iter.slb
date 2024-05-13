@@ -1,0 +1,50 @@
+big fib big number begin
+    big a b << 0,
+    b << 1,
+
+    big last_index << 0,
+    last_index << number - 1,
+    check last_index <= 0 do
+        last_index << 0,
+    .,
+    
+    big index << 0,
+    until index <= last_index do
+        big next_b << 0,
+        next_b << a + b,
+        a << b,
+        b << next_b,
+    .,
+
+    retur a,
+. end,
+
+big main begin
+    assert(fib(0) == 0),  # 0
+    assert(fib(1) == 1),  # 1
+    assert(fib(2) == 1),  # 1
+    assert(fib(3) == 2),  # 2
+    assert(fib(4) == 3),  # 3
+    assert(fib(5) == 5),  # 5
+    assert(fib(6) == 8),  # 8
+    assert(fib(7) == D),  # 13
+    assert(fib(8) == L),  # 21
+    assert(fib(9) == 12),  # 34
+    assert(fib(A) == 1N),  # 55
+    assert(fib(B) == 2P),  # 89
+    assert(fib(C) == 4G),  # 144
+    assert(fib(D) == 79),  # 233
+    assert(fib(E) == BP),  # 377
+    assert(fib(F) == J2),  # 610
+    assert(fib(G) == UR),  # 987
+    assert(fib(H) == 1HT),  # 1597
+    assert(fib(J) == 2GO),  # 2584
+    assert(fib(K) == 42L),  # 4181
+
+    # big index << 0,
+    # until index <= J do
+    #     print(fin(index)),
+    # .,
+. end,
+
+.
