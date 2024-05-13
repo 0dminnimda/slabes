@@ -89,13 +89,14 @@ INT_TYPES = "\n".join(make_int_types())
 
 INT_BIN_OP_TEMPLATE = """
 slabes_type_/*name*/ slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*name1*/ lhs, slabes_type_/*name2*/ rhs) {
-#ifdef SLABES_DEBUG_OP
-    printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")\\n", lhs, rhs);
-#endif
     /*preamble*/
     slabes_type_/*name*/ result;
     /*op*/;
     /*postamble*/
+#ifdef SLABES_DEBUG_OP
+    printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")", lhs, rhs);
+    printf(" -> " slabes_format_/*name*/ "\\n", result);
+#endif
     return result;
 }
 """
@@ -192,11 +193,17 @@ INT_BIN_OPS = "\n".join(make_int_bin_ops())
 INT_CMP_OP_TEMPLATE = """
 slabes_type_tiny slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*name1*/ lhs, slabes_type_/*name2*/ rhs) {
 #ifdef SLABES_DEBUG_OP
-    printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")\\n", lhs, rhs);
+    printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")", lhs, rhs);
 #endif
     if (lhs /*op*/ rhs) {
+#ifdef SLABES_DEBUG_OP
+        printf(" -> true\\n");
+#endif
         return slabes_max_value_unsigned_tiny;
     } else {
+#ifdef SLABES_DEBUG_OP
+        printf(" -> false\\n");
+#endif
         return slabes_min_value_unsigned_tiny;
     }
 }
@@ -233,15 +240,26 @@ INT_CMP_OPS = "\n".join(make_int_cmp_ops())
 
 INT_CONVERT_TEMPLATE = """
 slabes_type_/*name2*/ slabes_convert_/*name1*/_to_/*name2*/(slabes_type_/*name1*/ value) {
-#ifdef SLABES_DEBUG_OP
-    printf("slabes_convert_/*name1*/_to_/*name2*/(" slabes_format_/*name1*/ ")\\n", value);
-#endif
     value = /*arg*/;
+#ifdef SLABES_DEBUG_OP
+    printf("slabes_convert_/*name1*/_to_/*name2*/(" slabes_format_/*name1*/ ")", value);
+#endif
     if (value > slabes_max_value_/*name2*/) {
+#ifdef SLABES_DEBUG_OP
+        printf(" -> " slabes_format_/*name2*/ "\\n", slabes_max_value_/*name2*/);
+#endif
         return slabes_max_value_/*name2*/;
     } else if (value < slabes_min_value_/*name2*/) {
+#ifdef SLABES_DEBUG_OP
+        printf(" -> " slabes_format_/*name2*/ "\\n", slabes_min_value_/*name2*/);
+#endif
         return slabes_min_value_/*name2*/;
     }
+#ifdef SLABES_DEBUG_OP
+    else {
+        printf(" -> " slabes_format_/*name2*/ "\\n", (slabes_type_/*name2*/)value);
+    }
+#endif
     return value;
 }
 """
@@ -254,11 +272,19 @@ INT_REMOVE_SIGN = """
 #define slabes_remove_sign_/*name*/ slabes_convert_/*name*/_to_unsigned_/*name*/
 slabes_type_unsigned_/*name*/ slabes_convert_/*name*/_to_unsigned_/*name*/(slabes_type_/*name*/ value) {
 #ifdef SLABES_DEBUG_OP
-    printf("slabes_convert_/*name*/_to_unsigned_/*name*/(" slabes_format_/*name*/ ")\\n", value);
+    printf("slabes_convert_/*name*/_to_unsigned_/*name*/(" slabes_format_/*name*/ ")", value);
 #endif
     if (value < slabes_min_value_unsigned_/*name*/) {
+#ifdef SLABES_DEBUG_OP
+        printf(" -> " slabes_format_/*name*/ "\\n", slabes_min_value_unsigned_/*name*/);
+#endif
         return slabes_min_value_unsigned_/*name*/;
     }
+#ifdef SLABES_DEBUG_OP
+    else {
+        printf(" -> " slabes_format_/*name*/ "\\n", (slabes_type_unsigned_/*name*/)value);
+    }
+#endif
     return value;
 }
 """
@@ -267,11 +293,19 @@ INT_ADD_SIGN = """
 #define slabes_add_sign_/*name*/ slabes_convert_unsigned_/*name*/_to_/*name*/
 slabes_type_/*name*/ slabes_convert_unsigned_/*name*/_to_/*name*/(slabes_type_unsigned_/*name*/ value) {
 #ifdef SLABES_DEBUG_OP
-    printf("slabes_convert_unsigned_/*name*/_to_/*name*/(" slabes_format_/*name*/ ")\\n", value);
+    printf("slabes_convert_unsigned_/*name*/_to_/*name*/(" slabes_format_/*name*/ ")", value);
 #endif
     if (value > slabes_max_value_/*name*/) {
+#ifdef SLABES_DEBUG_OP
+        printf(" -> " slabes_format_/*name*/ "\\n", slabes_max_value_/*name*/);
+#endif
         return slabes_max_value_/*name*/;
     }
+#ifdef SLABES_DEBUG_OP
+    else {
+        printf(" -> " slabes_format_/*name*/ "\\n", (slabes_type_/*name*/)value);
+    }
+#endif
     return value;
 }
 """
