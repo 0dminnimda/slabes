@@ -56,6 +56,9 @@ class Value(Eval):
     def binary_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
         return None
 
+    def compare_operation(self, op: ast.CmpOp, rhs: Value, reversed: bool) -> Value | None:
+        return None
+
 
 @dataclass
 class ScopeContext(NameTable):
@@ -182,6 +185,32 @@ class BinaryOperation(Eval):
 
 
 @dataclass
+class CompareOperation(Eval):
+    operand: Eval
+    ops: list[ast.CmpOp]
+    operands: list[Eval]
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        lhs = self.operand.evaluate(context)
+        for op, rhs_e in zip(self.ops, self.operands):
+            rhs = rhs_e.evaluate(context)
+
+            res = lhs.compare_operation(op, rhs, False)
+            if res is None:
+                res = rhs.compare_operation(op, lhs, True)
+            if res is None:
+                report_fatal_at(
+                    lhs.loc.merge(rhs.loc),
+                    errors.TypeError,
+                    f"compare operation '{op}' not supported for '{lhs.type}' and '{rhs.type}'"
+                )
+
+            lhs = rhs
+
+        return res
+
+
+@dataclass
 class Name(Eval):
     value: str
 
@@ -203,6 +232,11 @@ class Int(Value):
         if isinstance(rhs, Int):
             kind = max(self.type.kind, rhs.type.kind)
             return Int(self.loc, 0, type=ts.IntType(kind))
+        return None
+
+    def compare_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
+        if isinstance(rhs, Int):
+            return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
         return None
 
 
@@ -234,6 +268,11 @@ class FuncPrint(Function):
     name: str = field(default="print", init=False)
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
+@dataclass
+class FuncAssert(Function):
+    name: str = field(default="__assert", init=False)
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+
 
 @dataclass
 class RobotCommandGo(Function):
@@ -255,6 +294,7 @@ class RobotCommandRR(Function):
 
 BUILTINS = {
     "print": FuncPrint(BuiltinLoc),
+    "assert": FuncAssert(BuiltinLoc),
     "__robot_command_go": RobotCommandGo(BuiltinLoc),
     "__robot_command_rl": RobotCommandRL(BuiltinLoc),
     "__robot_command_rr": RobotCommandRR(BuiltinLoc),
@@ -411,6 +451,12 @@ class Ast2Eval(ast.Visitor):
         loc = self.loc(node)
 
         return Name(loc, node.value)
+
+    def visit_CompareOperation(self, node: ast.CompareOperation):
+        loc = self.loc(node)
+
+        operands = [self.visit(it) for it in node.operands]
+        return CompareOperation(loc, self.visit(node.operand), node.ops, operands)
 
     def visit_BinaryOperation(self, node: ast.BinaryOperation):
         loc = self.loc(node)

@@ -300,10 +300,20 @@ ti hhh begin
 
 
 bi guhh begin
-    retur 5,
-    # check a == 5 do
+    big a << 3,
+    assert(0 <= a <= 5),
+    a << -1,
+    assert((a => 6) + (a <= -1)),
+    a << 6,
+    assert((a => 6) + (a <= -1)),
+    a << 5,
+    assert(0 <= a <= 5),
+    a << 0,
+    assert(0 <= a <= 5),
+    # check 0 <= a <= 5 do
     #     print(a),
     # .,
+    retur 5,
 . end,
 
 

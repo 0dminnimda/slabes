@@ -35,6 +35,54 @@ class Location:
             node.end_col_offset,
         )
 
+    def merge(self, other: Location) -> Location:
+        if self.filepath != other.filepath:
+            raise ValueError("Locations do not share the same file")
+
+        if self.lineno == other.lineno:
+            lineno = self.lineno
+            col_offset = min(self.col_offset, other.col_offset)
+        else:
+            if self.lineno < other.lineno:
+                lineno = self.lineno
+                col_offset = self.col_offset
+            else:
+                lineno = other.lineno
+                col_offset = other.col_offset
+
+        if self.end_lineno is None or other.end_lineno is None:
+            if self.end_lineno is not None:
+                end_lineno = self.end_lineno
+                end_col_offset = self.end_col_offset
+            elif other.end_lineno is not None:
+                end_lineno = other.end_lineno
+                end_col_offset = other.end_col_offset
+        elif self.end_lineno == other.end_lineno:
+            end_lineno = self.end_lineno
+            if self.end_col_offset is None and other.end_col_offset is None:
+                end_col_offset = None
+            elif other.end_col_offset is None:
+                end_col_offset = self.end_col_offset
+            elif self.end_col_offset is None:
+                end_col_offset = other.end_col_offset
+            else:
+                end_col_offset = max(self.end_col_offset, other.end_col_offset)
+        else:
+            if self.end_lineno > other.end_lineno:
+                end_lineno = self.end_lineno
+                end_col_offset = self.end_col_offset
+            else:
+                end_lineno = other.end_lineno
+                end_col_offset = other.end_col_offset
+
+        return Location(
+            self.filepath,
+            lineno,
+            col_offset,
+            end_lineno,
+            end_col_offset,
+        )
+
     def without_end(self) -> Location:
         return Location(
             self.filepath,
@@ -49,6 +97,11 @@ class Location:
         if self.end_lineno is not None and self.end_col_offset is not None:
             result += f":{self.end_lineno}:{self.end_col_offset}"
         return result
+
+    def get_exact_str_from_lines(self, lines: list[str]) -> str | None:
+        if self.lineno > len(lines):
+            return None
+        return lines[self.lineno - 1][self.col_offset:self.end_col_offset]
 
     def first_line_end(self, line: str | None = None) -> int | None:
         # if the node is single line, use it's end

@@ -185,6 +185,48 @@ def make_int_bin_ops():
 INT_BIN_OPS = "\n".join(make_int_bin_ops())
 
 
+INT_CMP_OP_TEMPLATE = """
+slabes_type_tiny slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*name1*/ lhs, slabes_type_/*name2*/ rhs) {
+#ifdef SLABES_DEBUG_OP
+    printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")\\n", lhs, rhs);
+#endif
+    if (lhs /*op*/ rhs) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+"""
+
+
+INT_CMP_OP_INFO = {
+    "eq": "==",
+    "ne": "!=",
+    "le": "<=",
+    "ge": ">=",
+}
+
+
+def make_int_cmp_ops():
+    for info1 in INT_TYPE_INFO.values():
+        for info2 in INT_TYPE_INFO.values():
+            for op_name, op in INT_CMP_OP_INFO.items():
+                template = INT_CMP_OP_TEMPLATE
+
+                for unsig1 in SIGN_UNSING:
+                    for unsig2 in SIGN_UNSING:
+                        yield (
+                            template
+                            .replace("/*op*/", op)
+                            .replace("/*name1*/", unsig1 + info1.name)
+                            .replace("/*name2*/", unsig2 + info2.name)
+                            .replace("/*op_name*/", op_name)
+                        )
+
+
+INT_CMP_OPS = "\n".join(make_int_cmp_ops())
+
+
 INT_CONVERT_TEMPLATE = """
 slabes_type_/*name2*/ slabes_convert_/*name1*/_to_/*name2*/(slabes_type_/*name1*/ value) {
 #ifdef SLABES_DEBUG_OP
@@ -273,7 +315,7 @@ TEMPLATE = Path(DIR / "slabes_template.c").read_text()
 
 TEMPLATE = (
     TEMPLATE.replace("/*int-types*/", INT_TYPES)
-    .replace("/*int-ops*/", INT_BIN_OPS)
+    .replace("/*int-ops*/", INT_BIN_OPS + INT_CMP_OPS)
     .replace("/*int-conv*/", INT_CONVERTIONS)
 )
 
@@ -479,6 +521,8 @@ class GenerateC:
     def visit_Call(self, node: ev.Call):
         if isinstance(node.operand.evaluated, ev.FuncPrint):
             self.handle_print(node)
+        elif isinstance(node.operand.evaluated, ev.FuncAssert):
+            self.handle_assert(node)
         else:
             assert isinstance(node.operand.evaluated, ev.Function), report_fatal_at(
                 node.loc, errors.TypeError, "Not a function"
@@ -500,6 +544,18 @@ class GenerateC:
         args = self.collect(format, *node.args, sep=",")
         self.put("printf(", args, ")")
 
+    def handle_assert(self, node: ev.Call):
+        for arg in node.args:
+            value = arg.evaluated
+            convert = "slabes_convert_" + value.type.name() + "_to_unsigned_tiny"
+            exact_str = arg.loc.get_exact_str_from_lines(self._lines)
+            if exact_str is None:
+                message = "expression"
+            else:
+                message = "'" + exact_str + "'"
+            message += f" evaluated to false (at {arg.loc})"
+            self.put("slabes_assert(", convert, "(", arg, "),", '"' + message + '"', ")")
+
     def bin_op_name(self, op: ast.BinOp) -> str:
         return "slabes_op_" + op.name.lower()
 
@@ -512,6 +568,26 @@ class GenerateC:
             + node.rhs.evaluated.type.name()
         )
         self.put("(", node.lhs, ",", node.rhs, ")")
+
+    def cmp_op_name(self, op: ast.CmpOp) -> str:
+        return "slabes_op_" + op.name.lower()
+
+    def visit_CompareOperation(self, node: ev.CompareOperation):
+        lhs = node.operand
+        for i, (op, rhs) in enumerate(zip(node.ops, node.operands)):
+            if i:
+                self.put("&&")
+
+            self.put(
+                self.cmp_op_name(op)
+                + "__"
+                + lhs.evaluated.type.name()
+                + "__"
+                + rhs.evaluated.type.name()
+            )
+            self.put("(", lhs, ",", rhs, ")")
+
+            lhs = rhs
 
     def visit_Return(self, node: ev.Return):
         if isinstance(node.evaluated, ev.Int):

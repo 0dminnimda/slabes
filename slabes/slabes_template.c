@@ -91,6 +91,15 @@ slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
     return 1;
 }
 
+slabes_type_unsigned_tiny slabes_assert(slabes_type_unsigned_tiny value, const char *msg) {
+    if (!value) {
+        printf("Assertion failed: %s\n", msg);
+        exit(1);
+    }
+    return value;
+}
+
+
 /*decl*/
 
 /*main*/
