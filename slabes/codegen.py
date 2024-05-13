@@ -195,9 +195,9 @@ slabes_type_tiny slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*name1
     printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")\\n", lhs, rhs);
 #endif
     if (lhs /*op*/ rhs) {
-        return 1;
+        return slabes_max_value_unsigned_tiny;
     } else {
-        return 0;
+        return slabes_min_value_unsigned_tiny;
     }
 }
 """
