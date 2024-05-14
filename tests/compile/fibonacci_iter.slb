@@ -7,14 +7,9 @@ big fib big number begin
     check last_index <= 0 do
         last_index << 0,
     .,
-    check last_index => 1 do
-        last_index << last_index - 1,
-    .,
     
     big index << 0,
     until index => last_index do
-        print(index  last_index),
-
         big next_b << 0,
         next_b << a + b,
         a << b,
@@ -51,8 +46,8 @@ big main begin
     assert(fib(F) == J2),  # 610
     assert(fib(G) == UR),  # 987
     assert(fib(H) == 1HT),  # 1597
-    assert(fib(J) == 2GO),  # 2584
-    assert(fib(K) == 42L),  # 4181
+    assert(fib(I) == 2GO),  # 2584
+    assert(fib(J) == 42L),  # 4181
 . end,
 
 .
