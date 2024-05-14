@@ -49,12 +49,6 @@ class NameTableVisitor(ast.Visitor, Generic[NameTableT]):
     def visit_Argument(self, node: ast.Argument) -> None:
         self.declare_name(node.name.value).is_arg = True
 
-    def visit_Check(self, node: ast.Check) -> None:
-        pass
-
-    def visit_Until(self, node: ast.Until) -> None:
-        pass
-
 
 def fill_name_table_from_ast(table: NameTableT, node: ast.AST) -> None:
     NameTableVisitor(table).generic_visit(node)

@@ -248,6 +248,20 @@ class Condition(Eval):
 
 
 @dataclass
+class Loop(Eval):
+    test: Eval
+    body: list[Eval]
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        test = self.test.evaluate(context)
+
+        for stmt in self.body:
+            stmt.evaluate(context)
+
+        return test
+
+
+@dataclass
 class Int(Value):
     value: int
     type: ts.IntType = field(kw_only=True)
@@ -381,6 +395,7 @@ class Ast2Eval(ast.Visitor):
     _lines: list[str] = field(default_factory=list)
 
     scope: ScopeValue = field(init=False)
+    current_body: list[Eval] = field(init=False)
 
     def visit(self, node):
         method = "visit_" + node.__class__.__name__
@@ -414,12 +429,22 @@ class Ast2Eval(ast.Visitor):
             if old is not None:
                 self.scope = old
 
+    @contextmanager
+    def new_body(self, new: list[Eval]):
+        old = getattr(self, "current_body" , None)
+        self.current_body = new
+        try:
+            yield self.current_body
+        finally:
+            if old is not None:
+                self.current_body = old
+
     def handle_body(self, body):
         for it in body:
             res = self.visit(it)
             if res is None:
                 continue
-            self.scope.body.append(res)
+            self.current_body.append(res)
 
     def visit_Module(self, node: ast.Module):
         loc = self.loc(node)
@@ -428,20 +453,15 @@ class Ast2Eval(ast.Visitor):
         fill_name_table_from_ast(mod, node)
         mod.outer = BUILTIN_CONTEXT
 
-        with self.new_scope(mod):
+        with self.new_scope(mod), self.new_body(mod.body):
             self.handle_body(node.body)
 
         return mod
 
     def visit_SingleExpression(self, node: ast.SingleExpression):
-        if isinstance(node.body, ast.Call):
-            value = self.visit(node.body)
-        else:
-            self.visit(node.body)
-            return None
-        return value
+        return self.visit(node.body)
 
-        self.scope.body.append(value)
+        self.current_body.append(value)
 
     def visit_NumericLiteral(
         self, node: ast.NumericLiteral, kind: ast.NumberType = ast.NumberType.BIG
@@ -458,7 +478,7 @@ class Ast2Eval(ast.Visitor):
         names = []
         for name in node.names:
             names.append(name.value)
-        self.scope.body.append(Assign(loc, names, lit))
+        self.current_body.append(Assign(loc, names, lit))
 
     def visit_Assignment(self, node: ast.Assignment):
         loc = self.loc(node)
@@ -474,7 +494,7 @@ class Ast2Eval(ast.Visitor):
                         self._lines,
                     )
                 names.append(name.value)
-            self.scope.body.append(Assign(self.loc(assign), names, value))
+            self.current_body.append(Assign(self.loc(assign), names, value))
 
     def visit_NumberTypeRef(self, node: ast.NumberTypeRef):
         return ts.IntType(node.type)
@@ -501,9 +521,9 @@ class Ast2Eval(ast.Visitor):
         fill_name_table_from_ast(func, node)
         func.outer = self.scope
 
-        self.scope.body.append(Assign(loc, [node.name], func))
+        self.current_body.append(Assign(loc, [node.name], func))
 
-        with self.new_scope(func):
+        with self.new_scope(func), self.new_body(func.body):
             self.handle_body(node.body)
 
     def visit_Call(self, node: ast.Call):
@@ -524,8 +544,18 @@ class Ast2Eval(ast.Visitor):
     def visit_Check(self, node: ast.Check):
         loc = self.loc(node)
 
-        body = [self.visit(it) for it in node.body]
+        body = []
+        with self.new_body(body):
+            self.handle_body(node.body)
         return Condition(loc, self.visit(node.test), body)
+
+    def visit_Until(self, node: ast.Until):
+        loc = self.loc(node)
+
+        body = []
+        with self.new_body(body):
+            self.handle_body(node.body)
+        return Loop(loc, self.visit(node.test), body)
 
     def visit_CompareOperation(self, node: ast.CompareOperation):
         loc = self.loc(node)

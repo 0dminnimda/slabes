@@ -647,3 +647,9 @@ class GenerateC:
         for it in node.body:
             self.put(it, ";;")
         self.put("}\n")
+
+    def visit_Loop(self, node: ev.Loop):
+        self.put("while (!(", node.test, ")) {\n")
+        for it in node.body:
+            self.put(it, ";;")
+        self.put("}\n")
