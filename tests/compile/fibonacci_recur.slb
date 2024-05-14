@@ -5,8 +5,6 @@ big fib   big number   begin
 . end,
 
 big main begin
-    print(fib(J)),
-
     assert(fib(0) == 0),  # 0
     assert(fib(1) == 1),  # 1
     assert(fib(2) == 1),  # 1
