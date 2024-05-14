@@ -5,6 +5,12 @@ big fib   big number   begin
 . end,
 
 big main begin
+    big index << 0,
+    until index => K do
+        print(fib(index)),
+        index << index + 1,
+    .,
+
     assert(fib(0) == 0),  # 0
     assert(fib(1) == 1),  # 1
     assert(fib(2) == 1),  # 1
@@ -25,11 +31,6 @@ big main begin
     assert(fib(H) == 1HT),  # 1597
     assert(fib(I) == 2GO),  # 2584
     assert(fib(J) == 42L),  # 4181
-
-    # big index << 0,
-    # until index <= J do
-    #     print(fin(index)),
-    # .,
 . end,
 
 .
