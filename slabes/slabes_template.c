@@ -7,9 +7,7 @@
 
 #include "libslabes/slabes.c"
 
-#if 0
-#define SLABES_DEBUG_OP
-#endif
+// #define SLABES_DEBUG_OP
 
 #ifdef _WIN32
 #include <windows.h>
