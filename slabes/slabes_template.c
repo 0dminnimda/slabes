@@ -62,9 +62,9 @@ typedef uint16_t unsigned_int16_t;
 #endif
 
 
-/*int-types*/
-/*int-ops*/
-/*int-conv*/
+/*types*/
+/*ops*/
+/*conv*/
 
 slabes_type_unsigned_tiny slabes_func___robot_command_go() {
     ROBOT_OP_DELAY;

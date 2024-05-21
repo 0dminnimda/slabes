@@ -35,6 +35,15 @@ class IntType(Type):
 
 
 @dataclass(frozen=True)
+class MatrixType(Type):
+    item_type: IntType
+    index_type: IntType
+
+    def name(self) -> str:
+        return "matrix_" + self.item_type.name()
+
+
+@dataclass(frozen=True)
 class ModuleType(Type):
     def name(self) -> str:
         return "module"

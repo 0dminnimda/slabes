@@ -226,6 +226,35 @@ class CompareOperation(Eval):
 
 
 @dataclass
+class SubscriptOperation(Eval):
+    value: Eval
+    index1: Eval
+    index2: Eval
+
+    def raw_eval(self, context: ScopeContext) -> Value:
+        value = self.value.evaluate(context)
+        if not isinstance(value, Matrix):
+            report_fatal_at(
+                self.loc,
+                errors.TypeError,
+                f"subscript is supported only for Matrix, not {value.type}"
+            )
+
+        index_self = Int(self.loc, 0, type=value.type.index_type)
+        index1 = self.index1.evaluate(context)
+        index2 = self.index2.evaluate(context)
+        for index in [index1, index2]:
+            if index.convert_to(index_self) is None:
+                report_fatal_at(
+                    self.loc,
+                    errors.TypeError,
+                    f"cannot use {index.type} as index (cannot convert to {index_self.type})"
+                )
+
+        return Int(self.loc, 0, type=value.type.item_type)
+
+
+@dataclass
 class Name(Eval):
     value: str
 
@@ -279,6 +308,29 @@ class Int(Value):
 
     def compare_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
         if isinstance(rhs, Int):
+            return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
+        return None
+
+
+@dataclass
+class Matrix(Value):
+    value: int
+    type: ts.MatrixType = field(kw_only=True)
+
+    def convert_to(self, other: Value) -> Value | None:
+        if isinstance(other.type, type(self.type)) and self.type.item_type == other.type.item_type:
+            return Matrix(self.loc, self.value, type=other.type)
+        return None
+
+    # def binary_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
+    #     if isinstance(rhs, Matrix):
+    #         rhs.
+    #         kind = max(self.type.kind, rhs.type.kind)
+    #         return Matrix(self.loc, 0, type=ts.IntType(kind))
+    #     return None
+
+    def compare_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
+        if isinstance(rhs, Matrix):
             return Int(self.loc, 0, type=ts.IntType(ast.NumberType.TINY))
         return None
 
@@ -480,6 +532,17 @@ class Ast2Eval(ast.Visitor):
             names.append(name.value)
         self.current_body.append(Assign(loc, names, lit))
 
+    def visit_ArrayDeclaration(self, node: ast.ArrayDeclaration):
+        loc = self.loc(node)
+        lit = self.visit_NumericLiteral(node.value, node.element_type.type)
+        item_type = lit.type
+        index_type = ts.IntType(node.size_type.type, ast.Signedness.POSITIVE)
+        val = Matrix(loc, lit.value, type=ts.MatrixType(item_type, index_type))
+        names = []
+        for name in node.names:
+            names.append(name.value)
+        self.current_body.append(Assign(loc, names, val))
+
     def visit_Assignment(self, node: ast.Assignment):
         loc = self.loc(node)
         for assign in node.parts:
@@ -567,6 +630,11 @@ class Ast2Eval(ast.Visitor):
         loc = self.loc(node)
 
         return BinaryOperation(loc, self.visit(node.lhs), node.op, self.visit(node.rhs))
+
+    def visit_Subscript(self, node: ast.Subscript):
+        loc = self.loc(node)
+
+        return SubscriptOperation(loc, self.visit(node.value), self.visit(node.index1), self.visit(node.index2))
 
     def visit_RobotOperation(self, node: ast.RobotOperation):
         loc = self.loc(node)

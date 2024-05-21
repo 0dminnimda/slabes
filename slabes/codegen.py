@@ -15,22 +15,6 @@ from .parser_base import DEFAULT_FILENAME
 DIR = Path(__file__).parent
 
 
-INT_TYPE_TEMPLATE = """
-typedef /*ctype*/ slabes_type_/*name*/;
-
-#define slabes_format_/*name*/ "/*format*/"
-#define slabes_max_value_/*name*/ /*max_value*/
-#define slabes_min_value_/*name*/ /*min_value*/
-
-void assign_slabes_type_/*name*/(slabes_type_/*name*/ *var, slabes_type_/*name*/ value) {
-#ifdef SLABES_DEBUG_OP
-    printf("assign_slabes_type_/*name*/(%p, " slabes_format_/*name*/ ")\\n", var, value);
-#endif
-    *var = value;
-}
-"""
-
-
 @dataclass
 class IntTypeInfo:
     name: str
@@ -59,6 +43,22 @@ INT_TYPE_INFO = {
 
 
 SIGN_UNSING = ["", "unsigned_"]
+
+
+INT_TYPE_TEMPLATE = """
+typedef /*ctype*/ slabes_type_/*name*/;
+
+#define slabes_format_/*name*/ "/*format*/"
+#define slabes_max_value_/*name*/ /*max_value*/
+#define slabes_min_value_/*name*/ /*min_value*/
+
+void assign_slabes_type_/*name*/(slabes_type_/*name*/ *var, slabes_type_/*name*/ value) {
+#ifdef SLABES_DEBUG_OP
+    printf("assign_slabes_type_/*name*/(%p, " slabes_format_/*name*/ ")\\n", var, value);
+#endif
+    *var = value;
+}
+"""
 
 
 def make_int_types():
@@ -349,12 +349,44 @@ def make_int_convertions():
 INT_CONVERTIONS = "\n".join(make_int_convertions())
 
 
+MATRIX_TYPE_TEMPLATE = """
+typedef slabes_type_/*name*/ *slabes_type_matrix_/*name*/;
+
+#define slabes_format_/*name*/ "%p"
+
+void init_slabes_type_matrix_/*name*/(slabes_type_matrix_/*name*/ *var, slabes_type_/*name*/ value, size_t size) {
+#ifdef SLABES_DEBUG_OP
+    printf("assign_slabes_type_matrix_/*name*/(%p, " slabes_format_/*name*/ ")\\n", var, value);
+#endif
+    if (*var == NULL) {
+        *var = malloc(size * sizeof(slabes_type_/*name*/));
+    }
+    memset(*var, value, size * sizeof(slabes_type_/*name*/));
+}
+
+void assign_slabes_type_matrix_/*name*/(slabes_type_matrix_/*name*/ *var, slabes_type_matrix_/*name*/ value) {
+#ifdef SLABES_DEBUG_OP
+    printf("assign_slabes_type_matrix_/*name*/(%p, " slabes_format_/*name*/ ")\\n", var, value);
+#endif
+    *var = value;
+}
+"""
+
+
+def make_matrix_types():
+    for info in INT_TYPE_INFO.values():
+        yield MATRIX_TYPE_TEMPLATE.replace("/*name*/", info.name)
+        yield MATRIX_TYPE_TEMPLATE.replace("/*name*/", "unsigned_" + info.name)
+
+
+MATRIX_TYPES = "\n".join(make_matrix_types())
+
 TEMPLATE = Path(DIR / "slabes_template.c").read_text()
 
 TEMPLATE = (
-    TEMPLATE.replace("/*int-types*/", INT_TYPES)
-    .replace("/*int-ops*/", INT_BIN_OPS + INT_CMP_OPS)
-    .replace("/*int-conv*/", INT_CONVERTIONS)
+    TEMPLATE.replace("/*types*/", INT_TYPES + MATRIX_TYPES)
+    .replace("/*ops*/", INT_BIN_OPS + INT_CMP_OPS)
+    .replace("/*conv*/", INT_CONVERTIONS)
 )
 
 
@@ -476,17 +508,27 @@ class GenerateC:
     def visit_str(self, string: str) -> str:
         return string
 
+    def put_scope_finalization(self, node: ev.ScopeValue):
+        for name, value in node.name_to_value.items():
+            if node.names[name].is_arg:
+                continue
+            if not isinstance(value, ev.Matrix):
+                continue
+            self.put("free(", self.var_name(name), ");;")
+
     def handle_scope(self, node: ev.ScopeValue):
         for name, value in node.name_to_value.items():
             if node.names[name].is_arg:
                 continue
             if not is_variable(value.type):
                 continue
-            self.put(self.type_name(value.type), self.var_name(name), ";;")
+            self.put(self.type_name(value.type), self.var_name(name), " = 0;;")
 
         with self.new_scope(node):
             for it in node.body:
                 self.put(it, ";;")
+
+        self.put_scope_finalization(node)
 
     def visit_Module(self, node: ev.Module):
         self.scope = node
@@ -526,12 +568,23 @@ class GenerateC:
     def type_name(self, node: ts.Type) -> str:
         return "slabes_type_" + node.name()
 
+    def type_max(self, node: ts.Type) -> str:
+        return "slabes_max_value_" + node.name()
+
+    def type_min(self, node: ts.Type) -> str:
+        return "slabes_min_value_" + node.name()
+
     def var_name(self, name: str) -> str:
         return "slabes_var_" + name
 
     def visit_Assign(self, node: ev.Assign):
         for name in node.names:
             tp = self.scope.name_to_value[name].type
+
+            if isinstance(node.value, ev.Matrix):
+                assert isinstance(tp, ts.MatrixType), "Matrix evaluated not to MatrixType"
+                self.put(f"init_slabes_type_matrix_{tp.item_type.name()}(&{self.var_name(name)},", node.value, ",", self.type_max(node.value.type.index_type) ,")")
+                continue
 
             if is_variable(tp):
                 self.put(
@@ -560,6 +613,9 @@ class GenerateC:
 
     def visit_Name(self, node: ev.Name):
         self.put(self.var_name(node.value))
+
+    def visit_Matrix(self, node: ev.Matrix):
+        return str(node.value)
 
     def visit_Call(self, node: ev.Call):
         if isinstance(node.operand.evaluated, ev.FuncPrint):
@@ -632,8 +688,12 @@ class GenerateC:
 
             lhs = rhs
 
+    def visit_SubscriptOperation(self, node: ev.SubscriptOperation):
+        self.put(node.value, "[", node.index1, "+", node.index2, "*", self.type_max(node.value.evaluated.type.index_type), "]")
+
     def visit_Return(self, node: ev.Return):
         if isinstance(node.evaluated, ev.Int):
+            self.put_scope_finalization(self.scope)
             self.put("return ", node.evalue, ";")
         else:
             report_fatal_at(
