@@ -578,7 +578,13 @@ class GenerateC:
         return "slabes_var_" + name
 
     def visit_Assign(self, node: ev.Assign):
-        for name in node.names:
+        for target in node.targets:
+            if isinstance(target, ev.SubscriptOperation):
+                self.put(target, "=", node.value)
+                continue
+
+            assert isinstance(target, ev.Name)
+            name = target.value
             tp = self.scope.name_to_value[name].type
 
             if isinstance(node.value, ev.Matrix):

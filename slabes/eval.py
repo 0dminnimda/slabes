@@ -112,7 +112,7 @@ def lookup_name(context: ScopeContext, name: str, loc: Location) -> Value:
 
 @dataclass
 class Assign(Eval):
-    names: list[str]
+    targets: list[Eval]
     value: Eval
 
     def raw_eval(self, context: ScopeContext) -> Value:
@@ -123,9 +123,14 @@ class Assign(Eval):
         else:
             value = self.value.evaluate(context)
 
-        for name in self.names:
-            origin = lookup_origin(context, name) or context
-            origin.set_name_value(name, value, self.loc)
+        for target in self.targets:
+            if isinstance(target, Name):
+                name = target.value
+                origin = lookup_origin(context, name) or context
+                origin.set_name_value(name, value, self.loc)
+            else:
+                assert isinstance(target, SubscriptOperation), f"assignment not to name or subscript is not supported, got {type(target)}"
+                target.evaluate(context)
 
         if is_value:
             self.value.evaluate(context)
@@ -434,7 +439,7 @@ def make_builtin_context():
     for name in BUILTINS.keys():
         context.names[name]
     for name, value in BUILTINS.items():
-        Assign(BuiltinLoc, [name], value).evaluate(context)
+        Assign(BuiltinLoc, [Name(BuiltinLoc, name)], value).evaluate(context)
     return context
 
 
@@ -527,10 +532,10 @@ class Ast2Eval(ast.Visitor):
     def visit_NumberDeclaration(self, node: ast.NumberDeclaration):
         loc = self.loc(node)
         lit = self.visit_NumericLiteral(node.value, node.type.type)
-        names = []
+        targets = []
         for name in node.names:
-            names.append(name.value)
-        self.current_body.append(Assign(loc, names, lit))
+            targets.append(self.visit(name))
+        self.current_body.append(Assign(loc, targets, lit))
 
     def visit_ArrayDeclaration(self, node: ast.ArrayDeclaration):
         loc = self.loc(node)
@@ -538,26 +543,19 @@ class Ast2Eval(ast.Visitor):
         item_type = lit.type
         index_type = ts.IntType(node.size_type.type, ast.Signedness.POSITIVE)
         val = Matrix(loc, lit.value, type=ts.MatrixType(item_type, index_type))
-        names = []
+        targets = []
         for name in node.names:
-            names.append(name.value)
-        self.current_body.append(Assign(loc, names, val))
+            targets.append(self.visit(name))
+        self.current_body.append(Assign(loc, targets, val))
 
     def visit_Assignment(self, node: ast.Assignment):
         loc = self.loc(node)
         for assign in node.parts:
-            names = []
+            targets = []
             value = self.visit(assign.value)
-            for name in assign.targets:
-                if isinstance(name, ast.Subscript):
-                    report_fatal_at(
-                        loc,
-                        errors.SyntaxError,
-                        "subscript assignment is not implemeented",
-                        self._lines,
-                    )
-                names.append(name.value)
-            self.current_body.append(Assign(self.loc(assign), names, value))
+            for target in assign.targets:
+                targets.append(self.visit(target))
+            self.current_body.append(Assign(self.loc(assign), targets, value))
 
     def visit_NumberTypeRef(self, node: ast.NumberTypeRef):
         return ts.IntType(node.type)
@@ -584,7 +582,7 @@ class Ast2Eval(ast.Visitor):
         fill_name_table_from_ast(func, node)
         func.outer = self.scope
 
-        self.current_body.append(Assign(loc, [node.name], func))
+        self.current_body.append(Assign(loc, [Name(loc, node.name)], func))
 
         with self.new_scope(func), self.new_body(func.body):
             self.handle_body(node.body)

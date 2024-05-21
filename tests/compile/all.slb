@@ -368,6 +368,8 @@ bi guhh begin
 bi arr begin
     field bi no a << 3,
     assert(0 <= a[0 0] <= 5),
+    a[0 0] << 10,
+    assert(a[0 0] == 10),
     retur 5,
 . end,
 
