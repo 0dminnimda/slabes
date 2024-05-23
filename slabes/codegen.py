@@ -352,7 +352,7 @@ INT_CONVERTIONS = "\n".join(make_int_convertions())
 MATRIX_TYPE_TEMPLATE = """
 typedef slabes_type_/*name*/ *slabes_type_matrix_/*name*/;
 
-#define slabes_format_/*name*/ "%p"
+#define slabes_format_matrix_/*name*/ "%p"
 
 void init_slabes_type_matrix_/*name*/(slabes_type_matrix_/*name*/ *var, slabes_type_/*name*/ value, size_t size) {
 #ifdef SLABES_DEBUG_OP
@@ -366,7 +366,7 @@ void init_slabes_type_matrix_/*name*/(slabes_type_matrix_/*name*/ *var, slabes_t
 
 void assign_slabes_type_matrix_/*name*/(slabes_type_matrix_/*name*/ *var, slabes_type_matrix_/*name*/ value) {
 #ifdef SLABES_DEBUG_OP
-    printf("assign_slabes_type_matrix_/*name*/(%p, " slabes_format_/*name*/ ")\\n", var, value);
+    printf("assign_slabes_type_matrix_/*name*/(%p, " slabes_format_matrix_/*name*/ ")\\n", var, value);
 #endif
     *var = value;
 }
