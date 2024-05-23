@@ -378,8 +378,6 @@ big main begin
     ppp(),
     ggg(),
     hhh(),
-    # bug  c << a << -6 >> b >> a << -8 >> b >> b,
-
     assert(guhh() == 5),
 . end,
 
