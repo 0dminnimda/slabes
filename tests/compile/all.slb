@@ -252,7 +252,7 @@ ti hhh begin
 
     b << b + 1,
     assert(a == 0),
-    # assert(b == -7),  # TODO: This is a bug!
+    assert(b == -7),
     assert(c == -6),
     assert(dd == -6),
 

@@ -307,8 +307,8 @@ class Int(Value):
 
     def binary_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
         if isinstance(rhs, Int):
-            kind = max(self.type.kind, rhs.type.kind)
-            return Int(self.loc, 0, type=ts.IntType(kind))
+            kind, signed = max((self.type.kind, self.type.signed), (rhs.type.kind, rhs.type.signed))
+            return Int(self.loc, 0, type=ts.IntType(kind, signed))
         return None
 
     def compare_operation(self, op: ast.BinOp, rhs: Value, reversed: bool) -> Value | None:
