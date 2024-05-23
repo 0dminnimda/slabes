@@ -437,7 +437,7 @@ class RobotCommandRR(Function):
 class RobotCommandSonar(Function):
     name: str = field(default="__robot_command_sonar", init=False)
     args: ClassVar[FunctionArgs] = {}
-    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.SMALL)), init=False)
 
 
 @dataclass
