@@ -52,6 +52,7 @@ typedef struct {
 typedef struct {
     Position player_position;
     Direction player_direction;
+    Position finish_position;
     Field field;
 } Game;
 
@@ -82,5 +83,7 @@ Direction right_rotated_direction(Direction direction);
 Direction reverse_direction(Direction direction);
 
 Walls game_walls_with_map_end(Game *game, Walls walls, ssize_t x, ssize_t y);
+
+void game_set_finish(Game *game, ssize_t x, ssize_t y);
 
 #endif // SLABES_H

@@ -11,8 +11,8 @@ big modulo big number, big divisor begin
 big main begin
     generate_maze(),
 
-    big count << 0,
-    until count => VVV do
+    big count << +0,
+    until count => FVV do
         big index << 0,
         big value << 6,
         value << sonar,
@@ -47,6 +47,7 @@ big main begin
         go,
 
         count << count + 1,
+        check compass do count << G00.,
     .,
 . end,
 .

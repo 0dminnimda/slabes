@@ -120,6 +120,13 @@ slabes_type_unsigned_small slabes_func___robot_command_sonar() {
     return result;
 }
 
+slabes_type_unsigned_tiny slabes_func___robot_command_compass() {
+    ROBOT_OP_DELAY;
+    Position player = get_game()->player_position;
+    Position finish = get_game()->finish_position;
+    return ((player.x == finish.x) && (player.y == finish.y));
+}
+
 slabes_type_unsigned_tiny slabes_func___generate_maze() {
     game_generate_a_maze(get_game());
     update_game_display();

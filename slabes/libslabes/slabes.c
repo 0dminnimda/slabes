@@ -380,10 +380,16 @@ void game_generate_a_maze(Game *game) {
         }
     }
 
-    field_checked_set_cell(&game->field, fartherst_pos.x, fartherst_pos.y, Finish);
+    game_set_finish(game, fartherst_pos.x, fartherst_pos.y);
 
     SLABES_FREE(stack_base);
     SLABES_FREE(visited);
+}
+
+void game_set_finish(Game *game, ssize_t x, ssize_t y) {
+    field_checked_set_cell(&game->field, x, y, Finish);
+    game->finish_position.x = x;
+    game->finish_position.y = y;
 }
 
 typedef void (*void_game_function_t)(Game *game);
