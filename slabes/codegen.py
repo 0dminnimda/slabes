@@ -262,7 +262,6 @@ INT_CMP_OPS = "\n".join(make_int_cmp_ops())
 
 INT_CONVERT_TEMPLATE = """
 slabes_type_/*name2*/ slabes_convert_/*name1*/_to_/*name2*/(slabes_type_/*name1*/ value) {
-    value = /*arg*/;
 #ifdef SLABES_DEBUG_OP
     printf("slabes_convert_/*name1*/_to_/*name2*/(" slabes_format_/*name1*/ ")", value);
 #endif
@@ -287,7 +286,7 @@ slabes_type_/*name2*/ slabes_convert_/*name1*/_to_/*name2*/(slabes_type_/*name1*
 """
 
 INT_CONVERT_TEMPLATE_NOOP = """
-#define slabes_convert_/*name1*/_to_/*name2*/(value) ((slabes_type_/*name2*/)/*arg*/)
+#define slabes_convert_/*name1*/_to_/*name2*/(value) (value)
 """
 
 INT_REMOVE_SIGN = """
@@ -343,28 +342,24 @@ def make_int_convertions():
             INT_ADD_SIGN
             .replace("/*name*/", info.name)
         )
+        for unsig in SIGN_UNSING:
+            yield (
+                INT_CONVERT_TEMPLATE_NOOP
+                .replace("/*name1*/", unsig + info.name)
+                .replace("/*name2*/", unsig + info.name)
+            )
 
     for i, info1 in enumerate(INT_TYPE_INFO.values()):
         for j, info2 in enumerate(INT_TYPE_INFO.values()):
-            if i > j:
-                template = INT_CONVERT_TEMPLATE
-            else:
-                template = INT_CONVERT_TEMPLATE_NOOP
+            if i == j:
+                continue
 
             for unsig1 in SIGN_UNSING:
                 for unsig2 in SIGN_UNSING:
-                    if unsig1 and not unsig2:
-                        arg = f"slabes_convert_unsigned_{info1.name}_to_{info1.name}(value)"
-                    elif not unsig1 and unsig2:
-                        arg = f"slabes_convert_{info1.name}_to_unsigned_{info1.name}(value)"
-                    else:
-                        arg = "value"
-
                     yield (
-                        template
+                        INT_CONVERT_TEMPLATE
                         .replace("/*name1*/", unsig1 + info1.name)
                         .replace("/*name2*/", unsig2 + info2.name)
-                        .replace("/*arg*/", arg)
                     )
 
 

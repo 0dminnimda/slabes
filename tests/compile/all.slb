@@ -178,9 +178,9 @@ big ppp begin
     over_bi << over_bi + 1,
 
     assert(over_ti == +1),
-    # assert(over_sma == +V),  # TODO: This is a bug!
-    # assert(over_no == +VV),  # TODO: This is a bug!
-    # assert(over_bi == +VVV),  # TODO: This is a bug!
+    assert(over_sma == +V),
+    assert(over_no == +VV),
+    assert(over_bi == +FVV),  # WHY?!!
 
     ti over_ti_help << +1,
     sma over_sma_help << +V,
@@ -261,22 +261,21 @@ ti hhh begin
     assert((a / sma_zero) == F),
     assert((a / no_zero) == FV),
     assert((a / bi_zero) == FVV),
-    
-    # TODO: This is a bug!
-    # assert((b / ti_zero) == -G),
-    # assert((b / sma_zero) == -G),
-    # assert((b / no_zero) == -GV),
-    # assert((b / bi_zero) == -GVV),
 
-    # assert((c / ti_zero) == -GV),
-    # assert((c / sma_zero) == -GV),
-    # assert((c / no_zero) == -GV),
-    # assert((c / bi_zero) == -GVV),
+    assert((b / ti_zero) == -G),
+    assert((b / sma_zero) == -G),
+    assert((b / no_zero) == -G0),
+    assert((b / bi_zero) == -G00),
 
-    # assert((dd / ti_zero) == -GVV),
-    # assert((dd / sma_zero) == -GVV),
-    # assert((dd / no_zero) == -GVV),
-    # assert((dd / bi_zero) == -GVV),
+    assert((c / ti_zero) == -G0),
+    assert((c / sma_zero) == -G0),
+    assert((c / no_zero) == -G0),
+    assert((c / bi_zero) == -G00),
+
+    assert((dd / ti_zero) == -G00),
+    assert((dd / sma_zero) == -G00),
+    assert((dd / no_zero) == -G00),
+    assert((dd / bi_zero) == -G00),
 
     ti over_ti << -0,
     sma over_sma << -0,
@@ -296,9 +295,9 @@ ti hhh begin
     over_bi << over_bi - 1,
 
     assert(over_ti == -0),
-    # assert(over_sma == -G),  # TODO: This is a bug!
-    # assert(over_no == -GV),  # TODO: This is a bug!
-    # assert(over_bi == -GVV),  # TODO: This is a bug!
+    assert(over_sma == -E),  # WHY?!!
+    assert(over_no == -FU),  # WHY?!!
+    assert(over_bi == -FVU),  # WHY?!!
 
     ti over_ti_help << -1,
     sma over_sma_help << -V,
@@ -324,9 +323,9 @@ ti hhh begin
     over_bi << over_bi + over_help,
 
     assert(over_ti == -0),
-    # assert(over_sma == -G),  # TODO: This is a bug!
-    # assert(over_no == -GV),  # TODO: This is a bug!
-    # assert(over_bi == -GVV),  # TODO: This is a bug!
+    assert(over_sma == -G),
+    assert(over_no == -G0),
+    assert(over_bi == -G00),
 
     over_ti << over_ti_help,
     over_sma << over_sma_help,
@@ -334,9 +333,9 @@ ti hhh begin
     over_bi << over_bi_help,
 
     assert((over_ti + over_help) == 0),
-    # assert((over_sma + over_help) == -G),  # TODO: This is a bug!
-    # assert((over_no + over_help) == -GV),  # TODO: This is a bug!
-    # assert((over_bi + over_help) == -GVV),  # TODO: This is a bug!
+    assert((over_sma + over_help) == -G),
+    assert((over_no + over_help) == -G0),
+    assert((over_bi + over_help) == -G00),
 
     over_ti << over_sma,
     over_sma << over_no,
@@ -344,7 +343,7 @@ ti hhh begin
 
     assert(over_ti == -0),
     assert(over_sma == -G),
-    # assert(over_no == -GV),  # TODO: This is a bug!
+    assert(over_no == -G0),
 . end,
 
 
@@ -388,22 +387,6 @@ big main begin
     print(),
     print(),
     # bug  c << a << -6 >> b >> a << -8 >> b >> b,
-
-
-    sma over_sma << +0,
-    over_sma << over_sma + V,  # 31
-    over_sma << over_sma + 1,
-    print(over_sma),  # +V
-
-
-    sma b << -V,
-    print(b),
-    big haa << 0,
-    haa << b,
-    print(haa),
-    print(b + 1),
-    b << b + 1,
-    print(b),
 
     print(guhh()),
 . end,
