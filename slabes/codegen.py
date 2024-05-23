@@ -89,10 +89,8 @@ INT_TYPES = "\n".join(make_int_types())
 
 INT_BIN_OP_TEMPLATE = """
 slabes_type_/*name*/ slabes_op_/*op_name*/__/*name1*/__/*name2*/(slabes_type_/*name1*/ lhs, slabes_type_/*name2*/ rhs) {
-    /*preamble*/
     slabes_type_/*name*/ result;
     /*op*/;
-    /*postamble*/
 #ifdef SLABES_DEBUG_OP
     printf("slabes_op_/*op_name*/__/*name1*/__/*name2*/(" slabes_format_/*name1*/ ", " slabes_format_/*name2*/ ")", lhs, rhs);
     printf(" -> " slabes_format_/*name*/ "\\n", result);
@@ -112,13 +110,7 @@ result = rhs /*op*/ lhs;
 
 INT_BIN_OP_CHECK_OVEFLOW_FULL = """
 if (ckd_/*op_name*/(&result, lhs, rhs)) {
-    result = slabes_max_value_/*name*/;
-}
-"""
-
-INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_LESS = INT_BIN_OP_NO_CHECK + """
-if (result < slabes_min_value_/*name*/) {
-    result = slabes_min_value_/*name*/;
+    /*overflow_code*/;
 }
 """
 
@@ -128,58 +120,88 @@ if (result > slabes_max_value_/*name*/) {
 }
 """
 
-INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MUCH_MORE = INT_BIN_OP_CHECK_OVEFLOW_FULL + """
+INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE_N_LESS = INT_BIN_OP_NO_CHECK + """
+if (result < slabes_min_value_/*name*/) {
+    result = slabes_min_value_/*name*/;
+}
 else if (result > slabes_max_value_/*name*/) {
     result = slabes_max_value_/*name*/;
 }
 """
 
+INT_BIN_OP_CHECK_OVEFLOW_FULL_PARTIAL_MORE = INT_BIN_OP_CHECK_OVEFLOW_FULL + """
+else if (result > slabes_max_value_/*name*/) {
+    result = slabes_max_value_/*name*/;
+}
+"""
 
-INT_BIN_OP_INFO = [
-    ("add", {
-        "tiny": INT_BIN_OP_NO_CHECK.replace("/*op*/", "+"),
-        "small": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE.replace("/*op*/", "+"),
-        "normal": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE.replace("/*op*/", "+"),
-        "big": INT_BIN_OP_CHECK_OVEFLOW_FULL,
-    }),
-    ("sub", {
-        "tiny": INT_BIN_OP_NO_CHECK.replace("/*op*/", "-"),
-        "small": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_LESS.replace("/*op*/", "-"),
-        "normal": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_LESS.replace("/*op*/", "-"),
-        "big": INT_BIN_OP_CHECK_OVEFLOW_FULL,
-    }),
-    ("mul", {
-        "tiny": INT_BIN_OP_NO_CHECK.replace("/*op*/", "*"),
-        "small": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MUCH_MORE.replace("/*op*/", "*"),
-        "normal": INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MUCH_MORE.replace("/*op*/", "*"),
-        "big": INT_BIN_OP_CHECK_OVEFLOW_FULL,
-    }),
-    ("div", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_NO_CHECK.replace("/*op*/", "/"))),
+INT_BIN_OP_CHECK_OVEFLOW_FULL_PARTIAL_MORE_N_LESS = INT_BIN_OP_CHECK_OVEFLOW_FULL_PARTIAL_MORE + """
+else if (result < slabes_min_value_/*name*/) {
+    result = slabes_min_value_/*name*/;
+}
+"""
+
+INT_BIN_OP_DIV_CHECK = """
+if (rhs == 0) {
+    if (lhs >= 0) return slabes_max_value_/*name*/;
+    else return slabes_min_value_/*name*/;
+}
+""" + INT_BIN_OP_NO_CHECK.replace("/*op*/", "/")
+
+
+INT_BIN_OP_UNSIGNED_MUL_CHECK = INT_BIN_OP_CHECK_OVEFLOW_FULL_PARTIAL_MORE_N_LESS.replace("/*overflow_code*/", "result = slabes_max_value_/*name*/")
+
+
+INT_BIN_OP_SIGNED_MUL_CHECK = INT_BIN_OP_CHECK_OVEFLOW_FULL_PARTIAL_MORE_N_LESS.replace("/*overflow_code*/",
+"""
+if ((lhs ^ rhs) >= 0) result = slabes_max_value_/*name*/;
+else result = slabes_min_value_/*name*/;
+"""
+)
+
+
+INT_BIN_OP_INFO_SIGNED = [
+    ("add", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE_N_LESS.replace("/*op*/", "+"))),
+    ("sub", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE_N_LESS.replace("/*op*/", "-"))),
+    ("mul", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_SIGNED_MUL_CHECK)),
+    ("div", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_DIV_CHECK)),
 ]
 
-INT_BIN_OP_DIV_CODE = "if (rhs == 0) return slabes_max_value_/*name*/;"
+INT_BIN_OP_INFO_UNSIGNED = [
+    ("add", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_CHECK_OVEFLOW_PARTIAL_MORE.replace("/*op*/", "+"))),
+    ("sub", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_CHECK_OVEFLOW_FULL.replace("/*overflow_code*/", "result = slabes_min_value_/*name*/"))),
+    ("mul", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_UNSIGNED_MUL_CHECK)),
+    ("div", dict.fromkeys(INT_TYPE_INFO.keys(), INT_BIN_OP_DIV_CHECK)),
+]
 
 
 def make_int_bin_ops():
+    for info in INT_TYPE_INFO.values():
+        template = INT_BIN_OP_TEMPLATE
+        for sign, bin_info in zip(SIGN_UNSING, [INT_BIN_OP_INFO_SIGNED, INT_BIN_OP_INFO_UNSIGNED]):
+            for op_name, op in bin_info:
+                yield (
+                    template
+                    .replace("/*op*/", op[info.name])
+                    .replace("/*name*/", sign + info.name)
+                    .replace("/*name1*/", sign + info.name)
+                    .replace("/*name2*/", sign + info.name)
+                    .replace("/*op_name*/", op_name)
+                )
+
+
     for i, info1 in enumerate(INT_TYPE_INFO.values()):
         for j, info2 in enumerate(INT_TYPE_INFO.values()):
             _, info, ind_max = max((i, info1, 0), (j, info2, 1))
 
-            for op_name, op in INT_BIN_OP_INFO:
-                if i != j:
-                    template = INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES
-                else:
-                    template = INT_BIN_OP_TEMPLATE
-
-                preamble = INT_BIN_OP_DIV_CODE if op_name == "div" else ""
-                postamble = ""
+            for op_name, _ in INT_BIN_OP_INFO_SIGNED:
                 for unsig1 in SIGN_UNSING:
                     for unsig2 in SIGN_UNSING:
+                        if i == j and unsig1 == unsig2:
+                            continue
+                        template = INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES
                         yield (
                             template
-                            .replace("/*preamble*/", preamble)
-                            .replace("/*postamble*/", postamble)
-                            .replace("/*op*/", op[info.name])
                             .replace("/*name*/", [unsig1, unsig2][ind_max] + info.name)
                             .replace("/*name1*/", unsig1 + info1.name)
                             .replace("/*name2*/", unsig2 + info2.name)
@@ -615,7 +637,7 @@ class GenerateC:
                 self.put(");;")
 
     def visit_Int(self, node: ev.Int):
-        return str(node.value)
+        return f"max(min({node.value}, {self.type_max(node.type)}), {self.type_min(node.type)})"
 
     def visit_Name(self, node: ev.Name):
         self.put(self.var_name(node.value))

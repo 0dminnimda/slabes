@@ -99,7 +99,7 @@ big ggg begin
     over_no << over_bi_help,
     over_bi << over_bi_help,
 
-    # assert((over_ti + over_help) == 1), # TODO: This is a bug!
+    assert((over_ti + over_help) == 1),
     assert((over_sma + over_help) == F),
     assert((over_no + over_help) == FV),
     assert((over_bi + over_help) == FVV),
@@ -205,20 +205,20 @@ big ppp begin
     over_bi << over_bi + over_bi_help,  # 32767
     over_bi << over_bi + over_help,
 
-    # assert(over_ti == +1),  # TODO: This is a bug!
+    assert(over_ti == +1),
     assert(over_sma == +V),
     assert(over_no == +VV),
-    # assert(over_bi == +VVV),  # TODO: This is a bug!
+    assert(over_bi == +VVV),
 
     over_ti << over_ti_help,
     over_sma << over_sma_help,
     over_no << over_bi_help,
     over_bi << over_bi_help,
 
-    # assert((over_ti + over_help) == +1), # TODO: This is a bug!
+    assert((over_ti + over_help) == +1),
     assert((over_sma + over_help) == +V),
     assert((over_no + over_help) == +VV),
-    # assert((over_bi + over_help) == +VVV),  # TODO: This is a bug!
+    assert((over_bi + over_help) == +VVV),
 
     over_ti << over_sma,
     over_sma << over_no,
@@ -256,12 +256,12 @@ ti hhh begin
     assert(c == -6),
     assert(dd == -6),
 
+    assert((a / ti_zero) == 1),
+    assert((a / sma_zero) == F),
+    assert((a / no_zero) == FV),
+    assert((a / bi_zero) == FVV),
+    
     # TODO: This is a bug!
-    # assert((a / ti_zero) == 0),
-    # assert((a / sma_zero) == -G),
-    # assert((a / no_zero) == -GV),
-    # assert((a / bi_zero) == -GVV),
-
     # assert((b / ti_zero) == -G),
     # assert((b / sma_zero) == -G),
     # assert((b / no_zero) == -GV),
