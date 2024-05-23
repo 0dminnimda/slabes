@@ -250,8 +250,9 @@ ti hhh begin
     assert(c == -6),
     assert(dd == -6),
 
+    a << a + 1,
     b << b + 1,
-    assert(a == 0),
+    assert(a == 1),
     assert(b == -7),
     assert(c == -6),
     assert(dd == -6),
