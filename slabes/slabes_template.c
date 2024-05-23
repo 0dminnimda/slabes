@@ -24,7 +24,7 @@ void sleep_ms(int milliseconds) {
 #endif
 }
 
-#define ROBOT_OP_DELAY sleep_ms(200)
+#define ROBOT_OP_DELAY sleep_ms(100)
 #else
 #define ROBOT_OP_DELAY
 #endif
@@ -61,6 +61,17 @@ typedef uint16_t unsigned_int16_t;
 // if (x != 0 && a < INT_MIN / x) // `a * x` would underflow
 #endif
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  ((byte) & 0x80 ? '1' : '0'), \
+  ((byte) & 0x40 ? '1' : '0'), \
+  ((byte) & 0x20 ? '1' : '0'), \
+  ((byte) & 0x10 ? '1' : '0'), \
+  ((byte) & 0x08 ? '1' : '0'), \
+  ((byte) & 0x04 ? '1' : '0'), \
+  ((byte) & 0x02 ? '1' : '0'), \
+  ((byte) & 0x01 ? '1' : '0') 
+
 
 /*types*/
 /*ops*/
@@ -90,18 +101,22 @@ slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
 }
 
 slabes_type_unsigned_small slabes_func___robot_command_sonar() {
+    ROBOT_OP_DELAY;
     Position position = get_game()->player_position;
     Direction direction = get_game()->player_direction;
     Direction rev_dir = reverse_direction(direction);
     Walls walls = field_checked_get_walls(&get_game()->field, position.x, position.y);
     slabes_type_unsigned_small result = 0;
     size_t offset = direction_to_index(direction);
+    offset += DirectionCount - 2;  // -2 since we start from relative 120 degrees, not 0
     for (size_t i = 0; i < DirectionCount; ++i) {
         Direction cur_dir = 1 << ((i + offset) % DirectionCount);
         if (cur_dir == rev_dir) continue;
-        result <<= 1;
-        if (walls & cur_dir) result &= 1;
+        if (!(walls & cur_dir)) result |= 1 << i;
     }
+#ifdef SLABES_DEBUG_OP
+    printf("sonar: "BYTE_TO_BINARY_PATTERN"\n", BYTE_TO_BINARY(result));
+#endif
     return result;
 }
 

@@ -1,48 +1,52 @@
+big modulo_from_divided big number, big divisor, big divided begin
+    return number - (divided \ divisor),
+. end,
+
+big modulo big number, big divisor begin
+    big divided << 0,
+    divided << number / divisor,
+    return modulo_from_divided(number  divisor  divided),
+. end,
+
 big main begin
-    # field bi no a << 3,
-    # assert(0 <= a[0 0] <= 5),
-    # a[0 0] << 10,
-    # assert(a[0 0] == 10),
-
-    print(go),
-    print(go),
-
     generate_maze(),
 
     big count << 0,
-    until count => VV do
+    until count => VVV do
         big index << 0,
         big value << 6,
         value << sonar,
 
-        rl, rl,
-        until index => 1 do
-            check last_index <= 0 do
-                last_index << 0,
+        tin contin << 1,
+        big bit << 1,
+        until contin == 0 do  # 2^5
+            big next_value << 0,
+            big mod << 0,
+            next_value << value / 2,
+            mod << modulo_from_divided(value 2 next_value),
+            value << next_value,
+
+            check mod == 1 do
+                contin << 0,
             .,
 
-            rr,
+            check contin do
+                bit << bit + bit,
+                check bit => 10 do
+                    contin << 0,
+                .,
+            .,
+        .,
 
-            index << index + 1,
-        .
+        check bit == 1 do rl, rl.,
+        check bit == 2 do rl.,
+        check bit == 4 do .,
+        check bit == 8 do rr.,
+        check bit == G do rr, rr.,
+        check bit == 10 do rr, rr, rr.,
+        go,
 
         count << count + 1,
     .,
-
-    print(rl),
-    print(go),
-    print(go),
-
-    print(rl),
-    print(go),
-    print(rl),
-    print(go),
-    print(go),
-    print(go),
-    print(go),
-    print(go),
-    print(go),
-
 . end,
-
 .
