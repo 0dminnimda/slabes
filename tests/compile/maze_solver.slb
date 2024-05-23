@@ -1,0 +1,48 @@
+big main begin
+    # field bi no a << 3,
+    # assert(0 <= a[0 0] <= 5),
+    # a[0 0] << 10,
+    # assert(a[0 0] == 10),
+
+    print(go),
+    print(go),
+
+    generate_maze(),
+
+    big count << 0,
+    until count => VV do
+        big index << 0,
+        big value << 6,
+        value << sonar,
+
+        rl, rl,
+        until index => 1 do
+            check last_index <= 0 do
+                last_index << 0,
+            .,
+
+            rr,
+
+            index << index + 1,
+        .
+
+        count << count + 1,
+    .,
+
+    print(rl),
+    print(go),
+    print(go),
+
+    print(rl),
+    print(go),
+    print(rl),
+    print(go),
+    print(go),
+    print(go),
+    print(go),
+    print(go),
+    print(go),
+
+. end,
+
+.

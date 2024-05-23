@@ -42,7 +42,7 @@ typedef Direction Walls;
 typedef struct {
     size_t width, height;
     Cell *cells;
-    Walls *walls;
+    Walls *walls;  // Wall order is: DownLeft, Down, DownRight, UpRight, Up and UpLeft
 } Field;
 
 typedef struct {
@@ -72,6 +72,8 @@ Cell field_checked_get_cell(Field *field, ssize_t x, ssize_t y, Cell default_val
 void field_checked_set_cell(Field *field, ssize_t x, ssize_t y, Cell value);
 
 char *direction_to_string(Direction direction);
+
+uint8_t direction_to_index(Direction direction);
 
 Direction left_rotated_direction(Direction direction);
 

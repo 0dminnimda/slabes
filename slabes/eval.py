@@ -397,10 +397,18 @@ class FuncPrint(Function):
     args: ClassVar[FunctionArgs] = None
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
+
 @dataclass
 class FuncAssert(Function):
     name: str = field(default="__assert", init=False)
     args: ClassVar[FunctionArgs] = None
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+
+
+@dataclass
+class FuncGenerateMaze(Function):
+    name: str = field(default="__generate_maze", init=False)
+    args: ClassVar[FunctionArgs] = {}
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
@@ -425,12 +433,29 @@ class RobotCommandRR(Function):
     return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
 
 
+@dataclass
+class RobotCommandSonar(Function):
+    name: str = field(default="__robot_command_sonar", init=False)
+    args: ClassVar[FunctionArgs] = {}
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+
+
+@dataclass
+class RobotCommandCompass(Function):
+    name: str = field(default="__robot_command_compass", init=False)
+    args: ClassVar[FunctionArgs] = {}
+    return_value: Value = field(default_factory=lambda: Int(BuiltinLoc, 0, type=ts.IntType(ast.NumberType.TINY)), init=False)
+
+
 BUILTINS = {
     "print": FuncPrint(BuiltinLoc),
     "assert": FuncAssert(BuiltinLoc),
+    "generate_maze": FuncGenerateMaze(BuiltinLoc),
     "__robot_command_go": RobotCommandGo(BuiltinLoc),
     "__robot_command_rl": RobotCommandRL(BuiltinLoc),
     "__robot_command_rr": RobotCommandRR(BuiltinLoc),
+    "__robot_command_sonar": RobotCommandSonar(BuiltinLoc),
+    "__robot_command_compass": RobotCommandCompass(BuiltinLoc),
 }
 
 
@@ -643,8 +668,10 @@ class Ast2Eval(ast.Visitor):
             return Call(loc, BUILTINS["__robot_command_rl"], [])
         if node.op == ast.RobOp.ROT_RIGHT:
             return Call(loc, BUILTINS["__robot_command_rr"], [])
-        # if node.op == ast.RobOp.SONAR:
-        # if node.op == ast.RobOp.COMPASS:
+        if node.op == ast.RobOp.SONAR:
+            return Call(loc, BUILTINS["__robot_command_sonar"], [])
+        if node.op == ast.RobOp.COMPASS:
+            return Call(loc, BUILTINS["__robot_command_compass"], [])
         report_fatal_at(
             loc,
             errors.SyntaxError,

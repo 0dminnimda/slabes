@@ -32,19 +32,19 @@ raylib_slabes:
 
 .PHONY: run
 run:
-	$(call prep_executable, EXEC, ./tests/compile/robot.out)
+	$(call prep_executable, EXEC, ./tests/compile/maze_solver.out)
 	$(EXEC)
 
 .PHONY: run_con
 run_con:
 	$(call prep_executable, SLIB, ./slabes/libslabes/console_display.so)
-	$(call prep_executable, EXEC, ./tests/compile/robot.out)
+	$(call prep_executable, EXEC, ./tests/compile/maze_solver.out)
 	$(EXEC) $(SLIB)
 
 .PHONY: run_ray
 run_ray:
 	$(call prep_executable, SLIB, ./slabes/libslabes/raylib_display.so)
-	$(call prep_executable, EXEC, ./tests/compile/robot.out)
+	$(call prep_executable, EXEC, ./tests/compile/maze_solver.out)
 	DISPLAY=$(DISPLAY) $(EXEC) $(SLIB)
 
 .PHONY: run_con_sl

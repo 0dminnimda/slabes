@@ -89,6 +89,28 @@ slabes_type_unsigned_tiny slabes_func___robot_command_rr() {
     return 1;
 }
 
+slabes_type_unsigned_small slabes_func___robot_command_sonar() {
+    Position position = get_game()->player_position;
+    Direction direction = get_game()->player_direction;
+    Direction rev_dir = reverse_direction(direction);
+    Walls walls = field_checked_get_walls(get_game()->field, position.x, position.y);
+    slabes_type_unsigned_small result = 0;
+    size_t offset = direction_to_index(direction);
+    for (size_t i = 0; i < DirectionCount; ++i) {
+        Direction cur_dir = 1 << ((i + offset) % DirectionCount);
+        if (cur_dir == rev_dir) continue;
+        result <<= 1;
+        if (walls & cur_dir) result &= 1;
+    }
+    return result;
+}
+
+slabes_type_unsigned_tiny slabes_func___generate_maze() {
+    game_generate_a_maze(get_game());
+    update_game_display();
+    return 1;
+}
+
 slabes_type_unsigned_tiny slabes_assert(slabes_type_unsigned_tiny value, const char *msg) {
     if (!value) {
         printf("Assertion failed: %s\n", msg);

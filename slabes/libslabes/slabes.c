@@ -40,6 +40,17 @@ char *direction_to_string(Direction direction) {
     }
 }
 
+uint8_t direction_to_index(Direction direction) {
+    switch (direction) {
+        case UpLeft: return 5;
+        case Up: return 4;
+        case UpRight: return 3;
+        case DownRight: return 2;
+        case Down: return 1;
+        case DownLeft: return 0;
+    }
+}
+
 Direction left_rotated_direction(Direction direction) {
     switch (direction) {
         case UpLeft: return Up;
