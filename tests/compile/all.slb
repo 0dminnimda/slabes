@@ -375,20 +375,12 @@ bi arr begin
 
 
 big main begin
-    print(),
-    print(),
     ppp(),
-    print(),
-    print(),
     ggg(),
-    print(),
-    print(),
     hhh(),
-    print(),
-    print(),
     # bug  c << a << -6 >> b >> a << -8 >> b >> b,
 
-    print(guhh()),
+    assert(guhh() == 5),
 . end,
 
 .
