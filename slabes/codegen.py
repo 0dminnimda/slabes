@@ -105,7 +105,7 @@ INT_BIN_OP_TEMPLATE_DIFFERENT_TYPES = """
 """
 
 INT_BIN_OP_NO_CHECK = """
-result = rhs /*op*/ lhs;
+result = lhs /*op*/ rhs;
 """
 
 INT_BIN_OP_CHECK_OVEFLOW_FULL = """

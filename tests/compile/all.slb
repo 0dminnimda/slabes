@@ -165,22 +165,22 @@ big ppp begin
     no over_no << +0,
     bi over_bi << +0,
 
-    over_ti << over_ti + 1,
-    over_ti << over_ti + 1,
+    over_ti << over_ti + +1,
+    over_ti << over_ti + +1,
 
-    over_sma << over_sma + V,  # 31
-    over_sma << over_sma + 1,
+    over_sma << over_sma + +V,  # 31
+    over_sma << over_sma + +1,
 
-    over_no << over_no + VV,  # 1023
-    over_no << over_no + 1,
+    over_no << over_no + +VV,  # 1023
+    over_no << over_no + +1,
 
-    over_bi << over_bi + VVV,  # 32767
-    over_bi << over_bi + 1,
+    over_bi << over_bi + +VVV,  # 32767
+    over_bi << over_bi + +1,
 
     assert(over_ti == +1),
     assert(over_sma == +V),
     assert(over_no == +VV),
-    assert(over_bi == +FVV),  # WHY?!!
+    assert(over_bi == +VVV),
 
     ti over_ti_help << +1,
     sma over_sma_help << +V,
@@ -295,9 +295,9 @@ ti hhh begin
     over_bi << over_bi - 1,
 
     assert(over_ti == -0),
-    assert(over_sma == -E),  # WHY?!!
-    assert(over_no == -FU),  # WHY?!!
-    assert(over_bi == -FVU),  # WHY?!!
+    assert(over_sma == -G),
+    assert(over_no == -G0),
+    assert(over_bi == -G00),
 
     ti over_ti_help << -1,
     sma over_sma_help << -V,
