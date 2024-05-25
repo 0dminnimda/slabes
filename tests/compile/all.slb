@@ -367,9 +367,43 @@ bi guhh begin
 
 bi arr begin
     field bi no a << 3,
-    assert(0 <= a[0 0] <= 5),
+
+    bi index1 << 0,
+    until index1 => FV do
+        bi index2 << 0,
+        until index2 => FV do
+            # print(1 index1 index2 a[index1 index2]),
+            assert(0 <= a[index1 index2] <= 5),
+            assert(a[index1 index2] == 3),
+            index2 << index2 + 1,
+        .,
+        index1 << index1 + 1,
+    .,
+
     a[0 0] << 10,
-    assert(a[0 0] == 10),
+
+
+    bi index1 << 0,
+    until index1 => FV do
+        bi index2 << 0,
+        until index2 => FV do
+            # print(2 index1 index2 a[index1 index2]),
+            check index1 == 0 do
+                check index2 == 0 do
+                    assert(a[index1 index2] == 10),
+                .,
+            .,
+            check index1 <> 0 do
+                check index2 <> 0 do
+                    assert(0 <= a[index1 index2] <= 5),
+                    assert(a[index1 index2] == 3),
+                .,
+            .,
+            index2 << index2 + 1,
+        .,
+        index1 << index1 + 1,
+    .,
+
     retur 5,
 . end,
 
@@ -378,6 +412,7 @@ big main begin
     ppp(),
     ggg(),
     hhh(),
+    arr(),
     assert(guhh() == 5),
 . end,
 

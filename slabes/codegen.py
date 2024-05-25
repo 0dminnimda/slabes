@@ -376,9 +376,11 @@ void init_slabes_type_matrix_/*name*/(slabes_type_matrix_/*name*/ *var, slabes_t
     printf("assign_slabes_type_matrix_/*name*/(%p, " slabes_format_/*name*/ ")\\n", var, value);
 #endif
     if (*var == NULL) {
-        *var = malloc(size * sizeof(slabes_type_/*name*/));
+        *var = malloc(size * size * sizeof(slabes_type_/*name*/));
     }
-    memset(*var, value, size * sizeof(slabes_type_/*name*/));
+    for (size_t i = 0; i < size * size; ++i) {
+        (*var)[i] = value;
+    }
 }
 
 void assign_slabes_type_matrix_/*name*/(slabes_type_matrix_/*name*/ *var, slabes_type_matrix_/*name*/ value) {
