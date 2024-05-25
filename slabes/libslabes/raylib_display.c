@@ -18,6 +18,9 @@ const Color player_color = WHITE;
 const Color player_direction_color = GREEN;
 const Color finish_color = RED;
 
+const float desired_FPS = 1.0f / 60.0f;
+const size_t max_frames_skipped = 10;
+
 int screen_width = 800;
 int screen_height = 450;
 double hex_side = 20;
@@ -148,10 +151,22 @@ void update_display(Game *game) {
         return;
     }
 
+    float delta_time = 0.0f;
+
     if (IsWindowResized()) {
         recalculate_sizes(game);
+        delta_time = desired_FPS;
+    } else {
+        delta_time = GetFrameTime();
     }
-    
+
+    static size_t frames_skipped = 0;
+    if (delta_time < desired_FPS) {
+        ++frames_skipped;
+        if (frames_skipped < max_frames_skipped)
+            return;
+    }
+
     BeginDrawing();
 
     ClearBackground(background_color);
