@@ -137,24 +137,33 @@ bool setup_display(Game *game) {
     return true;
 }
 
+static bool windows_closed = false;
+
 void update_display(Game *game) {
-    if (!WindowShouldClose()) {
-        if (IsWindowResized()) {
-            recalculate_sizes(game);
-        }
-        
-        BeginDrawing();
+    if (windows_closed) return;
 
-        ClearBackground(background_color);
+    if (WindowShouldClose()) {
+        windows_closed = true;
+        CloseWindow();
+        return;
+    }
 
-        draw_hexagon_grid(game, hex_side);
-
-        EndDrawing();
+    if (IsWindowResized()) {
+        recalculate_sizes(game);
     }
     
+    BeginDrawing();
+
+    ClearBackground(background_color);
+
+    draw_hexagon_grid(game, hex_side);
+
+    EndDrawing();
 }
 
 void cleanup_display(Game *game) {
+    if (!windows_closed) return;
+
     while (!WindowShouldClose()) {
         BeginDrawing();
 
@@ -164,5 +173,6 @@ void cleanup_display(Game *game) {
 
         EndDrawing();
     }
+
     CloseWindow();
 }
