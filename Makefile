@@ -12,6 +12,7 @@ install:
 .PHONY: com
 com: console_lib ralib_display_lib console_slabes raylib_slabes
 	$(PYTHON) -m slabes tests/compile/all.slb
+	$(PYTHON) -m slabes tests/compile/maze_solver.slb
 	$(PYTHON) -m slabes tests/compile/robot.slb
 
 .PHONY: console_lib
